@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransitOps - Transport Management System</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto+Slab:wght@300;400;500&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #35627A;
+            --accent-1: #B46258;
+            --accent-2: #E5AEA9;
+            --muted: #A6A9D0;
+            --background: #F5F5F5;
+            --surface: #FFFFFF;
+            --text-muted: #8E9A98;
+            --text-dark: #2C3E50;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto Slab', serif;
+            background-color: var(--background);
+            color: var(--text-dark);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- Sidebar --- */
+        .sidebar {
+            width: 260px;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 0;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 0 24px 24px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 24px;
+        }
+
+        .sidebar-header h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links {
+            list-style: none;
+            flex: 1;
+        }
+
+        .nav-links li {
+            padding: 14px 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .nav-links li:hover {
+            background-color: rgba(255,255,255,0.05);
+            border-left-color: var(--accent-2);
+        }
+
+        .nav-links li.active {
+            background-color: rgba(180, 98, 88, 0.2);
+            border-left-color: var(--accent-1);
+            color: var(--accent-2);
+            font-weight: 500;
+        }
+
+        .user-profile-bottom {
+            padding: 20px 24px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .user-profile-bottom img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+
+        /* --- Main Content --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .topbar {
+            background-color: var(--surface);
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #E0E0E0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .topbar h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 22px;
+            color: var(--primary);
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .topbar-actions i {
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .profile-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .profile-badge span {
+            color: var(--text-muted);
+            font-weight: 400;
+            font-size: 12px;
+            display: block;
+        }
+
+        .content-body {
+            padding: 32px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* --- Cards & Sections --- */
+        .card {
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #F0F0F0;
+        }
+
+        .card-header h3 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 16px;
+            color: var(--primary);
+        }
+
+        /* --- Buttons --- */
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover { background-color: #2a4d61; }
+
+        .btn-accent {
+            background-color: var(--accent-1);
+            color: white;
+        }
+        .btn-accent:hover { background-color: #9a4f46; }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--muted);
+            color: var(--text-dark);
+        }
+        .btn-outline:hover { background-color: #f0f0f0; }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* --- Tables --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            border-bottom: 1px solid #E0E0E0;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #F5F5F5;
+            color: var(--text-dark);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background-color: #FAFAFA;
+        }
+
+        /* --- Badges --- */
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .badge-scheduled { background-color: #E8F0FE; color: #1A73E8; }
+        .badge-cancelled { background-color: #FCE8E6; color: #C5221F; }
+        .badge-completed { background-color: #E6F4EA; color: #137333; }
+        .badge-pending { background-color: #FEF7E0; color: #B06000; }
+
+        /* --- Form Elements --- */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .form-group input, .form-group select {
+            padding: 10px 14px;
+            border: 1px solid #D1D5DB;
+            border-radius: 6px;
+            font-family: 'Roboto Slab', serif;
+            font-size: 14px;
+            outline: none;
+            transition: border 0.2s ease;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(53, 98, 122, 0.1);
+        }
+
+        /* --- Map Placeholder --- */
+        .map-container {
+            width: 100%;
+            height: 300px;
+            background-color: #E5E7EB;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-family: 'Montserrat', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .map-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: radial-gradient(circle, #D1D5DB 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.5;
+        }
+
+        .map-overlay {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: var(--surface);
+            padding: 8px 16px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .map-overlay .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--accent-1);
+        }
+
+        /* --- Tab Switching --- */
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+    <div class="sidebar-header">
+        <h2><i class="fa-solid fa-bus"></i> TransitOps</h2>
+    </div>
+    <ul class="nav-links">
+        <li class="active" onclick="switchTab('dashboard', this)"><i class="fa-solid fa-chart-pie"></i> Dashboard</li>
+        <li onclick="switchTab('routes', this)"><i class="fa-solid fa-route"></i> Manage Routes</li>
+        <li onclick="switchTab('trips', this)"><i class="fa-solid fa-calendar-plus"></i> Schedule Trips</li>
+        <li onclick="switchTab('tracking', this)"><i class="fa-solid fa-location-dot"></i> Driver Tracking</li>
+        <li onclick="switchTab('payments', this)"><i class="fa-solid fa-credit-card"></i> Payments</li>
+    </ul>
+    <div class="user-profile-bottom">
+        <img src="https://ui-avatars.com/api/?name=Elena+Rostova&background=35627A&color=fff" alt="Profile">
+        <div>
+            <strong>Elena Rostova</strong>
+            <span>Transport Officer</span>
+        </div>
+    </div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+    <!-- TOPBAR -->
+    <header class="topbar">
+        <h1 id="page-title">Dashboard Overview</h1>
+        <div class="topbar-actions">
+            <i class="fa-regular fa-bell"></i>
+            <div class="profile-badge">
+                <img src="https://ui-avatars.com/api/?name=Elena+Rostova&background=35627A&color=fff" width="36" style="border-radius: 50%;">
+                <div>
+                    Elena Rostova
+                    <span>Transport Officer</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="content-body">
+
+        <!-- 1. DASHBOARD TAB -->
+        <div id="dashboard" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Live Trip Map</h3>
+                    <span class="badge badge-scheduled">Live Tracking Active</span>
+                </div>
+                <div class="map-container">
+                    <div class="map-overlay">
+                        <div class="dot"></div> Bus #104 - In Transit
+                    </div>
+                    <p style="z-index: 1;">Interactive Map View (Google Maps API / Leaflet Integration)</p>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Fleet Status</h3>
+                    </div>
+                    <p style="font-size: 14px; color: var(--text-muted);">3 Active Trips • 1 Delayed • 0 Cancelled</p>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Quick Actions</h3>
+                    </div>
+                    <button class="btn btn-primary" onclick="switchTab('trips')"><i class="fa-solid fa-plus"></i> Schedule New Trip</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. MANAGE ROUTES TAB -->
+        <div id="routes" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Add New Route</h3>
+                </div>
+                <form class="form-grid">
+                    <div class="form-group">
+                        <label>Route Name</label>
+                        <input type="text" placeholder="e.g., Kaduwela - SLIIT Express">
+                    </div>
+                    <div class="form-group">
+                        <label>Start Point</label>
+                        <input type="text" placeholder="e.g., Kaduwela">
+                    </div>
+                    <div class="form-group">
+                        <label>End Point</label>
+                        <input type="text" placeholder="e.g., SLIIT Malabe">
+                    </div>
+                    <div class="form-group" style="justify-content: flex-end;">
+                        <button type="button" class="btn btn-primary" onclick="alert('Route Added Successfully!')"><i class="fa-solid fa-save"></i> Save Route</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Existing Routes</h3>
+                </div>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Route Name</th>
+                        <th>Start Point</th>
+                        <th>End Point</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Kaduwela - SLIIT Express</td>
+                        <td>Kaduwela</td>
+                        <td>SLIIT Malabe</td>
+                        <td>
+                            <button class="btn btn-outline btn-sm"><i class="fa-solid fa-pen"></i> Edit</button>
+                            <button class="btn btn-accent btn-sm" onclick="alert('Route Deleted')"><i class="fa-solid fa-trash"></i> Delete</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Kandy - SLIIT Route</td>
+                        <td>Kandy</td>
+                        <td>SLIIT Malabe</td>
+                        <td>
+                            <button class="btn btn-outline btn-sm"><i class="fa-solid fa-pen"></i> Edit</button>
+                            <button class="btn btn-accent btn-sm" onclick="alert('Route Deleted')"><i class="fa-solid fa-trash"></i> Delete</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. SCHEDULE TRIPS TAB -->
+        <div id="trips" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Schedule New Bus Trip</h3>
+                </div>
+                <form class="form-grid">
+                    <div class="form-group">
+                        <label>Trip Date</label>
+                        <input type="date">
+                    </div>
+                    <div class="form-group">
+                        <label>Start Time</label>
+                        <input type="time">
+                    </div>
+                    <div class="form-group">
+                        <label>Pickup Location</label>
+                        <select>
+                            <option>Kaduwela</option>
+                            <option>Kandy</option>
+                            <option>SLIIT Malabe</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Drop Location</label>
+                        <select>
+                            <option>SLIIT Malabe</option>
+                            <option>Kaduwela</option>
+                            <option>Kandy</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="grid-column: span 2; justify-content: flex-end;">
+                        <button type="button" class="btn btn-primary" onclick="alert('Trip Scheduled!')"><i class="fa-solid fa-calendar-check"></i> Schedule Trip</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Upcoming Trips</h3>
+                </div>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Trip ID</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Route</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>2026-09-20</td>
+                        <td>07:00 AM</td>
+                        <td>Kaduwela → SLIIT</td>
+                        <td><span class="badge badge-scheduled">Scheduled</span></td>
+                        <td><button class="btn btn-accent btn-sm" onclick="alert('Trip Cancelled')"><i class="fa-solid fa-ban"></i> Cancel</button></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>2026-09-20</td>
+                        <td>06:00 AM</td>
+                        <td>Kandy → SLIIT</td>
+                        <td><span class="badge badge-scheduled">Scheduled</span></td>
+                        <td><button class="btn btn-accent btn-sm" onclick="alert('Trip Cancelled')"><i class="fa-solid fa-ban"></i> Cancel</button></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 4. DRIVER TRACKING TAB -->
+        <div id="tracking" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Active Driver Progress</h3>
+                </div>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Trip ID</th>
+                        <th>Driver</th>
+                        <th>Current Location</th>
+                        <th>ETA</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>M. Vance</td>
+                        <td>Kaduwela Junction</td>
+                        <td>08:15 AM</td>
+                        <td><span class="badge badge-scheduled">On Route</span></td>
+                        <td>
+                            <button class="btn btn-outline btn-sm" onclick="alert('Location Updated!')"><i class="fa-solid fa-location-crosshairs"></i> Update Loc</button>
+                            <button class="btn btn-primary btn-sm" onclick="alert('Trip Marked Complete!')"><i class="fa-solid fa-flag-checkered"></i> Complete</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 5. PAYMENTS TAB -->
+        <div id="payments" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Student Payment Records</h3>
+                </div>
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Payment ID</th>
+                        <th>Student ID</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>1001</td>
+                        <td>LKR 5,000.00</td>
+                        <td><span class="badge badge-completed">Completed</span></td>
+                        <td><button class="btn btn-accent btn-sm" onclick="alert('Payment Cancelled')"><i class="fa-solid fa-xmark"></i> Cancel</button></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>1002</td>
+                        <td>LKR 15,000.00</td>
+                        <td><span class="badge badge-completed">Completed</span></td>
+                        <td><button class="btn btn-accent btn-sm" onclick="alert('Payment Cancelled')"><i class="fa-solid fa-xmark"></i> Cancel</button></td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>1003</td>
+                        <td>LKR 5,000.00</td>
+                        <td><span class="badge badge-cancelled">Cancelled</span></td>
+                        <td><button class="btn btn-outline btn-sm" disabled><i class="fa-solid fa-check"></i> Done</button></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<script>
+    function switchTab(tabId, element) {
+        // 1. Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        // 2. Show the selected tab content
+        document.getElementById(tabId).classList.add('active');
+
+        // 3. Update active state in sidebar
+        document.querySelectorAll('.nav-links li').forEach(li => {
+            li.classList.remove('active');
+        });
+        element.classList.add('active');
+
+        // 4. Update Page Title
+        const titles = {
+            'dashboard': 'Dashboard Overview',
+            'routes': 'Manage Bus Routes',
+            'trips': 'Schedule & Manage Trips',
+            'tracking': 'Driver Progress & ETA',
+            'payments': 'Payment Cancellations'
+        };
+        document.getElementById('page-title').innerText = titles[tabId];
+    }
+</script>
+</body>
+</html>
