@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UTMS | Shuttle Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Import SweetAlert2 for professional popups -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary: #35627A;
+            --accent1: #B46258;
+            --accent2: #E5AEA9;
+            --muted: #A6A9D0;
+            --bg: #F5F5F5;
+            --surface: #FFFFFF;
+            --text-muted: #8E9A98;
+            --text-dark: #2C3E50;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body { font-family: 'Roboto Slab', serif; background-color: var(--bg); color: var(--text-dark); display: flex; min-height: 100vh; }
+        h1, h2, h3, th { font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--primary); }
+
+        /* Sidebar Navigation */
+        .sidebar { width: 250px; background-color: var(--primary); color: var(--surface); display: flex; flex-direction: column; padding: 20px 0; }
+        .sidebar-brand { font-family: 'Montserrat', sans-serif; font-size: 24px; padding: 0 20px 30px; border-bottom: 1px solid var(--muted); margin-bottom: 20px; }
+        .nav-link { padding: 15px 20px; color: var(--muted); text-decoration: none; font-size: 16px; transition: 0.3s; }
+        .nav-link:hover { background-color: rgba(255,255,255,0.1); color: var(--accent2); }
+        .nav-link.active { background-color: rgba(255,255,255,0.1); color: var(--surface); border-left: 4px solid var(--accent1); }
+
+        /* Main Content */
+        .main-content { flex: 1; padding: 40px; }
+        .page-header { margin-bottom: 30px; font-size: 28px; }
+
+        /* Cards & Forms */
+        .card { background-color: var(--surface); border-radius: 8px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; color: var(--text-muted); font-size: 14px; margin-bottom: 8px; }
+        input { width: 100%; max-width: 400px; padding: 10px 15px; border: 1px solid var(--muted); border-radius: 4px; font-family: 'Roboto Slab', serif; color: var(--text-dark); outline: none; }
+        input:focus { border-color: var(--primary); }
+        input::placeholder { color: var(--text-muted); }
+
+        /* Buttons */
+        .btn { background-color: var(--primary); color: var(--surface); padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 14px; transition: 0.3s; }
+        .btn:hover { background-color: var(--accent1); }
+        .btn-delete { background-color: var(--accent1); padding: 6px 12px; font-size: 12px; }
+        .btn-delete:hover { background-color: var(--accent2); color: var(--text-dark); }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: var(--bg); color: var(--primary); text-transform: uppercase; font-size: 13px; }
+        td { font-size: 15px; color: var(--text-dark); }
+        tr:hover { background-color: #fcfcfc; }
+
+        /* Custom SweetAlert Font */
+        .swal2-popup { font-family: 'Roboto Slab', serif; }
+        .swal2-title { font-family: 'Montserrat', sans-serif; color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <div class="sidebar-brand">UTMS Fleet</div>
+    <a href="buses.html" class="nav-link active">🚌 Shuttle Routes</a>
+    <a href="drivers.html" class="nav-link">👤 Transit Operators</a>
+</nav>
+
+<main class="main-content">
+    <h1 class="page-header">Shuttle Fleet Management</h1>
+
+    <div class="card">
+        <h2>Deploy New Shuttle</h2>
+        <form id="busForm" style="margin-top: 20px;">
+            <div class="form-group">
+                <label>Registration Number</label>
+                <input type="text" id="registrationNumber" placeholder="e.g., NA-1234" required>
+            </div>
+            <div class="form-group">
+                <label>Maximum Passenger Capacity</label>
+                <input type="number" id="capacity" placeholder="e.g., 45" required>
+            </div>
+            <button type="submit" class="btn">Deploy Shuttle</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Active Shuttle Roster</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>Fleet ID</th>
+                <th>Registration</th>
+                <th>Seating Capacity</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody id="busTableBody">
+            <!-- JavaScript injected data -->
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<script>
+    const API_BASE_URL = "http://localhost:8080/api/buses";
+
+    async function loadBuses() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/all`);
+            const buses = await response.json();
+            const tableBody = document.getElementById('busTableBody');
+            tableBody.innerHTML = '';
+
+            buses.forEach(bus => {
+                const busId = bus.busId || bus.id;
+                const seatCapacity = bus.passengerCapacity !== undefined ? bus.passengerCapacity : 'N/A';
+
+                const row = `<tr>
+                    <td><strong>#${busId}</strong></td>
+                    <td>${bus.registrationNumber}</td>
+                    <td>${seatCapacity} Passengers</td>
+                    <td><button class="btn btn-delete" onclick="deleteBus(${busId})">Decommission</button></td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        } catch (error) { console.error("Error loading buses:", error); }
+    }
+
+    document.getElementById('busForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        const busData = {
+            registrationNumber: document.getElementById('registrationNumber').value,
+            passengerCapacity: document.getElementById('capacity').value
+        };
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(busData)
+            });
+
+            if (response.ok) {
+                document.getElementById('busForm').reset();
+                loadBuses();
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Shuttle deployed successfully.',
+                    icon: 'success',
+                    confirmButtonColor: '#35627A'
+                });
+            } else {
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Failed to deploy shuttle.',
+                    icon: 'error',
+                    confirmButtonColor: '#B46258'
+                });
+            }
+        } catch (error) { console.error("Error saving bus:", error); }
+    });
+
+    async function deleteBus(id) {
+        Swal.fire({
+            title: 'Decommission Shuttle?',
+            text: "This action cannot be undone.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#B46258', // Red accent
+            cancelButtonColor: '#A6A9D0',  // Muted grey
+            confirmButtonText: 'Yes, decommission it!'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/delete/${id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        loadBuses();
+                        Swal.fire({
+                            title: 'Decommissioned!',
+                            text: 'The shuttle has been removed.',
+                            icon: 'success',
+                            confirmButtonColor: '#35627A'
+                        });
+                    } else {
+                        Swal.fire('Error', 'Failed to delete shuttle.', 'error');
+                    }
+                } catch (error) { console.error("Error deleting bus:", error); }
+            }
+        });
+    }
+
+    loadBuses();
+</script>
+</body>
+</html>
