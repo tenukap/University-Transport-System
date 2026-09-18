@@ -115,6 +115,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Lombok To avoid writing hundreds of lines of getters and setters -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
     </dependencies>
 
     <build>
