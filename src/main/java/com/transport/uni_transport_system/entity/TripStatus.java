@@ -23,5 +23,35 @@ public class TripStatus {
 
     public TripStatus() {}
 
-    // Add Getters and Setters here (Generate them in IntelliJ using Alt+Insert)
+    public Integer getStatusId() {
+        return statusId;
+    }
+
+    public void setStatusId(Integer statusId) {
+        this.statusId = statusId;
+    }
+
+    public Integer getTripId() {
+        return tripId;
+    }
+
+    public void setTripId(Integer tripId) {
+        this.tripId = tripId;
+    }
+
+    public String getStatusType() {
+        return statusType;
+    }
+
+    public void setStatusType(String statusType) {
+        this.statusType = statusType;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

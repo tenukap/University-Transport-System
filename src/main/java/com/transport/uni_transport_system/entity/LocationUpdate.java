@@ -27,5 +27,43 @@ public class LocationUpdate {
 
     public LocationUpdate() {}
 
-    // Add Getters and Setters here (Generate them in IntelliJ using Alt+Insert)
+    public Integer getLocationUpdateId() {
+        return locationUpdateId;
+    }
+
+    public void setLocationUpdateId(Integer locationUpdateId) {
+        this.locationUpdateId = locationUpdateId;
+    }
+
+    public Integer getTripId() {
+        return tripId;
+    }
+
+    public void setTripId(Integer tripId) {
+        this.tripId = tripId;
+    }
+
+    public BigDecimal getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(BigDecimal latitude) {
+        this.latitude = latitude;
+    }
+
+    public BigDecimal getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(BigDecimal longitude) {
+        this.longitude = longitude;
+    }
+
+    public LocalDateTime getRecordedAt() {
+        return recordedAt;
+    }
+
+    public void setRecordedAt(LocalDateTime recordedAt) {
+        this.recordedAt = recordedAt;
+    }
 }
