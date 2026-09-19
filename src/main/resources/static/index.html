@@ -1,109 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>University Transport System</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-    <div class="dashboard-container">
-        <!-- Sidebar Navigation -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2>UniDrive</h2>
-                <p>Transport System</p>
-            </div>
-            <nav class="sidebar-nav">
-                <button class="nav-btn active" data-target="reports-tab">
-                    <i>🚨</i> Emergency Reports
-                </button>
-                <button class="nav-btn" data-target="incidents-tab">
-                    <i>💥</i> Crash Incidents
-                </button>
-                <button class="nav-btn" data-target="status-tab">
-                    <i>🚌</i> Trip Status
-                </button>
-                <button class="nav-btn" data-target="location-tab">
-                    <i>📍</i> Location Tracking
-                </button>
-            </nav>
-        </aside>
-
-        <!-- Main Content Area -->
-        <main class="main-content">
-            <header class="top-nav">
-                <h1>Dashboard Overview</h1>
-                <div class="user-profile" style="background: var(--glass-bg); padding: 0.5rem 1rem; border-radius: 20px; border: 1px solid var(--glass-border);">
-                   👨‍✈️ Admin Portal
-                </div>
-            </header>
-
-            <div class="content-wrapper">
-                <!-- Emergency Reports Tab -->
-                <section id="reports-tab" class="tab-pane active">
-                    <div class="card glass-card">
-                        <h2>File a New Emergency Report</h2>
-                        <form id="emergency-form">
-                            <div class="form-group">
-                                <label for="reportTitle">Report Title</label>
-                                <input type="text" id="reportTitle" required placeholder="e.g. Bus 45 Breakdown on Route A">
-                            </div>
-                            <div class="form-group">
-                                <label for="emergencyType">Emergency Type</label>
-                                <select id="emergencyType">
-                                    <option value="Mechanical">Mechanical Failure</option>
-                                    <option value="Medical">Medical Emergency</option>
-                                    <option value="Security">Security Issue</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="description">Description</label>
-                                <textarea id="description" rows="4" required placeholder="Describe the situation in detail..."></textarea>
-                            </div>
-                            <button type="submit" class="submit-btn" style="width: 100%;">Submit Report to API</button>
-                        </form>
-                    </div>
-
-                    <div class="card glass-card mt-4">
-                        <h2>Recent Active Reports</h2>
-                        <div id="reports-list" class="data-list">
-                            <p class="loading" style="color: var(--text-secondary);">Connecting to API (/api/emergency-reports)...</p>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Crash Incidents Tab (Placeholder for now) -->
-                <section id="incidents-tab" class="tab-pane">
-                    <div class="card glass-card">
-                        <h2>Crash Incidents System</h2>
-                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">This module tracks major vehicle collision reports.</p>
-                        <p style="color: var(--accent);">Ready to implement API hookups.</p>
-                    </div>
-                </section>
-
-                <!-- Trip Status Tab (Placeholder for now) -->
-                <section id="status-tab" class="tab-pane">
-                    <div class="card glass-card">
-                        <h2>Active Trip Status</h2>
-                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">Real-time transit fleet status metrics.</p>
-                        <p style="color: var(--accent);">Ready to implement API hookups.</p>
-                    </div>
-                </section>
-
-                <!-- Location Tracking Tab (Placeholder for now) -->
-                <section id="location-tab" class="tab-pane">
-                    <div class="card glass-card">
-                        <h2>GPS Location Tracking</h2>
-                        <p style="color: var(--text-secondary); margin-bottom: 1rem;">Live coordinate tracking for operating fleet.</p>
-                        <p style="color: var(--accent);">Ready to implement API hookups.</p>
-                    </div>
-                </section>
-            </div>
-        </main>
-    </div>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto+Slab:wght@400;500;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>University Transport Dashboard</title>
+    <script type="module" crossorigin src="/assets/index-bb35e596.js"></script>
+    <link rel="stylesheet" href="/assets/index-d962ecb1.css">
+  </head>
+  <body>
+    <div id="root"></div>
     
-    <script src="js/app.js"></script>
-</body>
+  </body>
 </html>
