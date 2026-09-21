@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BusTrans Pro | Sign in</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: Inter, sans-serif; background: #f8fafc; }
+        .login-panel { box-shadow: 0 18px 50px rgba(15, 23, 42, .12); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6 text-slate-900">
+<main class="w-full max-w-md">
+    <section class="login-panel bg-white border border-slate-200 rounded-xl p-8 md:p-10">
+        <div class="flex items-center gap-3 mb-10">
+            <div class="w-11 h-11 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">BT</div>
+            <div>
+                <h1 class="text-xl font-bold">BusTrans Pro</h1>
+                <p class="text-sm text-slate-500">Fleet administration</p>
+            </div>
+        </div>
+        <h2 class="text-2xl font-semibold mb-2">Welcome back</h2>
+        <p class="text-sm text-slate-500 mb-8">Sign in with an authorized administration account.</p>
+        <form id="login-form" class="space-y-5" novalidate>
+            <div>
+                <label for="username" class="block text-sm font-medium text-slate-700 mb-2">Email or username</label>
+                <input id="username" name="username" required autocomplete="username" class="w-full rounded-lg border-slate-300 px-4 py-3 focus:border-blue-600 focus:ring-blue-600" placeholder="admin@campus.edu">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-slate-700 mb-2">Password</label>
+                <input id="password" name="password" type="password" required autocomplete="current-password" class="w-full rounded-lg border-slate-300 px-4 py-3 focus:border-blue-600 focus:ring-blue-600" placeholder="Enter your password">
+            </div>
+            <p id="login-error" class="hidden rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm p-3" role="alert"></p>
+            <button id="login-button" class="w-full rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 transition-colors" type="submit">Sign in</button>
+        </form>
+    </section>
+</main>
+<script>
+    const API_BASE = 'http://localhost:8080/api';
+    const form = document.querySelector('#login-form');
+    const errorBox = document.querySelector('#login-error');
+    const button = document.querySelector('#login-button');
+
+    function showError(message) {
+        errorBox.textContent = message;
+        errorBox.classList.remove('hidden');
+    }
+
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+        errorBox.classList.add('hidden');
+        button.disabled = true;
+        button.textContent = 'Signing in...';
+        try {
+            const username = document.querySelector('#username').value.trim();
+            const password = document.querySelector('#password').value;
+
+            let response = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            let result;
+            if (response.ok) {
+                result = await response.json();
+            } else if (response.status === 404) {
+                const unregMsg = "You cannot enter this system. Your account has not been added by the admin.";
+                alert(unregMsg);
+                throw new Error(unregMsg);
+            } else {
+                const portalResp = await fetch(`${API_BASE}/portal/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: username, password })
+                });
+
+                if (portalResp.status === 404) {
+                    const unregMsg = "You cannot enter this system. Your account has not been added by the admin.";
+                    alert(unregMsg);
+                    throw new Error(unregMsg);
+                }
+
+                if (!portalResp.ok) {
+                    const errData = await portalResp.json().catch(() => ({}));
+                    const errMsg = errData.message || 'Invalid email/username or password.';
+                    if (errMsg.includes('not added') || errMsg.includes('cannot enter')) {
+                        alert(errMsg);
+                    }
+                    throw new Error(errMsg);
+                }
+                result = await portalResp.json();
+            }
+
+            const rawRole = result.user.role || result.user.roleName || '';
+            const roleValue = rawRole.toUpperCase().replace('-', '_').replace(' ', '_');
+            const role = roleValue === 'FINANCEOFFICER' ? 'FINANCE_OFFICER' : roleValue;
+
+            localStorage.setItem('bustrans_token', result.token);
+            localStorage.setItem('bustrans_user', JSON.stringify(result.user));
+            localStorage.setItem('bustrans_role', role);
+
+            if (role === 'STUDENT' || role === 'DRIVER') {
+                window.location.href = 'profile.html';
+            } else {
+                window.location.href = 'code.html';
+            }
+        } catch (error) {
+            showError(error.message);
+        } finally {
+            button.disabled = false;
+            button.textContent = 'Sign in';
+        }
+    });
+</script>
+</body>
+</html>
