@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BusTrans Pro - Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto+Slab:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary": "#35627A",
+                        "on-primary": "#ffffff",
+                        "primary-container": "#4A7A94",
+                        "on-primary-container": "#E0EEF5",
+                        "primary-fixed": "#C8DDE8",
+                        "primary-fixed-dim": "#9BBDD0",
+                        "on-primary-fixed": "#1A3140",
+                        "on-primary-fixed-variant": "#2A4F63",
+                        "secondary": "#B46258",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#E5AEA9",
+                        "on-secondary-container": "#5A2F2A",
+                        "secondary-fixed": "#F5D5D1",
+                        "secondary-fixed-dim": "#E5AEA9",
+                        "on-secondary-fixed": "#3D1F1B",
+                        "on-secondary-fixed-variant": "#8B4A42",
+                        "tertiary": "#A6A9D0",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-container": "#D3D5E8",
+                        "on-tertiary-container": "#4A4C6A",
+                        "tertiary-fixed": "#E8E9F5",
+                        "tertiary-fixed-dim": "#C4C6E0",
+                        "on-tertiary-fixed": "#2D2F4A",
+                        "on-tertiary-fixed-variant": "#6B6D8A",
+                        "error": "#B46258",
+                        "on-error": "#ffffff",
+                        "error-container": "#F5D5D1",
+                        "on-error-container": "#5A2F2A",
+                        "surface": "#FFFFFF",
+                        "on-surface": "#2D2D2D",
+                        "surface-variant": "#E8E8F0",
+                        "on-surface-variant": "#8E9A98",
+                        "surface-dim": "#E0E0E8",
+                        "surface-bright": "#FFFFFF",
+                        "surface-container-lowest": "#FFFFFF",
+                        "surface-container-low": "#F5F5F8",
+                        "surface-container": "#EFEFF5",
+                        "surface-container-high": "#E8E8F0",
+                        "surface-container-highest": "#E0E0E8",
+                        "surface-tint": "#35627A",
+                        "outline": "#A6A9D0",
+                        "outline-variant": "#D0D0E0",
+                        "background": "#F5F5F5",
+                        "on-background": "#2D2D2D",
+                        "inverse-surface": "#35627A",
+                        "inverse-on-surface": "#F5F5F5",
+                        "inverse-primary": "#E5AEA9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "card-gap": "20px",
+                        "container-padding": "32px",
+                        "base": "8px",
+                        "sidebar-width": "280px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Montserrat", "sans-serif"],
+                        "label-sm": ["Roboto Slab", "serif"],
+                        "headline-md-mobile": ["Montserrat", "sans-serif"],
+                        "body-lg": ["Roboto Slab", "serif"],
+                        "body-md": ["Roboto Slab", "serif"],
+                        "headline-md": ["Montserrat", "sans-serif"],
+                        "display-lg": ["Montserrat", "sans-serif"],
+                        "label-md": ["Roboto Slab", "serif"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "headline-md-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "display-lg": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    },
+                    "boxShadow": {
+                        "level-1": "0 4px 12px rgba(53,98,122,0.06)",
+                        "level-2": "0 10px 24px rgba(0,0,0,0.10)"
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#f8fafc] text-on-surface font-body-md antialiased overflow-x-hidden min-h-screen">
+<!-- SideNavBar -->
+<nav class="hidden md:flex fixed left-0 top-0 h-full w-[280px] flex-col p-4 bg-inverse-surface dark:bg-on-surface z-50 transition-transform">
+<div class="mb-8 px-4 py-2 flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary font-headline-sm">BT</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-surface-container-lowest">BusTrans Pro</h1>
+<p id="sidebar-role" class="text-surface-variant/70 font-label-md text-label-md">Finance Officer</p>
+</div>
+</div>
+<ul class="flex flex-col gap-2 flex-grow">
+<li><a class="flex items-center gap-3 px-4 py-3 text-primary-fixed bg-primary/10 rounded-lg cursor-pointer active:scale-95 duration-150" href="#"><span class="material-symbols-outlined" data-icon="dashboard">dashboard</span> <span class="font-label-md text-label-md">Dashboard</span></a></li>
+<li><a class="flex items-center gap-3 px-4 py-3 text-surface-variant/70 hover:bg-primary/5 hover:text-surface-bright transition-colors rounded-lg cursor-pointer active:scale-95 duration-150" href="#"><span class="material-symbols-outlined" data-icon="group">group</span> <span class="font-label-md text-label-md">Users</span></a></li>
+<li><a class="flex items-center gap-3 px-4 py-3 text-surface-variant/70 hover:bg-primary/5 hover:text-surface-bright transition-colors rounded-lg cursor-pointer active:scale-95 duration-150" href="#"><span class="material-symbols-outlined" data-icon="event_seat">event_seat</span> <span class="font-label-md text-label-md">Bookings</span></a></li>
+<li><a class="flex items-center gap-3 px-4 py-3 text-surface-variant/70 hover:bg-primary/5 hover:text-surface-bright transition-colors rounded-lg cursor-pointer active:scale-95 duration-150" href="#"><span class="material-symbols-outlined" data-icon="assessment">assessment</span> <span class="font-label-md text-label-md">Reports</span></a></li>
+<li><a class="flex items-center gap-3 px-4 py-3 text-surface-variant/70 hover:bg-primary/5 hover:text-surface-bright transition-colors rounded-lg cursor-pointer active:scale-95 duration-150" href="#"><span class="material-symbols-outlined" data-icon="route">route</span> <span class="font-label-md text-label-md">Routes</span></a></li>
+<li><a class="flex items-center gap-3 px-4 py-3 text-surface-variant/70 hover:bg-primary/5 hover:text-surface-bright transition-colors rounded-lg cursor-pointer active:scale-95 duration-150" href="#"><span class="material-symbols-outlined" data-icon="campaign">campaign</span> <span class="font-label-md text-label-md">Announcements</span></a></li>
+</ul>
+<div class="mt-auto">
+<a class="flex items-center gap-3 px-4 py-3 text-surface-variant/70 hover:bg-primary/5 hover:text-surface-bright transition-colors rounded-lg cursor-pointer active:scale-95 duration-150" href="#"><span class="material-symbols-outlined" data-icon="settings">settings</span> <span class="font-label-md text-label-md">Settings</span></a>
+<button id="logout" class="flex items-center gap-3 px-4 py-3 text-surface-variant/70 hover:bg-primary/5 hover:text-surface-bright transition-colors rounded-lg cursor-pointer active:scale-95 duration-150 text-left w-full"><span class="material-symbols-outlined">logout</span> <span class="font-label-md text-label-md">Logout</span></button>
+</div>
+</nav>
+<!-- TopNavBar -->
+<header class="hidden md:flex fixed top-0 right-0 left-[280px] h-16 justify-between items-center px-8 z-40 bg-surface dark:bg-surface-dim border-b border-outline-variant/30 shadow-sm transition-opacity active:opacity-70">
+<div class="flex items-center gap-4 w-1/3">
+<h2 class="font-headline-sm text-headline-sm font-bold text-on-surface whitespace-nowrap">Transport Management</h2>
+<div class="relative w-full max-w-md ml-4">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full bg-surface-container-low text-on-surface font-body-md pl-10 pr-4 py-2 rounded-full border-none focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest transition-all" placeholder="Search..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-secondary-container hover:bg-surface-container-low transition-all rounded-full"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
+<button class="p-2 text-on-secondary-container hover:bg-surface-container-low transition-all rounded-full"><span class="material-symbols-outlined" data-icon="help">help</span></button>
+<button class="p-2 text-on-secondary-container hover:bg-surface-container-low transition-all rounded-full"><span class="material-symbols-outlined" data-icon="settings">settings</span></button>
+<div class="h-8 w-px bg-outline-variant/30 mx-2"></div>
+<span id="header-user" class="text-on-surface-variant font-label-md text-label-md"></span>
+<img alt="Finance Officer Avatar" class="w-9 h-9 rounded-full object-cover border-2 border-surface-container-lowest shadow-sm" data-alt="A professional headshot of a corporate finance officer, female, wearing glasses and a dark blazer, well-lit studio lighting with a neutral gray background. High quality, sharp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaAPDBr60zFeg3j_eGX4vy4k-XF_HwEJyWp3yPEHfPk5w6vJj2xEVb-v1XAMUfiQZS6wyFZRxK6IZ-MoGsEG3-unUUSU-hTFRAssNm0uRKJwbNd4sIiKckMp8vLoKC3ynrmdKYAhSSeat_jSYXKB8-poE8OOJmWJ3EeN-fkaQ3vvEOEBQhDusCiWjTli5n9cy5qSKCbFivZQ9Oi-VfnwTM5nGmwHfykp9flWo2bIqAQlrWer7fOMXd"/>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="md:ml-[280px] pt-20 p-container-padding transition-all max-w-[1600px] mx-auto space-y-gutter">
+<!-- Header Section -->
+<div class="flex justify-between items-center mb-6">
+<div>
+<h2 class="font-display-lg text-display-lg text-on-surface">Overview</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Track fleet performance and user activity.</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 bg-surface-container-lowest border border-outline-variant text-on-surface font-label-md text-label-md px-4 py-2 rounded-lg shadow-level-1 hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[18px]">download</span> Export Report
+                </button>
+<button class="flex items-center gap-2 bg-primary-container text-on-primary font-label-md text-label-md px-4 py-2 rounded-lg shadow-level-1 hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span> New Booking
+                </button>
+</div>
+</div>
+<!-- Metrics Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-card-gap">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-level-1 relative overflow-hidden group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-primary/10 text-primary rounded-lg">
+<span class="material-symbols-outlined">confirmation_number</span>
+</div>
+<span class="px-2 py-1 bg-[#10b981]/10 text-[#10b981] rounded-full font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_up</span> 12%
+                    </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-1">Total Active Bookings</p>
+<h3 class="font-headline-md text-headline-md text-on-surface">1,284</h3>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-level-1 relative overflow-hidden group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-[#f59e0b]/10 text-[#f59e0b] rounded-lg">
+<span class="material-symbols-outlined">directions_bus</span>
+</div>
+<span class="px-2 py-1 bg-outline-variant/20 text-on-surface-variant rounded-full font-label-md text-label-md flex items-center gap-1">
+                        Today
+                    </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-1">Upcoming Trips</p>
+<h3 class="font-headline-md text-headline-md text-on-surface">42</h3>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-level-1 relative overflow-hidden group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-[#8b5cf6]/10 text-[#8b5cf6] rounded-lg">
+<span class="material-symbols-outlined">speed</span>
+</div>
+<span class="px-2 py-1 bg-[#10b981]/10 text-[#10b981] rounded-full font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">arrow_upward</span> 5%
+                    </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-1">Bus Utilisation</p>
+<h3 class="font-headline-md text-headline-md text-on-surface">88%</h3>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-level-1 relative overflow-hidden group">
+<div class="flex justify-between items-start mb-4">
+<div class="p-2 bg-[#06b6d4]/10 text-[#06b6d4] rounded-lg">
+<span class="material-symbols-outlined">groups</span>
+</div>
+<span class="px-2 py-1 bg-[#ef4444]/10 text-[#ef4444] rounded-full font-label-md text-label-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">trending_down</span> 2%
+                    </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-1">Total Active Users</p>
+<h3 class="font-headline-md text-headline-md text-on-surface">3,420</h3>
+</div>
+</div>
+<!-- Administration and Reporting Modules -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-card-gap mt-8">
+<!-- User Management -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-level-1 flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">User Management</h3>
+<button id="create-account" class="flex items-center gap-2 bg-primary-container text-on-primary font-label-md text-label-md px-3 py-1.5 rounded-lg hover:bg-primary transition-colors">
+<span class="material-symbols-outlined text-[18px]">person_add</span> Create Account
+            </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left font-body-md text-on-surface-variant">
+<thead>
+<tr class="border-b border-outline-variant/30 text-label-md uppercase">
+<th class="py-2 px-2 font-semibold">User</th>
+<th class="py-2 px-2 font-semibold">Role</th>
+<th class="py-2 px-2 font-semibold">Status</th>
+<th class="py-2 px-2 font-semibold">Action</th>
+</tr>
+</thead>
+<tbody id="users-table-body">
+<tr class="border-b border-outline-variant/10">
+<td class="py-3 px-2 text-on-surface">Alice Smith</td>
+<td class="py-3 px-2">Admin</td>
+<td class="py-3 px-2"><span class="px-2 py-1 bg-[#10b981]/10 text-[#10b981] rounded-full text-[11px] font-medium">Active</span></td>
+<td class="py-3 px-2"><button class="text-primary font-label-md hover:underline">Edit</button></td>
+</tr>
+<tr>
+<td class="py-3 px-2 text-on-surface">Bob Johnson</td>
+<td class="py-3 px-2">Driver</td>
+<td class="py-3 px-2"><span class="px-2 py-1 bg-[#ef4444]/10 text-[#ef4444] rounded-full text-[11px] font-medium">Suspended</span></td>
+<td class="py-3 px-2"><button class="text-primary font-label-md hover:underline">Edit</button></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Financial Reporting -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-level-1 flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Financial Reporting</h3>
+</div>
+<form class="flex flex-col gap-4">
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block font-label-md text-on-surface-variant mb-1">Date Range</label>
+<input class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg text-body-md focus:ring-2 focus:ring-primary p-2" type="date"/>
+</div>
+<div>
+<label class="block font-label-md text-on-surface-variant mb-1">Route Filter</label>
+<select class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg text-body-md focus:ring-2 focus:ring-primary p-2 text-on-surface">
+<option>All Routes</option>
+<option>Route A</option>
+<option>Route B</option>
+</select>
+</div>
+<div class="col-span-2">
+<label class="block font-label-md text-on-surface-variant mb-1">Student Group</label>
+<select class="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg text-body-md focus:ring-2 focus:ring-primary p-2 text-on-surface">
+<option>All Groups</option>
+<option>Undergraduates</option>
+<option>Postgraduates</option>
+</select>
+</div>
+</div>
+<div class="flex gap-3 mt-2">
+<button class="flex-1 bg-primary-container text-on-primary font-label-md text-label-md py-2 rounded-lg hover:bg-primary transition-colors flex justify-center items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">assessment</span> Generate Report
+                </button>
+<button class="flex-1 bg-surface-container-lowest border border-outline-variant text-on-surface font-label-md text-label-md py-2 rounded-lg hover:bg-surface-container-low transition-colors flex justify-center items-center gap-2" type="button">
+<span class="material-symbols-outlined text-[18px]">save</span> Export/Save Report
+                </button>
+</div>
+</form>
+</div>
+<!-- Feedback & Announcements -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-level-1 flex flex-col gap-4 lg:col-span-2">
+<div class="flex justify-between items-center">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Feedback &amp; Announcements</h3>
+<button class="flex items-center gap-2 bg-primary-container text-on-primary font-label-md text-label-md px-4 py-2 rounded-lg hover:bg-primary transition-colors shadow-level-1">
+<span class="material-symbols-outlined text-[18px]">campaign</span> Post Announcement
+            </button>
+</div>
+<div class="space-y-4 mt-2">
+<h4 class="font-label-md text-on-surface-variant uppercase tracking-wide">Recent User Feedback</h4>
+<div class="p-4 bg-surface-container-low rounded-lg border border-outline-variant/30">
+<div class="flex justify-between mb-2 items-center">
+<span class="font-label-md text-on-surface font-semibold">Sarah Connor</span>
+<span class="text-[12px] text-on-surface-variant">2 hours ago</span>
+</div>
+<p class="text-body-md text-on-surface-variant">The 8:00 AM bus on Route A was slightly delayed today. Please check the schedule.</p>
+</div>
+<div class="p-4 bg-surface-container-low rounded-lg border border-outline-variant/30">
+<div class="flex justify-between mb-2 items-center">
+<span class="font-label-md text-on-surface font-semibold">John Doe</span>
+<span class="text-[12px] text-on-surface-variant">1 day ago</span>
+</div>
+<p class="text-body-md text-on-surface-variant">Great service this week, very comfortable ride and the app is working perfectly.</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+<!-- Modals Container -->
+<!-- 1. Create User Modal -->
+<div id="create-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-all">
+    <div class="bg-surface-container-lowest text-on-surface rounded-2xl shadow-2xl border border-outline-variant/30 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between p-6 border-b border-outline-variant/20 bg-surface-container-low/40">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+                    <span class="material-symbols-outlined text-[22px]">person_add</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-on-surface">Create New Account</h3>
+                    <p class="text-xs text-on-surface-variant">Add an authorized user to CampusTransport</p>
+                </div>
+            </div>
+            <button id="close-create-modal" type="button" class="text-outline hover:text-on-surface p-1.5 rounded-lg hover:bg-surface-container transition-colors">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+        <form id="create-user-form" class="p-6 space-y-4">
+            <div>
+                <label for="create-name" class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5">Full Name</label>
+                <input id="create-name" name="fullName" required placeholder="e.g. Marcus Vance" class="w-full rounded-xl border border-outline-variant/40 bg-surface-container-low px-4 py-2.5 text-sm text-on-surface focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 transition-all outline-none">
+            </div>
+            <div>
+                <label for="create-email" class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5">Email Address</label>
+                <input id="create-email" name="email" type="email" required placeholder="e.g. marcus@campus.edu" class="w-full rounded-xl border border-outline-variant/40 bg-surface-container-low px-4 py-2.5 text-sm text-on-surface focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 transition-all outline-none">
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="create-role" class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5">Role</label>
+                    <select id="create-role" name="roleName" class="w-full rounded-xl border border-outline-variant/40 bg-surface-container-low px-4 py-2.5 text-sm text-on-surface focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 transition-all outline-none">
+                        <option value="Student">Student</option>
+                        <option value="Driver">Driver</option>
+                        <option value="FinanceOfficer">Finance Officer</option>
+                        <option value="Admin">Administrator</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="create-password" class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5">Temporary Password</label>
+                    <input id="create-password" name="password" type="password" required placeholder="Min 6 characters" class="w-full rounded-xl border border-outline-variant/40 bg-surface-container-low px-4 py-2.5 text-sm text-on-surface focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 transition-all outline-none">
+                </div>
+            </div>
+            <div id="create-error" class="hidden p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium"></div>
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-outline-variant/20">
+                <button id="cancel-create-modal" type="button" class="px-4 py-2.5 rounded-xl border border-outline-variant/40 text-sm font-semibold text-on-surface-variant hover:bg-surface-container transition-colors">Cancel</button>
+                <button id="submit-create-btn" type="submit" class="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-on-primary text-sm font-semibold shadow-level-1 transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">person_add</span> Create Account
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 2. Edit User Modal -->
+<div id="edit-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-all">
+    <div class="bg-surface-container-lowest text-on-surface rounded-2xl shadow-2xl border border-outline-variant/30 w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between p-6 border-b border-outline-variant/20 bg-surface-container-low/40">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+                    <span class="material-symbols-outlined text-[22px]">edit</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-on-surface">Edit User Account</h3>
+                    <p class="text-xs text-on-surface-variant">Update user details, role assignment, or account status</p>
+                </div>
+            </div>
+            <button id="close-edit-modal" type="button" class="text-outline hover:text-on-surface p-1.5 rounded-lg hover:bg-surface-container transition-colors">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+        <form id="edit-user-form" class="p-6 space-y-4">
+            <input type="hidden" id="edit-id">
+            <div>
+                <label for="edit-name" class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5">Full Name</label>
+                <input id="edit-name" name="fullName" required class="w-full rounded-xl border border-outline-variant/40 bg-surface-container-low px-4 py-2.5 text-sm text-on-surface focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 transition-all outline-none">
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="edit-role" class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5">Role</label>
+                    <select id="edit-role" name="roleName" class="w-full rounded-xl border border-outline-variant/40 bg-surface-container-low px-4 py-2.5 text-sm text-on-surface focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 transition-all outline-none">
+                        <option value="Student">Student</option>
+                        <option value="Driver">Driver</option>
+                        <option value="FinanceOfficer">Finance Officer</option>
+                        <option value="Admin">Administrator</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="edit-status" class="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5">Account Status</label>
+                    <select id="edit-status" name="accountStatus" class="w-full rounded-xl border border-outline-variant/40 bg-surface-container-low px-4 py-2.5 text-sm text-on-surface focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 transition-all outline-none">
+                        <option value="Active">Active</option>
+                        <option value="Suspended">Suspended</option>
+                        <option value="Deactivated">Deactivated</option>
+                    </select>
+                </div>
+            </div>
+            <div id="edit-error" class="hidden p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium"></div>
+            <div class="flex items-center justify-end gap-3 pt-4 border-t border-outline-variant/20">
+                <button id="cancel-edit-modal" type="button" class="px-4 py-2.5 rounded-xl border border-outline-variant/40 text-sm font-semibold text-on-surface-variant hover:bg-surface-container transition-colors">Cancel</button>
+                <button id="submit-edit-btn" type="submit" class="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-on-primary text-sm font-semibold shadow-level-1 transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-[18px]">check</span> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 3. Delete Confirmation Modal -->
+<div id="delete-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-all">
+    <div class="bg-surface-container-lowest text-on-surface rounded-2xl shadow-2xl border border-outline-variant/30 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-6">
+        <div class="w-12 h-12 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center mb-4">
+            <span class="material-symbols-outlined text-[28px]">warning</span>
+        </div>
+        <h3 class="text-lg font-bold text-on-surface mb-2">Delete User Account</h3>
+        <p id="delete-modal-msg" class="text-sm text-on-surface-variant mb-6">Are you sure you want to delete this user? This will permanently remove their SQL records.</p>
+        <div id="delete-error" class="hidden p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium mb-4"></div>
+        <div class="flex items-center justify-end gap-3">
+            <button id="cancel-delete-modal" type="button" class="px-4 py-2.5 rounded-xl border border-outline-variant/40 text-sm font-semibold text-on-surface-variant hover:bg-surface-container transition-colors">Cancel</button>
+            <button id="confirm-delete-btn" type="button" class="px-5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold shadow-level-1 transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-[18px]">delete</span> Delete User
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+        const API_BASE = 'http://localhost:8080/api';
+
+        async function api(path, options = {}) {
+            const token = localStorage.getItem('bustrans_token');
+            const response = await fetch(`${API_BASE}${path}`, {
+                headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}), ...options.headers },
+                ...options
+            });
+            if (response.status === 401) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+                throw new Error('Your session is not authorized');
+            }
+            if (!response.ok) {
+                let errorMsg = `Request failed (${response.status})`;
+                try {
+                    const errorJson = await response.json();
+                    errorMsg = errorJson.message || errorJson.error || errorMsg;
+                } catch (e) {
+                    const text = await response.text();
+                    if (text) errorMsg = text;
+                }
+                throw new Error(errorMsg);
+            }
+            return response.status === 204 ? null : response.json();
+        }
+
+        function renderUsers(users) {
+            const body = document.querySelector('#users-table-body');
+            const currentRole = localStorage.getItem('bustrans_role');
+            const isAdmin = currentRole === 'ADMIN';
+
+            body.innerHTML = users.map(user => {
+                const displayName = user.fullName || user.name || '';
+                const displayRole = user.roleName || user.role || '';
+                const displayStatus = user.accountStatus || user.status || 'Active';
+                const statusBadge = displayStatus === 'Active'
+                    ? '<span class="px-2 py-1 bg-[#10b981]/10 text-[#10b981] rounded-full text-[11px] font-medium">Active</span>'
+                    : '<span class="px-2 py-1 bg-[#ef4444]/10 text-[#ef4444] rounded-full text-[11px] font-medium">' + displayStatus + '</span>';
+
+                const actionButtons = isAdmin
+                    ? `<button class="text-primary font-label-md hover:underline" data-action="edit" data-id="${user.id}" data-name="${displayName}" data-role="${displayRole}" data-status="${displayStatus}">Edit</button>
+                       <button class="text-[#ba1a1a] font-label-md hover:underline" data-action="delete" data-id="${user.id}" data-name="${displayName}">Delete</button>`
+                    : `<span class="text-xs text-outline italic">Admin Only</span>`;
+
+                return `
+                <tr class="border-b border-outline-variant/10 hover:bg-surface-container-low/30 transition-colors">
+                    <td class="py-3 px-2 text-on-surface font-medium">${displayName}</td>
+                    <td class="py-3 px-2 text-on-surface-variant">${displayRole}</td>
+                    <td class="py-3 px-2">${statusBadge}</td>
+                    <td class="py-3 px-2 flex gap-3">${actionButtons}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        async function loadDashboard() {
+            const [dashboard, users] = await Promise.all([api('/dashboard'), api('/users')]);
+            const values = document.querySelectorAll('.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-4 h3');
+            [dashboard.activeBookings, dashboard.upcomingTrips, dashboard.busUtilisation, dashboard.activeUsers]
+                .forEach((metric, index) => { if (values[index]) values[index].textContent = metric.displayValue; });
+            renderUsers(users);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('bustrans_token');
+            const user = JSON.parse(localStorage.getItem('bustrans_user') || 'null');
+            const role = localStorage.getItem('bustrans_role');
+            if (role === 'STUDENT' || role === 'DRIVER') {
+                alert('Access Denied: Students and Drivers can only access the Transport Profile interface.');
+                window.location.href = 'profile.html';
+                return;
+            }
+            if (!token || !user || !['ADMIN', 'FINANCE_OFFICER'].includes(role)) {
+                window.location.href = 'login.html';
+                return;
+            }
+            document.querySelector('#header-user').textContent = `${user.name || user.fullName} (${role})`;
+            document.querySelector('#sidebar-role').textContent = role === 'ADMIN' ? 'System Administrator' : 'Finance Officer';
+            document.querySelector('#logout').addEventListener('click', () => {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            });
+
+            // If not admin, hide or disable Create Account button
+            if (role !== 'ADMIN') {
+                const createBtn = document.querySelector('#create-account');
+                if (createBtn) createBtn.style.display = 'none';
+            }
+
+            loadDashboard().catch(error => console.error('Could not load dashboard:', error));
+
+            // Modal elements
+            const createModal = document.querySelector('#create-modal');
+            const createForm = document.querySelector('#create-user-form');
+            const createError = document.querySelector('#create-error');
+            const createSubmitBtn = document.querySelector('#submit-create-btn');
+
+            const editModal = document.querySelector('#edit-modal');
+            const editForm = document.querySelector('#edit-user-form');
+            const editError = document.querySelector('#edit-error');
+            const editSubmitBtn = document.querySelector('#submit-edit-btn');
+
+            const deleteModal = document.querySelector('#delete-modal');
+            const deleteMsg = document.querySelector('#delete-modal-msg');
+            const deleteError = document.querySelector('#delete-error');
+            const confirmDeleteBtn = document.querySelector('#confirm-delete-btn');
+            let pendingDeleteId = null;
+
+            function openModal(modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+
+            function closeModal(modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+
+            // Open Create Modal
+            document.querySelector('#create-account').addEventListener('click', () => {
+                createForm.reset();
+                createError.classList.add('hidden');
+                createError.textContent = '';
+                openModal(createModal);
+                document.querySelector('#create-name').focus();
+            });
+
+            document.querySelector('#close-create-modal').addEventListener('click', () => closeModal(createModal));
+            document.querySelector('#cancel-create-modal').addEventListener('click', () => closeModal(createModal));
+
+            // Create User Form Submit
+            createForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                createError.classList.add('hidden');
+                createSubmitBtn.disabled = true;
+                createSubmitBtn.textContent = 'Creating...';
+
+                const body = {
+                    fullName: document.querySelector('#create-name').value.trim(),
+                    email: document.querySelector('#create-email').value.trim(),
+                    roleName: document.querySelector('#create-role').value,
+                    password: document.querySelector('#create-password').value
+                };
+
+                try {
+                    await api('/users', { method: 'POST', body: JSON.stringify(body) });
+                    closeModal(createModal);
+                    await loadDashboard();
+                } catch (err) {
+                    createError.textContent = err.message;
+                    createError.classList.remove('hidden');
+                } finally {
+                    createSubmitBtn.disabled = false;
+                    createSubmitBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">person_add</span> Create Account';
+                }
+            });
+
+            // Edit Modal Handlers
+            document.querySelector('#close-edit-modal').addEventListener('click', () => closeModal(editModal));
+            document.querySelector('#cancel-edit-modal').addEventListener('click', () => closeModal(editModal));
+
+            editForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                editError.classList.add('hidden');
+                editSubmitBtn.disabled = true;
+                editSubmitBtn.textContent = 'Saving...';
+
+                const id = document.querySelector('#edit-id').value;
+                const body = {
+                    fullName: document.querySelector('#edit-name').value.trim(),
+                    roleName: document.querySelector('#edit-role').value,
+                    accountStatus: document.querySelector('#edit-status').value
+                };
+
+                try {
+                    await api(`/users/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+                    closeModal(editModal);
+                    await loadDashboard();
+                } catch (err) {
+                    editError.textContent = err.message;
+                    editError.classList.remove('hidden');
+                } finally {
+                    editSubmitBtn.disabled = false;
+                    editSubmitBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">check</span> Save Changes';
+                }
+            });
+
+            // Delete Modal Handlers
+            document.querySelector('#cancel-delete-modal').addEventListener('click', () => closeModal(deleteModal));
+
+            confirmDeleteBtn.addEventListener('click', async () => {
+                if (!pendingDeleteId) return;
+                deleteError.classList.add('hidden');
+                confirmDeleteBtn.disabled = true;
+                confirmDeleteBtn.textContent = 'Deleting...';
+
+                try {
+                    await api(`/users/${pendingDeleteId}`, { method: 'DELETE' });
+                    closeModal(deleteModal);
+                    pendingDeleteId = null;
+                    await loadDashboard();
+                } catch (err) {
+                    deleteError.textContent = err.message;
+                    deleteError.classList.remove('hidden');
+                } finally {
+                    confirmDeleteBtn.disabled = false;
+                    confirmDeleteBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">delete</span> Delete User';
+                }
+            });
+
+            // Table Actions (Edit & Delete)
+            document.querySelector('#users-table-body').addEventListener('click', (event) => {
+                const button = event.target.closest('button[data-action]');
+                if (!button) return;
+
+                const action = button.dataset.action;
+                const id = button.dataset.id;
+                const name = button.dataset.name;
+                const role = button.dataset.role;
+                const status = button.dataset.status;
+
+                if (action === 'edit') {
+                    document.querySelector('#edit-id').value = id;
+                    document.querySelector('#edit-name').value = name;
+                    document.querySelector('#edit-role').value = role;
+                    document.querySelector('#edit-status').value = status;
+                    editError.classList.add('hidden');
+                    openModal(editModal);
+                } else if (action === 'delete') {
+                    pendingDeleteId = id;
+                    deleteMsg.textContent = `Are you sure you want to delete ${name}? This will permanently remove their records from CampusTransportDB.`;
+                    deleteError.classList.add('hidden');
+                    openModal(deleteModal);
+                }
+            });
+
+            // Close modals when clicking outside
+            [createModal, editModal, deleteModal].forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) closeModal(modal);
+                });
+            });
+        });
+    </script>
+</body></html>

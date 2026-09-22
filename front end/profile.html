@@ -1,0 +1,347 @@
+<!DOCTYPE html><html class="light" lang="en" style="width: 1280px; height: 819px; overflow: hidden; position: relative;"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>TransMove - User Profile</title>
+<!-- Tailwind -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary": "#35627A",
+                      "on-primary": "#ffffff",
+                      "primary-container": "#4A7A94",
+                      "on-primary-container": "#E0EEF5",
+                      "primary-fixed": "#C8DDE8",
+                      "primary-fixed-dim": "#9BBDD0",
+                      "on-primary-fixed": "#1A3140",
+                      "on-primary-fixed-variant": "#2A4F63",
+                      "secondary": "#B46258",
+                      "on-secondary": "#ffffff",
+                      "secondary-container": "#E5AEA9",
+                      "on-secondary-container": "#5A2F2A",
+                      "secondary-fixed": "#F5D5D1",
+                      "secondary-fixed-dim": "#E5AEA9",
+                      "on-secondary-fixed": "#3D1F1B",
+                      "on-secondary-fixed-variant": "#8B4A42",
+                      "tertiary": "#A6A9D0",
+                      "on-tertiary": "#ffffff",
+                      "tertiary-container": "#D3D5E8",
+                      "on-tertiary-container": "#4A4C6A",
+                      "tertiary-fixed": "#E8E9F5",
+                      "tertiary-fixed-dim": "#C4C6E0",
+                      "on-tertiary-fixed": "#2D2F4A",
+                      "on-tertiary-fixed-variant": "#6B6D8A",
+                      "error": "#B46258",
+                      "on-error": "#ffffff",
+                      "error-container": "#F5D5D1",
+                      "on-error-container": "#5A2F2A",
+                      "surface": "#FFFFFF",
+                      "on-surface": "#2D2D2D",
+                      "surface-variant": "#E8E8F0",
+                      "on-surface-variant": "#8E9A98",
+                      "surface-dim": "#E0E0E8",
+                      "surface-bright": "#FFFFFF",
+                      "surface-container-lowest": "#FFFFFF",
+                      "surface-container-low": "#F5F5F8",
+                      "surface-container": "#EFEFF5",
+                      "surface-container-high": "#E8E8F0",
+                      "surface-container-highest": "#E0E0E8",
+                      "surface-tint": "#35627A",
+                      "outline": "#A6A9D0",
+                      "outline-variant": "#D0D0E0",
+                      "background": "#F5F5F5",
+                      "on-background": "#2D2D2D",
+                      "inverse-surface": "#35627A",
+                      "inverse-on-surface": "#F5F5F5",
+                      "inverse-primary": "#E5AEA9"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "margin-desktop": "64px",
+                      "container-max": "1280px",
+                      "base": "8px",
+                      "margin-mobile": "16px"
+              },
+              "fontFamily": {
+                      "body-lg": [
+                              "Roboto Slab", "serif"
+                      ],
+                      "body-sm": [
+                              "Roboto Slab", "serif"
+                      ],
+                      "headline-lg": [
+                              "Montserrat", "sans-serif"
+                      ],
+                      "headline-xl": [
+                              "Montserrat", "sans-serif"
+                      ],
+                      "headline-lg-mobile": [
+                              "Montserrat", "sans-serif"
+                      ],
+                      "label-bold": [
+                              "Roboto Slab", "serif"
+                      ],
+                      "body-md": [
+                              "Roboto Slab", "serif"
+                      ],
+                      "headline-md": [
+                              "Montserrat", "sans-serif"
+                      ]
+              },
+              "fontSize": {
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-sm": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-xl": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "28px",
+                              {
+                                      "lineHeight": "34px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "label-bold": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto+Slab:wght@400;500;600&display=swap');
+    </style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&amp;family=Roboto+Slab:wght@400;500;600&amp;display=swap" data-snapdom="injected-import"></head>
+<body class="bg-background text-on-background min-h-screen flex flex-col font-body-md">
+<!-- TopNavBar -->
+<header class="bg-surface dark:bg-primary docked full-width top-0 shadow-sm z-50">
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop flex justify-between items-center w-full h-16">
+<div class="flex items-center gap-gutter">
+<span class="font-headline-md text-headline-md text-primary dark:text-on-primary-fixed-variant">TransMove</span>
+</div>
+<nav class="hidden md:flex gap-gutter h-full items-center">
+<a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md cursor-pointer active:opacity-80" href="#">Dashboard</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md cursor-pointer active:opacity-80" href="#">Booking History</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md cursor-pointer active:opacity-80" href="#">Transit Passes</a>
+<a class="text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md cursor-pointer active:opacity-80" href="#">Routes</a>
+</nav>
+<div class="flex items-center gap-base">
+<button class="text-secondary dark:text-secondary-fixed p-2 rounded-full hover:bg-surface-container dark:hover:bg-primary-container transition-all cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-secondary dark:text-secondary-fixed p-2 rounded-full hover:bg-surface-container dark:hover:bg-primary-container transition-all cursor-pointer active:opacity-80">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden ml-2 border border-outline-variant flex items-center justify-center font-bold text-[#2A4F63]">
+<span id="nav-initials">U</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow max-w-container-max mx-auto w-full px-margin-mobile md:px-margin-desktop py-8 md:py-16 grid grid-cols-1 md:grid-cols-12 gap-gutter">
+<!-- Sidebar Navigation -->
+<aside class="md:col-span-3 space-y-2 flex flex-col">
+<div class="bg-surface-container-lowest shadow-sm rounded-lg border border-outline-variant p-6 mb-gutter flex flex-col items-center text-center">
+<div class="w-24 h-24 rounded-full bg-[#35627A] text-white flex items-center justify-center font-bold text-3xl mb-4 border-2 border-surface-container shadow-sm">
+<span id="avatar-initials">U</span>
+</div>
+<h2 id="profile-name" class="font-headline-md text-headline-md text-on-surface mb-1">Loading profile...</h2>
+<span id="profile-role-badge" class="inline-block mt-1 mb-2 px-3 py-1 rounded-full bg-[#E5AEA9]/20 text-[#35627A] text-xs font-semibold">User</span>
+<p id="profile-email" class="text-xs text-[#8E9A98] mb-2"></p>
+<p class="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 justify-center mb-4">
+<span class="material-symbols-outlined text-[16px]">calendar_month</span>
+                    <span id="profile-member-since">Member since 2026</span>
+                </p>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="px-4 py-3 rounded bg-secondary-fixed text-on-secondary-fixed font-body-md text-body-md flex items-center gap-3 font-semibold shadow-sm" href="#">
+<span class="material-symbols-outlined">person</span>
+                    Profile &amp; Personal Info
+                </a>
+<a class="px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">settings</span>
+                    Settings
+                </a>
+<a class="px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">security</span>
+                    Security
+                </a>
+<a class="px-4 py-3 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors font-body-md text-body-md flex items-center gap-3" href="#">
+<span class="material-symbols-outlined">payments</span>
+                    Payment Methods
+                </a>
+<button id="logout-btn" class="px-4 py-3 rounded text-[#B46258] hover:bg-[#F5D5D1] transition-colors font-body-md text-body-md flex items-center gap-3 w-full text-left font-semibold cursor-pointer">
+<span class="material-symbols-outlined">logout</span>
+                    Sign Out
+                </button>
+</nav>
+</aside>
+<!-- Main Content Area -->
+<section class="md:col-span-9 space-y-gutter">
+<!-- Tabs -->
+<div class="border-b border-outline-variant flex gap-6 overflow-x-auto">
+<button class="pb-3 border-b-2 border-secondary text-secondary font-semibold font-body-md text-body-md whitespace-nowrap flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">history</span>Booking History</button>
+<button class="pb-3 border-b-2 border-transparent text-on-surface-variant hover:text-secondary transition-colors font-body-md text-body-md whitespace-nowrap flex items-center gap-2"><span class="material-symbols-outlined text-[18px]">badge</span>Active Passes <span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-on-surface text-[12px] font-semibold">2</span></button>
+</div>
+
+<div class="space-y-6"><div class="space-y-3"><div class="flex items-center justify-between"><h3 class="font-headline-md text-[18px] text-on-surface flex items-center gap-2 font-semibold"><span class="material-symbols-outlined text-secondary">credit_card</span>Active Digital Passes</h3><button class="text-secondary hover:underline font-body-sm text-body-sm flex items-center gap-1 font-semibold"><span class="material-symbols-outlined text-[18px]">add_circle</span>Buy New Pass</button></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 shadow-sm relative overflow-hidden flex flex-col justify-between"><div class="flex justify-between items-start mb-3"><div><span class="px-2.5 py-0.5 rounded-full bg-surface-container-high text-secondary text-[11px] font-semibold tracking-wider uppercase">Monthly All-Access</span><h4 class="font-semibold text-on-surface text-[16px] mt-1">Metro &amp; Regional Bus Unlimited</h4><p class="font-body-sm text-[12px] text-on-surface-variant">Pass ID: TM-9824-BUSS</p></div><div class="w-12 h-12 rounded bg-surface-container-low border border-surface-container flex items-center justify-center"><span class="material-symbols-outlined text-secondary text-[28px]">qr_code_2</span></div></div><div class="space-y-2 border-t border-surface-container pt-3"><div class="flex justify-between text-body-sm text-[13px]"><span class="text-on-surface-variant">Validity</span><span class="font-semibold text-on-surface">Valid through Oct 31, 2026</span></div><div class="flex justify-between text-body-sm text-[13px]"><span class="text-on-surface-variant">Zone Coverage</span><span class="text-on-surface font-semibold">Zones 1 - 4 (Metropolitan)</span></div></div><div class="flex gap-2 mt-4"><button class="flex-1 py-2 px-3 bg-secondary text-on-secondary rounded text-[13px] font-semibold flex items-center justify-center gap-1 hover:opacity-95 transition-opacity"><span class="material-symbols-outlined text-[16px]">qr_code_scanner</span>View Pass QR</button><button class="py-2 px-3 border border-outline-variant hover:bg-surface-container rounded text-[13px] font-semibold text-on-surface flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[16px]">autorenew</span>Renew</button></div></div><div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 shadow-sm relative overflow-hidden flex flex-col justify-between"><div class="flex justify-between items-start mb-3"><div><span class="px-2.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed text-[11px] font-semibold tracking-wider uppercase">10-Ride Flexi</span><h4 class="font-semibold text-on-surface text-[16px] mt-1">Express Rail Commuter Pass</h4><p class="font-body-sm text-[12px] text-on-surface-variant">Pass ID: TM-4109-RAIL</p></div><div class="w-12 h-12 rounded bg-surface-container-low border border-surface-container flex items-center justify-center"><span class="material-symbols-outlined text-secondary text-[28px]">train</span></div></div><div class="space-y-2 border-t border-surface-container pt-3"><div class="flex justify-between text-body-sm text-[13px]"><span class="text-on-surface-variant">Trips Remaining</span><span class="font-semibold text-on-surface">8 of 20 rides left</span></div><div class="w-full bg-surface-container-high rounded-full h-1.5 overflow-hidden"><div class="bg-secondary h-1.5 rounded-full" style="width: 40%"></div></div><div class="flex justify-between text-body-sm text-[12px] text-on-surface-variant"><span class="">Expiry: Dec 15, 2026</span><span class="">Express Shuttle Line</span></div></div><div class="flex gap-2 mt-4"><button class="flex-1 py-2 px-3 bg-secondary text-on-secondary rounded text-[13px] font-semibold flex items-center justify-center gap-1 hover:opacity-95 transition-opacity"><span class="material-symbols-outlined text-[16px]">qr_code_scanner</span>View Pass QR</button><button class="py-2 px-3 border border-outline-variant hover:bg-surface-container rounded text-[13px] font-semibold text-on-surface flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[16px]">add</span>Top Up</button></div></div></div></div><div class="space-y-4 pt-2"><div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3"><div class="flex flex-wrap gap-2"><button class="px-3 py-1.5 rounded-full bg-secondary text-on-secondary font-semibold text-[13px]">All Bookings (14)</button><button class="px-3 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface text-[13px] transition-colors">Completed</button><button class="px-3 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface text-[13px] transition-colors">Upcoming (1)</button><button class="px-3 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface text-[13px] transition-colors">Cancelled</button></div><div class="flex items-center gap-2"><button class="border border-outline-variant rounded px-3 py-1.5 text-[13px] font-semibold text-on-surface flex items-center gap-1.5 hover:bg-surface-container"><span class="material-symbols-outlined text-[16px]">file_download</span>Export Receipts</button></div></div><div class="space-y-3"><div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-5 shadow-sm hover:shadow transition-shadow"><div class="flex flex-col md:flex-row md:items-center justify-between gap-4"><div class="flex items-start gap-4"><div class="w-10 h-10 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center flex-shrink-0 mt-0.5"><span class="material-symbols-outlined text-[20px]">directions_railway</span></div><div><div class="flex items-center gap-2 mb-1"><span class="font-semibold text-on-surface text-[16px]">Central Terminal → North Tech Park Hub</span><span class="px-2 py-0.5 rounded bg-surface-container-high text-secondary text-[11px] font-semibold">Upcoming</span></div><p class="text-body-sm text-[13px] text-on-surface-variant flex items-center gap-3"><span class=""><span class="material-symbols-outlined text-[14px] align-middle mr-0.5">event</span>Tomorrow, 08:15 AM</span><span class="">•</span><span class="">Ref: #TM-89421</span><span class="">•</span><span class="">Seat 12A (Express)</span></p></div></div><div class="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 pt-3 md:pt-0"><div class="text-right"><span class="text-[18px] font-semibold text-on-surface">$14.50</span><p class="text-[11px] text-on-surface-variant">Paid via Visa ••4019</p></div><div class="flex items-center gap-2"><button class="px-3 py-1.5 bg-secondary text-on-secondary rounded text-[13px] font-semibold flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">confirmation_number</span>Boarding Pass</button></div></div></div></div></div></div></div></section>
+</main>
+<!-- Footer -->
+<footer class="bg-inverse-surface dark:bg-surface-container-highest full-width bottom-0 mt-auto border-t border-outline-variant">
+<div class="max-w-container-max mx-auto px-margin-desktop py-12 flex flex-col md:flex-row justify-between items-center gap-8">
+<div class="font-headline-sm text-headline-sm text-surface-container-lowest">TransMove</div>
+<nav class="flex flex-wrap gap-6 justify-center">
+<a class="text-surface-variant hover:text-on-primary transition-colors hover:underline cursor-pointer font-body-sm text-body-sm" href="#">Privacy Policy</a>
+<a class="text-surface-variant hover:text-on-primary transition-colors hover:underline cursor-pointer font-body-sm text-body-sm" href="#">Terms of Service</a>
+<a class="text-surface-variant hover:text-on-primary transition-colors hover:underline cursor-pointer font-body-sm text-body-sm" href="#">Accessibility</a>
+<a class="text-surface-variant hover:text-on-primary transition-colors hover:underline cursor-pointer font-body-sm text-body-sm" href="#">Contact Support</a>
+</nav>
+<div class="text-on-primary dark:text-on-surface font-body-sm text-body-sm">
+                © 2026 TransMove Logistics. All rights reserved.
+            </div>
+</div>
+</footer>
+
+<script>
+    const API_BASE = 'http://localhost:8080/api';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const token = localStorage.getItem('bustrans_token');
+        if (!token) {
+            alert('Please sign in to access your Transport Profile.');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/profile/me`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 401 || response.status === 403) {
+                alert('Session expired or unauthorized access. Please sign in again.');
+                localStorage.clear();
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (!response.ok) {
+                throw new Error('Failed to load profile');
+            }
+
+            const user = await response.json();
+
+            const fullName = user.fullName || user.name || 'User';
+            const profileNameEl = document.querySelector('#profile-name');
+            if (profileNameEl) profileNameEl.textContent = fullName;
+
+            const initials = fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            const avatarInitialsEl = document.querySelector('#avatar-initials');
+            if (avatarInitialsEl) avatarInitialsEl.textContent = initials;
+            const navInitialsEl = document.querySelector('#nav-initials');
+            if (navInitialsEl) navInitialsEl.textContent = initials;
+
+            const emailEl = document.querySelector('#profile-email');
+            if (emailEl) emailEl.textContent = user.email || '';
+
+            const roleBadgeEl = document.querySelector('#profile-role-badge');
+            if (roleBadgeEl) {
+                const role = user.roleName || user.role || 'User';
+                roleBadgeEl.textContent = role.toUpperCase();
+            }
+
+            const memberSinceEl = document.querySelector('#profile-member-since');
+            if (memberSinceEl) {
+                if (user.createdAt) {
+                    const date = new Date(user.createdAt);
+                    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+                    memberSinceEl.textContent = `Member since ${months[date.getMonth()]} ${date.getFullYear()}`;
+                } else {
+                    memberSinceEl.textContent = `Member since 2026`;
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching profile:', error);
+            const localUser = JSON.parse(localStorage.getItem('bustrans_user') || 'null');
+            if (localUser) {
+                const nameEl = document.querySelector('#profile-name');
+                if (nameEl) nameEl.textContent = localUser.fullName || localUser.name || 'User';
+                const emailEl = document.querySelector('#profile-email');
+                if (emailEl) emailEl.textContent = localUser.email || '';
+                const roleEl = document.querySelector('#profile-role-badge');
+                if (roleEl) roleEl.textContent = (localUser.role || localUser.roleName || 'User').toUpperCase();
+            }
+        }
+
+        const logoutBtn = document.querySelector('#logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            });
+        }
+    });
+</script>
+
+</body></html>
