@@ -1,16 +1,46 @@
-# React + Vite
+# TransitPass — Frontend (Plain HTML/CSS/JS)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The frontend for the University Transport Management System. It is built with plain
+HTML, CSS, and vanilla JavaScript — **no build step, no npm, no framework**. It talks
+to the Spring Boot REST API at `http://localhost:8080/api`.
 
-Currently, two official plugins are available:
+## Pages
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| File            | Purpose                                          |
+| --------------- | ------------------------------------------------ |
+| `index.html`    | Redirects to `book.html`                          |
+| `book.html`     | Book a Trip — pick a route + date, reserve a seat |
+| `map.html`      | Live Trip Map — Leaflet map of routes             |
+| `bookings.html` | My Bookings — list, filter, view details, cancel  |
+| `profile.html`  | My Profile — view/edit student details            |
 
-## React Compiler
+## Structure
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```
+css/styles.css     All styling (design tokens + components)
+js/config.js       API base URL + hardcoded STUDENT_ID
+js/api.js          fetch wrappers for the REST API
+js/layout.js       Injects the shared sidebar + top bar
+js/book.js         Per-page logic
+js/map.js
+js/bookings.js
+js/profile.js
+```
 
-## Expanding the Oxlint configuration
+Leaflet (used by the map page) is loaded from a CDN in `map.html`.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Running
+
+No build required. Start the Spring Boot backend on port 8080, then serve this folder
+with any static server, for example:
+
+```bash
+python3 -m http.server 5500
+```
+
+Then open <http://localhost:5500/book.html>. (VS Code "Live Server" also works.)
+
+The backend enables CORS for all origins, so no extra configuration is needed.
+
+> Note: opening the files directly via `file://` may cause the API `fetch` calls to be
+> blocked — use a static server as shown above.

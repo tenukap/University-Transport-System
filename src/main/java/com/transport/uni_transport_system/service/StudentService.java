@@ -7,6 +7,7 @@ import com.transport.uni_transport_system.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+
 @Service
 @RequiredArgsConstructor
 public class StudentService {
