@@ -27,10 +27,18 @@ public class JwtService {
     }
 
     public String createToken(long userId, String role) {
+        return createToken(userId, role, null);
+    }
+
+    public String createToken(long userId, String role, Long studentId) {
         Instant now = Instant.now();
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(String.valueOf(userId))
-                .claim("role", role)
+                .claim("role", role);
+        if (studentId != null) {
+            builder.claim("studentId", studentId);
+        }
+        return builder
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(expirationHours, ChronoUnit.HOURS)))
                 .signWith(signingKey)

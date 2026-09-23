@@ -1,17 +1,24 @@
 // API layer - native fetch wrappers (ports src/api/api.js from the old React app).
-// Base URL and STUDENT_ID come from config.js.
+// Base URL comes from config.js; every request carries the JWT via getAuthHeaders().
 
-// Core request helper: sets JSON headers, checks status, parses body.
-// Throws an Error whose message is the backend's response text so callers
-// can surface it (mirrors the old axios err.response.data handling).
+// Core request helper: sets JSON + Authorization headers, checks status, parses body.
+// Throws an Error whose message is the backend's response text so callers can surface it.
 async function request(path, { method = 'GET', body } = {}) {
   const options = {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(), // { Content-Type, Authorization: Bearer <token> }
   };
   if (body !== undefined) options.body = JSON.stringify(body);
 
   const res = await fetch(`${API_BASE}${path}`, options);
+
+  // Not signed in / not allowed: clear state and return to login.
+  if (res.status === 401 || res.status === 403) {
+    localStorage.clear();
+    window.location.replace('login.html');
+    throw new Error('Your session is not authorized');
+  }
+
   const text = await res.text();
 
   if (!res.ok) {

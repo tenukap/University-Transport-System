@@ -9,8 +9,19 @@ const NAV_ITEMS = [
   { page: 'profile',  href: 'profile.html',  label: 'My Profile',    title: 'My Profile',     icon: userIcon() },
 ];
 
+function layoutInitials(name) {
+  if (!name) return 'ST';
+  return name.trim().split(/\s+/).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
+}
+
 function renderLayout() {
   const current = document.body.dataset.page || '';
+
+  // Signed-in user (cached at login). Falls back gracefully when absent.
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  const displayName = (user && (user.fullName || user.name)) || 'Student';
+  const roleLabel = (typeof getRole === 'function' && getRole()) || 'STUDENT';
+  const initials = layoutInitials(displayName);
 
   const sidebarEl = document.getElementById('sidebar');
   if (sidebarEl) {
@@ -27,10 +38,10 @@ function renderLayout() {
       </div>
       <nav class="sidebar__nav">${links}</nav>
       <div class="sidebar__user">
-        <div class="sidebar__avatar">JS</div>
+        <div class="sidebar__avatar">${initials}</div>
         <div>
-          <div class="sidebar__user-name">John Silva</div>
-          <div class="sidebar__user-id">IT21001</div>
+          <div class="sidebar__user-name">${displayName}</div>
+          <div class="sidebar__user-id">${roleLabel}</div>
         </div>
       </div>`;
   }
@@ -44,8 +55,17 @@ function renderLayout() {
       <h1 class="topbar__title">${title}</h1>
       <div class="topbar__right">
         <button class="topbar__bell" aria-label="Notifications">${bellIcon()}</button>
-        <div class="topbar__avatar">JS</div>
+        <div class="topbar__avatar">${initials}</div>
+        <button class="btn btn--outline" id="layout-logout" style="padding:6px 14px;">Logout</button>
       </div>`;
+
+    const logoutBtn = document.getElementById('layout-logout');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        if (typeof logout === 'function') logout();
+        else { localStorage.clear(); window.location.replace('login.html'); }
+      });
+    }
   }
 }
 

@@ -74,7 +74,7 @@ async function handleSave() {
   saveBtn.disabled = true;
   saveBtn.textContent = 'Saving...';
   try {
-    student = await updateStudent(STUDENT_ID, { fullName, phone });
+    student = await updateStudent(getStudentIdFromToken(), { fullName, phone });
     editing = false;
     render();
     const success = document.getElementById('profile-success');
@@ -90,7 +90,7 @@ async function handleSave() {
 async function loadStudent() {
   root.innerHTML = '<p class="muted-text center">Loading...</p>';
   try {
-    student = await getStudentById(STUDENT_ID);
+    student = await getStudentById(getStudentIdFromToken());
     render();
   } catch (err) {
     root.innerHTML = `<p class="error-text center">${err.message || 'Failed to load profile'}</p>`;

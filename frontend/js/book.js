@@ -48,7 +48,7 @@ async function handleBook() {
   bookBtn.textContent = 'Booking...';
   try {
     await createBooking({
-      studentId: STUDENT_ID,
+      studentId: getStudentIdFromToken(),
       tripId: selectedTrip.tripId,
       pickupLocId: selectedTrip.pickupLocationId,
       dropoffLocId: selectedTrip.dropLocationId,

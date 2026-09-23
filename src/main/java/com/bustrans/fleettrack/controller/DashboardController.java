@@ -42,17 +42,17 @@ public class DashboardController {
         return service.bookingHistory(id);
     }
 
-    @GetMapping("/bookings")
+    @GetMapping("/dashboard/bookings")
     public List<Models.Booking> bookings() {
         return service.listBookings();
     }
 
-    @PostMapping("/bookings")
+    @PostMapping("/dashboard/bookings")
     public ResponseEntity<Models.Booking> createBooking(@Valid @RequestBody Models.CreateBookingRequest request) {
         return ResponseEntity.status(201).body(service.createBooking(request));
     }
 
-    @DeleteMapping("/bookings/{id}")
+    @DeleteMapping("/dashboard/bookings/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteBooking(@PathVariable long id) {
         service.deleteBooking(id);

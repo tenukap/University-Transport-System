@@ -139,7 +139,7 @@ async function handleCancel() {
 async function loadBookings() {
   listEl.innerHTML = '<p class="muted-text">Loading...</p>';
   try {
-    const data = await getBookingsByStudent(STUDENT_ID);
+    const data = await getBookingsByStudent(getStudentIdFromToken());
     bookings = Array.isArray(data) ? data : [];
     renderList();
   } catch (err) {

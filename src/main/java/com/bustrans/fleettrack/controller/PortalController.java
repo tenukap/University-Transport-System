@@ -4,6 +4,8 @@ import com.bustrans.fleettrack.dto.PortalLoginDto.PortalLoginRequest;
 import com.bustrans.fleettrack.dto.PortalLoginDto.PortalLoginResponse;
 import com.bustrans.fleettrack.dto.PortalLoginDto.PortalMessageResponse;
 import com.bustrans.fleettrack.dto.UserDto.UserResponse;
+import com.bustrans.fleettrack.entity.Student;
+import com.bustrans.fleettrack.repository.StudentRepository;
 import com.bustrans.fleettrack.repository.UserRepository;
 import com.bustrans.fleettrack.repository.UserRepository.UserRecord;
 import com.bustrans.fleettrack.security.JwtService;
@@ -21,11 +23,14 @@ import java.util.Optional;
 @RequestMapping("/api/portal")
 public class PortalController {
     private final UserRepository userRepository;
+    private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public PortalController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public PortalController(UserRepository userRepository, StudentRepository studentRepository,
+                            PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userRepository = userRepository;
+        this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
@@ -70,7 +75,14 @@ public class PortalController {
                     .body(new PortalMessageResponse("Account is " + user.accountStatus() + ". Please contact the transport office."));
         }
 
-        String token = jwtService.createToken(user.userId(), normalizedRole);
+        // Students share their primary key with the user row (@MapsId), so the
+        // student id is the same value as the user id when a student row exists.
+        // The claim is omitted for non-students (admins, drivers, finance officers).
+        Long studentId = studentRepository.findById(user.userId())
+                .map(Student::getId)
+                .orElse(null);
+
+        String token = jwtService.createToken(user.userId(), normalizedRole, studentId);
         return ResponseEntity.ok(new PortalLoginResponse(token, UserResponse.fromRecord(user)));
     }
 }
