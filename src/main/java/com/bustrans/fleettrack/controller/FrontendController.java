@@ -6,6 +6,7 @@ import org.springframework.web.servlet.view.RedirectView;
 
 @Controller
 public class FrontendController {
+
     @GetMapping("/")
     public RedirectView home() {
         return new RedirectView("/login.html");

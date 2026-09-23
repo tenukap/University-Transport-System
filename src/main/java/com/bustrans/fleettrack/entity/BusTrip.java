@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
@@ -22,6 +23,10 @@ public class BusTrip {
     @Column(name = "TripId")
     private Integer tripId;
 
+    @ManyToOne
+    @JoinColumn(name = "bus_id")
+    private Bus bus;
+
     @Column(name = "TripDate")
     private LocalDate tripDate;
 
@@ -31,9 +36,17 @@ public class BusTrip {
     @Column(name = "ETA")
     private LocalTime eta;
 
-    @Column(name = "PickupLocationId")
-    private Integer pickupLocationId;
+    @ManyToOne
+    @JoinColumn(name = "PickupLocationId")
+    private Location pickupLocation;
 
-    @Column(name = "DropLocationId")
-    private Integer dropLocationId;
+    @ManyToOne
+    @JoinColumn(name = "DropLocationId")
+    private Location dropLocation;
+
+    @Column(name = "TripStatus")
+    private String tripStatus;
+
+    @Column(name = "OperatingCost")
+    private BigDecimal operatingCost;
 }

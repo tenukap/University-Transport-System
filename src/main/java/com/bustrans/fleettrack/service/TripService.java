@@ -2,13 +2,12 @@ package com.bustrans.fleettrack.service;
 
 import com.bustrans.fleettrack.dto.TripResponseDTO;
 import com.bustrans.fleettrack.entity.BusTrip;
+import com.bustrans.fleettrack.entity.Location;
 import com.bustrans.fleettrack.repository.BusTripRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -17,41 +16,32 @@ public class TripService {
 
     private final BusTripRepository busTripRepository;
 
-    private static final Map<Integer, String> LOCATION_NAMES = Map.of(
-            1, "SLIIT",
-            2, "Kaduwela",
-            3, "Malabe",
-            4, "Colombo Fort",
-            5, "Nugegoda",
-            6, "Maharagama",
-            7, "Kottawa",
-            8, "Pannipitiya",
-            9, "Battaramulla",
-            10, "Rajagiriya"
-    );
-
     public List<TripResponseDTO> getAllTrips() {
         return busTripRepository.findAll().stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
-    public List<TripResponseDTO> getTripsByDate(LocalDate date) {
-        return busTripRepository.findByTripDate(date).stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
+    public TripResponseDTO getTripById(Integer id) {
+        BusTrip trip = busTripRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Trip " + id + " was not found"));
+        return mapToDTO(trip);
     }
 
-    public TripResponseDTO mapToDTO(BusTrip trip) {
+    private TripResponseDTO mapToDTO(BusTrip trip) {
+        Location pickup = trip.getPickupLocation();
+        Location drop = trip.getDropLocation();
         return TripResponseDTO.builder()
                 .tripId(trip.getTripId())
-                .tripDate(trip.getTripDate())
-                .startTime(trip.getStartTime())
-                .eta(trip.getEta())
-                .pickupLocationId(trip.getPickupLocationId())
-                .dropLocationId(trip.getDropLocationId())
-                .pickupLocationName(LOCATION_NAMES.getOrDefault(trip.getPickupLocationId(), "Unknown"))
-                .dropLocationName(LOCATION_NAMES.getOrDefault(trip.getDropLocationId(), "Unknown"))
+                .tripDate(trip.getTripDate() != null ? trip.getTripDate().toString() : null)
+                .startTime(trip.getStartTime() != null ? trip.getStartTime().toString() : null)
+                .eta(trip.getEta() != null ? trip.getEta().toString() : null)
+                .tripStatus(trip.getTripStatus())
+                .operatingCost(trip.getOperatingCost())
+                .pickupLocationId(pickup != null ? pickup.getLocationId() : null)
+                .pickupLocationName(pickup != null ? pickup.getLocationName() : null)
+                .dropLocationId(drop != null ? drop.getLocationId() : null)
+                .dropLocationName(drop != null ? drop.getLocationName() : null)
                 .build();
     }
 }

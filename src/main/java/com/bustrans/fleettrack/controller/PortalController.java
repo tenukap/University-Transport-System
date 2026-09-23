@@ -1,13 +1,7 @@
 package com.bustrans.fleettrack.controller;
 
-import com.bustrans.fleettrack.dto.PortalLoginDto.PortalLoginRequest;
-import com.bustrans.fleettrack.dto.PortalLoginDto.PortalLoginResponse;
-import com.bustrans.fleettrack.dto.PortalLoginDto.PortalMessageResponse;
-import com.bustrans.fleettrack.dto.UserDto.UserResponse;
-import com.bustrans.fleettrack.entity.Student;
-import com.bustrans.fleettrack.repository.StudentRepository;
+import com.bustrans.fleettrack.entity.User;
 import com.bustrans.fleettrack.repository.UserRepository;
-import com.bustrans.fleettrack.repository.UserRepository.UserRecord;
 import com.bustrans.fleettrack.security.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,22 +16,28 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/portal")
 public class PortalController {
+
     private final UserRepository userRepository;
-    private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    public PortalController(UserRepository userRepository, StudentRepository studentRepository,
-                            PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public PortalController(UserRepository userRepository,
+                            PasswordEncoder passwordEncoder,
+                            JwtService jwtService) {
         this.userRepository = userRepository;
-        this.studentRepository = studentRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
 
+    public record PortalLoginRequest(String email, String password) {}
+
+    public record PortalLoginResponse(String token, Long userId, String roleName, String email) {}
+
+    public record PortalMessageResponse(String message) {}
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody PortalLoginRequest request) {
-        String email = request.getEffectiveEmail();
+        String email = request.email() != null ? request.email().trim() : "";
         String password = request.password();
 
         if (email.isBlank() || password == null || password.isBlank()) {
@@ -45,44 +45,26 @@ public class PortalController {
                     .body(new PortalMessageResponse("Email and password are required"));
         }
 
-        Optional<UserRecord> userOpt = userRepository.findByEmail(email);
+        Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new PortalMessageResponse("You cannot enter this system. Your account has not been added by the admin."));
         }
 
-        UserRecord user = userOpt.get();
+        User user = userOpt.get();
 
-        boolean passMatch = false;
-        try {
-            passMatch = passwordEncoder.matches(password, user.passwordHash());
-        } catch (Exception ignored) {}
-        if (!passMatch && password.equals(user.passwordHash())) {
-            passMatch = true;
-        }
-
-        if (!passMatch) {
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new PortalMessageResponse("Invalid email or password"));
         }
 
-        String roleName = user.roleName() != null ? user.roleName().trim() : "";
-        String normalizedRole = roleName.toUpperCase().replace('-', '_').replace(' ', '_');
-        if ("FINANCEOFFICER".equals(normalizedRole)) normalizedRole = "FINANCE_OFFICER";
-
-        if (!"Active".equalsIgnoreCase(user.accountStatus())) {
+        if (!"Active".equalsIgnoreCase(user.getAccountStatus())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(new PortalMessageResponse("Account is " + user.accountStatus() + ". Please contact the transport office."));
+                    .body(new PortalMessageResponse("Account is " + user.getAccountStatus() + ". Please contact the transport office."));
         }
 
-        // Students share their primary key with the user row (@MapsId), so the
-        // student id is the same value as the user id when a student row exists.
-        // The claim is omitted for non-students (admins, drivers, finance officers).
-        Long studentId = studentRepository.findById(user.userId())
-                .map(Student::getId)
-                .orElse(null);
-
-        String token = jwtService.createToken(user.userId(), normalizedRole, studentId);
-        return ResponseEntity.ok(new PortalLoginResponse(token, UserResponse.fromRecord(user)));
+        String role = user.getRoleName();
+        String token = jwtService.createToken(user.getUserId(), role);
+        return ResponseEntity.ok(new PortalLoginResponse(token, user.getUserId(), role, user.getEmail()));
     }
 }

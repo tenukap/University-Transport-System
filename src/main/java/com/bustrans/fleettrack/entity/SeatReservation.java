@@ -18,17 +18,18 @@ public class SeatReservation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
-    @OneToOne
-    @JoinColumn(name = "booking_id", unique = true, nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "booking_id")
     private Booking booking;
 
     @ManyToOne
-    @JoinColumn(name = "bus_id", nullable = false)
+    @JoinColumn(name = "bus_id")
     private Bus bus;
 
-    @Column(name = "seat_number", nullable = false)
+    @Column(name = "seat_number")
     private Integer seatNumber;
 
     @Column(name = "reserved_at")

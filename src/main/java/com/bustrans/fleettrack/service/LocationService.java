@@ -6,6 +6,7 @@ import com.bustrans.fleettrack.repository.LocationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,7 +24,7 @@ public class LocationService {
 
     public LocationResponseDTO getLocationById(Integer id) {
         Location location = locationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Location not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Location " + id + " was not found"));
         return mapToDTO(location);
     }
 
@@ -31,8 +32,12 @@ public class LocationService {
         return LocationResponseDTO.builder()
                 .locationId(location.getLocationId())
                 .locationName(location.getLocationName())
-                .latitude(location.getLatitude())
-                .longitude(location.getLongitude())
+                .latitude(toDouble(location.getLatitude()))
+                .longitude(toDouble(location.getLongitude()))
                 .build();
+    }
+
+    private Double toDouble(BigDecimal value) {
+        return value != null ? value.doubleValue() : null;
     }
 }

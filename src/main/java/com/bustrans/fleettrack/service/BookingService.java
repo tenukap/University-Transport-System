@@ -3,111 +3,98 @@ package com.bustrans.fleettrack.service;
 import com.bustrans.fleettrack.dto.BookingRequestDTO;
 import com.bustrans.fleettrack.dto.BookingResponseDTO;
 import com.bustrans.fleettrack.entity.Booking;
-import com.bustrans.fleettrack.entity.Bus;
-import com.bustrans.fleettrack.entity.SeatReservation;
-import com.bustrans.fleettrack.entity.Student;
+import com.bustrans.fleettrack.entity.BusTrip;
+import com.bustrans.fleettrack.entity.Location;
+import com.bustrans.fleettrack.entity.User;
 import com.bustrans.fleettrack.repository.BookingRepository;
-import com.bustrans.fleettrack.repository.BusRepository;
-import com.bustrans.fleettrack.repository.SeatReservationRepository;
-import com.bustrans.fleettrack.repository.StudentRepository;
+import com.bustrans.fleettrack.repository.BusTripRepository;
+import com.bustrans.fleettrack.repository.LocationRepository;
+import com.bustrans.fleettrack.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class BookingService {
 
     private final BookingRepository bookingRepository;
-    private final SeatReservationRepository seatReservationRepository;
-    private final StudentRepository studentRepository;
-    private final BusRepository busRepository;
+    private final UserRepository userRepository;
+    private final BusTripRepository busTripRepository;
+    // Needed to resolve the pickup/dropoff location FK relations on Booking.
+    private final LocationRepository locationRepository;
 
-    public BookingResponseDTO createBooking(BookingRequestDTO request) {
-        Student student = studentRepository.findById(request.getStudentId())
-                .orElseThrow(() -> new RuntimeException("Student not found"));
+    public BookingResponseDTO createBooking(Long userId, BookingRequestDTO request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User " + userId + " was not found"));
+
+        BusTrip busTrip = busTripRepository.findById(request.getTripId())
+                .orElseThrow(() -> new IllegalArgumentException("Trip " + request.getTripId() + " was not found"));
 
         Booking booking = Booking.builder()
-                .student(student)
-                .tripId(request.getTripId())
-                .pickupLocId(request.getPickupLocId())
-                .dropoffLocId(request.getDropoffLocId())
+                .user(user)
+                .busTrip(busTrip)
+                .pickupLocation(resolveLocation(request.getPickupLocId()))
+                .dropoffLocation(resolveLocation(request.getDropoffLocId()))
+                .seatNumber(request.getSeatNumber())
+                .fareAmount(request.getFareAmount())
                 .status("PENDING")
                 .createdAt(LocalDateTime.now())
                 .build();
-        booking = bookingRepository.save(booking);
 
-        // Bus is hardcoded to id = 1 for now until the bus-trip relationship is confirmed.
-        Bus bus = busRepository.findById(1L)
-                .orElseThrow(() -> new RuntimeException("Bus not found"));
-
-        long reservedCount = seatReservationRepository
-                .countByBusIdAndBookingTripId(bus.getBusId(), request.getTripId());
-        int capacity = bus.getPassengerCapacity();
-        if (reservedCount >= capacity) {
-            throw new RuntimeException("Bus is fully booked");
-        }
-
-        int nextSeatNumber = seatReservationRepository
-                .findMaxSeatNumberByBusIdAndBookingTripId(bus.getBusId(), request.getTripId())
-                .map(max -> max + 1)
-                .orElse(1);
-
-        SeatReservation seatReservation = SeatReservation.builder()
-                .booking(booking)
-                .bus(bus)
-                .seatNumber(nextSeatNumber)
-                .reservedAt(LocalDateTime.now())
-                .build();
-        seatReservation = seatReservationRepository.save(seatReservation);
-
-        booking.setStatus("CONFIRMED");
-        booking = bookingRepository.save(booking);
-
-        return mapToResponseDTO(booking, Optional.of(seatReservation));
+        return mapToDTO(bookingRepository.save(booking));
     }
 
-    public List<BookingResponseDTO> getBookingsByStudent(Long studentId) {
-        return bookingRepository.findByStudentId(studentId).stream()
-                .map(booking -> mapToResponseDTO(booking,
-                        seatReservationRepository.findByBookingId(booking.getId())))
+    public List<BookingResponseDTO> getBookingsByUser(Long userId) {
+        return bookingRepository.findByUser_UserId(userId).stream()
+                .map(this::mapToDTO)
                 .toList();
     }
 
-    public BookingResponseDTO getBookingById(Long bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
-        Optional<SeatReservation> seatReservation =
-                seatReservationRepository.findByBookingId(bookingId);
-        return mapToResponseDTO(booking, seatReservation);
+    public List<BookingResponseDTO> getAllBookings() {
+        return bookingRepository.findAll().stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 
-    public BookingResponseDTO cancelBooking(Long bookingId) {
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new RuntimeException("Booking not found"));
-        if ("CANCELLED".equals(booking.getStatus())) {
-            throw new RuntimeException("Booking already cancelled");
+    public BookingResponseDTO getBookingById(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Booking " + id + " was not found"));
+        return mapToDTO(booking);
+    }
+
+    public BookingResponseDTO cancelBooking(Long id) {
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Booking " + id + " was not found"));
+        if ("CANCELLED".equalsIgnoreCase(booking.getStatus())) {
+            throw new IllegalArgumentException("Booking already cancelled");
         }
         booking.setStatus("CANCELLED");
-        booking = bookingRepository.save(booking);
-        return mapToResponseDTO(booking, seatReservationRepository.findByBookingId(bookingId));
+        return mapToDTO(bookingRepository.save(booking));
     }
 
-    private BookingResponseDTO mapToResponseDTO(Booking booking,
-                                                Optional<SeatReservation> seatReservation) {
+    /** A managed reference for the given location id, or null when no id supplied. */
+    private Location resolveLocation(Integer locationId) {
+        if (locationId == null) {
+            return null;
+        }
+        return locationRepository.findById(locationId)
+                .orElseThrow(() -> new IllegalArgumentException("Location " + locationId + " was not found"));
+    }
+
+    private BookingResponseDTO mapToDTO(Booking booking) {
         return BookingResponseDTO.builder()
                 .id(booking.getId())
-                .studentId(booking.getStudent().getId())
-                .studentName(booking.getStudent().getFullName())
-                .tripId(booking.getTripId())
-                .pickupLocId(booking.getPickupLocId())
-                .dropoffLocId(booking.getDropoffLocId())
+                .userId(booking.getUser() != null ? booking.getUser().getUserId() : null)
+                .tripId(booking.getBusTrip() != null ? booking.getBusTrip().getTripId() : null)
+                .pickupLocId(booking.getPickupLocation() != null ? booking.getPickupLocation().getLocationId() : null)
+                .dropoffLocId(booking.getDropoffLocation() != null ? booking.getDropoffLocation().getLocationId() : null)
+                .seatNumber(booking.getSeatNumber())
+                .fareAmount(booking.getFareAmount())
                 .status(booking.getStatus())
                 .createdAt(booking.getCreatedAt())
-                .seatNumber(seatReservation.map(SeatReservation::getSeatNumber).orElse(null))
                 .build();
     }
 }

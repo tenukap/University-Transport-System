@@ -33,8 +33,11 @@ public class SecurityConfig {
                         .requestMatchers("/", "/login.html", "/code.html", "/profile.html", "/screen.png",
                                 "/css/**", "/js/**", "/error", "/favicon.ico", "/actuator/health").permitAll()
                         .requestMatchers("/api/auth/login", "/api/portal/login").permitAll()
-                        .requestMatchers("/api/profile/**", "/api/portal/me").hasAnyRole("ADMIN", "FINANCE_OFFICER", "STUDENT", "DRIVER")
-                        .requestMatchers("/api/dashboard", "/api/reports/**", "/api/users/**", "/api/bookings/**", "/api/announcements/**", "/api/feedback/**").hasAnyRole("ADMIN", "FINANCE_OFFICER")
+                        // Admin-only management endpoints.
+                        .requestMatchers("/api/users/**", "/api/dashboard/**").hasRole("ADMIN")
+                        // Student-facing endpoints (admin has access too).
+                        .requestMatchers("/api/trips/**", "/api/locations/**", "/api/bookings/**", "/api/students/**")
+                                .hasAnyRole("STUDENT", "ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

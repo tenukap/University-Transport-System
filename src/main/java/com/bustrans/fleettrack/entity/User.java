@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "users")
+@Table(name = "Users")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,17 +18,30 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "UserId")
+    private Long userId;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "FullName")
+    private String fullName;
+
+    @Column(name = "Email")
     private String email;
 
-    @Column(nullable = false)
-    private String password;
+    @Column(name = "PasswordHash")
+    private String passwordHash;
 
-    @Column(nullable = false)
-    private String role;
+    @Column(name = "Phone")
+    private String phone;
 
-    @Column(name = "created_at")
+    @Column(name = "RoleName")
+    private String roleName;
+
+    @Column(name = "AccountStatus")
+    private String accountStatus;
+
+    @Column(name = "CreatedAt")
     private LocalDateTime createdAt;
+
+    @Column(name = "UpdatedAt")
+    private LocalDateTime updatedAt;
 }

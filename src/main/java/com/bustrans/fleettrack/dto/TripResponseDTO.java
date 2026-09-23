@@ -5,8 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.math.BigDecimal;
 
 @Data
 @NoArgsConstructor
@@ -15,11 +14,13 @@ import java.time.LocalTime;
 public class TripResponseDTO {
 
     private Integer tripId;
-    private LocalDate tripDate;
-    private LocalTime startTime;
-    private LocalTime eta;
+    private String tripDate;
+    private String startTime;
+    private String eta;
+    private String tripStatus;
+    private BigDecimal operatingCost;
     private Integer pickupLocationId;
-    private Integer dropLocationId;
     private String pickupLocationName;
+    private Integer dropLocationId;
     private String dropLocationName;
 }

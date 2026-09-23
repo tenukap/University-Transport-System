@@ -7,22 +7,21 @@ import com.bustrans.fleettrack.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-
 @Service
 @RequiredArgsConstructor
 public class StudentService {
 
     private final StudentRepository studentRepository;
 
-    public StudentResponseDTO getStudentById(Long id) {
+    public StudentResponseDTO getStudent(Long id) {
         Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
-        return mapToResponseDTO(student);
+                .orElseThrow(() -> new IllegalArgumentException("Student " + id + " was not found"));
+        return mapToDTO(student);
     }
 
     public StudentResponseDTO updateStudent(Long id, StudentUpdateDTO updateDTO) {
         Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Student not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Student " + id + " was not found"));
 
         if (updateDTO.getFullName() != null) {
             student.setFullName(updateDTO.getFullName());
@@ -31,17 +30,16 @@ public class StudentService {
             student.setPhone(updateDTO.getPhone());
         }
 
-        student = studentRepository.save(student);
-        return mapToResponseDTO(student);
+        return mapToDTO(studentRepository.save(student));
     }
 
-    private StudentResponseDTO mapToResponseDTO(Student student) {
+    private StudentResponseDTO mapToDTO(Student student) {
         return StudentResponseDTO.builder()
                 .id(student.getId())
                 .studentIndex(student.getStudentIndex())
                 .fullName(student.getFullName())
                 .phone(student.getPhone())
-                .email(student.getUser().getEmail())
+                .email(student.getUser() != null ? student.getUser().getEmail() : null)
                 .build();
     }
 }

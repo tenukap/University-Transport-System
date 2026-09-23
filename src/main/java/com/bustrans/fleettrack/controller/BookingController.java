@@ -6,55 +6,51 @@ import com.bustrans.fleettrack.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/bookings")
-@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class BookingController {
 
     private final BookingService bookingService;
 
     @PostMapping
-    public ResponseEntity<?> createBooking(@RequestBody BookingRequestDTO request) {
-        try {
-            BookingResponseDTO response = bookingService.createBooking(request);
-            return new ResponseEntity<>(response, HttpStatus.CREATED);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<BookingResponseDTO> createBooking(@RequestBody BookingRequestDTO request) {
+        BookingResponseDTO response = bookingService.createBooking(currentUserId(), request);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @GetMapping("/student/{studentId}")
-    public ResponseEntity<?> getBookingsByStudent(@PathVariable Long studentId) {
-        try {
-            List<BookingResponseDTO> response = bookingService.getBookingsByStudent(studentId);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
+    @GetMapping("/user/{userId}")
+    public List<BookingResponseDTO> getBookingsByUser(@PathVariable Long userId) {
+        return bookingService.getBookingsByUser(userId);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getBookingById(@PathVariable Long id) {
-        try {
-            BookingResponseDTO response = bookingService.getBookingById(id);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
+    public BookingResponseDTO getBookingById(@PathVariable Long id) {
+        return bookingService.getBookingById(id);
     }
 
     @PutMapping("/{id}/cancel")
-    public ResponseEntity<?> cancelBooking(@PathVariable Long id) {
+    public BookingResponseDTO cancelBooking(@PathVariable Long id) {
+        return bookingService.cancelBooking(id);
+    }
+
+    /** The authenticated user's id, taken from the JWT subject (principal). */
+    private Long currentUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth.getPrincipal() == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated");
+        }
         try {
-            BookingResponseDTO response = bookingService.cancelBooking(id);
-            return new ResponseEntity<>(response, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+            return Long.parseLong(auth.getPrincipal().toString());
+        } catch (NumberFormatException e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid user token principal");
         }
     }
 }

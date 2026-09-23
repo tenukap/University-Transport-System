@@ -19,10 +19,10 @@ public class Bus {
     @Column(name = "bus_id")
     private Long busId;
 
-    @Column(name = "registration_number", nullable = false, unique = true)
+    @Column(name = "registration_number")
     private String registrationNumber;
 
-    @Column(name = "passenger_capacity", nullable = false)
+    @Column(name = "passenger_capacity")
     private Integer passengerCapacity;
 
     @Column(name = "status")

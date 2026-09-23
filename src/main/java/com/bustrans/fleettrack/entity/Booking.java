@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,22 +19,32 @@ public class Booking {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "student_id", nullable = false)
-    private Student student;
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    @Column(name = "trip_id", nullable = false)
-    private Integer tripId;
+    @ManyToOne
+    @JoinColumn(name = "trip_id")
+    private BusTrip busTrip;
 
-    @Column(name = "pickup_loc_id", nullable = false)
-    private Integer pickupLocId;
+    @ManyToOne
+    @JoinColumn(name = "pickup_loc_id")
+    private Location pickupLocation;
 
-    @Column(name = "dropoff_loc_id", nullable = false)
-    private Integer dropoffLocId;
+    @ManyToOne
+    @JoinColumn(name = "dropoff_loc_id")
+    private Location dropoffLocation;
 
-    @Column(nullable = false)
+    @Column(name = "seat_number")
+    private Integer seatNumber;
+
+    @Column(name = "fare_amount")
+    private BigDecimal fareAmount;
+
+    @Column(name = "status")
     private String status;
 
     @Column(name = "created_at")
