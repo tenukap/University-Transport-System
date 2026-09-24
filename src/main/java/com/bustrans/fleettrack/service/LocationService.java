@@ -24,7 +24,7 @@ public class LocationService {
 
     public LocationResponseDTO getLocationById(Integer id) {
         Location location = locationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Location " + id + " was not found"));
+                .orElseThrow(() -> new RuntimeException("Location not found with id: " + id));
         return mapToDTO(location);
     }
 

@@ -28,10 +28,24 @@ public class BookingService {
 
     public BookingResponseDTO createBooking(Long userId, BookingRequestDTO request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User " + userId + " was not found"));
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-        BusTrip busTrip = busTripRepository.findById(request.getTripId())
-                .orElseThrow(() -> new IllegalArgumentException("Trip " + request.getTripId() + " was not found"));
+        Integer tripId = request.getTripId();
+        BusTrip busTrip = busTripRepository.findById(tripId)
+                .orElseThrow(() -> new RuntimeException("Trip not found with id: " + tripId));
+
+        if (!"Scheduled".equalsIgnoreCase(busTrip.getTripStatus())) {
+            throw new RuntimeException("Trip is not available for booking");
+        }
+
+        boolean alreadyBooked = bookingRepository.findByUser_UserId(userId).stream()
+                .anyMatch(b -> b.getBusTrip() != null
+                        && tripId.equals(b.getBusTrip().getTripId())
+                        && ("PENDING".equalsIgnoreCase(b.getStatus())
+                            || "CONFIRMED".equalsIgnoreCase(b.getStatus())));
+        if (alreadyBooked) {
+            throw new RuntimeException("You already have a booking for this trip");
+        }
 
         Booking booking = Booking.builder()
                 .user(user)
@@ -61,15 +75,15 @@ public class BookingService {
 
     public BookingResponseDTO getBookingById(Long id) {
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Booking " + id + " was not found"));
+                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + id));
         return mapToDTO(booking);
     }
 
     public BookingResponseDTO cancelBooking(Long id) {
         Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Booking " + id + " was not found"));
+                .orElseThrow(() -> new RuntimeException("Booking not found with id: " + id));
         if ("CANCELLED".equalsIgnoreCase(booking.getStatus())) {
-            throw new IllegalArgumentException("Booking already cancelled");
+            throw new RuntimeException("Booking is already cancelled");
         }
         booking.setStatus("CANCELLED");
         return mapToDTO(bookingRepository.save(booking));

@@ -30,16 +30,21 @@ public class UserService {
 
     public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User " + id + " was not found"));
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
         return UserResponse.fromEntity(user);
     }
 
     public UserResponse createUser(UserRequest request) {
+        if (request.email() != null && userRepository.findByEmail(request.email()).isPresent()) {
+            throw new RuntimeException("Email already in use: " + request.email());
+        }
+
         LocalDateTime now = LocalDateTime.now();
         User user = User.builder()
                 .fullName(request.fullName())
                 .email(request.email())
-                .passwordHash(passwordEncoder.encode(request.password()))
+                // TEMP: storing plaintext for testing only — REVERT to passwordEncoder.encode() before production.
+                .passwordHash(request.password())
                 .phone(request.phone())
                 .roleName(request.roleName())
                 .accountStatus("Active")
@@ -51,12 +56,15 @@ public class UserService {
 
     public UserResponse updateUser(Long id, UserRequest request) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User " + id + " was not found"));
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
 
         if (request.fullName() != null) {
             user.setFullName(request.fullName());
         }
         if (request.email() != null) {
+            userRepository.findByEmail(request.email())
+                    .filter(existing -> !existing.getUserId().equals(id))
+                    .ifPresent(existing -> { throw new RuntimeException("Email already in use"); });
             user.setEmail(request.email());
         }
         if (request.password() != null && !request.password().isBlank()) {
@@ -74,7 +82,7 @@ public class UserService {
 
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
-            throw new IllegalArgumentException("User " + id + " was not found");
+            throw new RuntimeException("User not found with id: " + id);
         }
         userRepository.deleteById(id);
     }

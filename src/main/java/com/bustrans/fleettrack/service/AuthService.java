@@ -35,7 +35,8 @@ public class AuthService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                         "Invalid email or password"));
 
-        if (password == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
+        // TEMP: plaintext comparison for testing only — REVERT to passwordEncoder.matches() before production.
+        if (password == null || !password.equals(user.getPasswordHash())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
 

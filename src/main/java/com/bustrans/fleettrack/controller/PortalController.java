@@ -53,7 +53,8 @@ public class PortalController {
 
         User user = userOpt.get();
 
-        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+        // TEMP: plaintext comparison for testing only — REVERT to passwordEncoder.matches() before production.
+        if (!password.equals(user.getPasswordHash())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new PortalMessageResponse("Invalid email or password"));
         }

@@ -24,7 +24,7 @@ public class TripService {
 
     public TripResponseDTO getTripById(Integer id) {
         BusTrip trip = busTripRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Trip " + id + " was not found"));
+                .orElseThrow(() -> new RuntimeException("Trip not found with id: " + id));
         return mapToDTO(trip);
     }
 

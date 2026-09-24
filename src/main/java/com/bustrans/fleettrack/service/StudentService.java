@@ -15,13 +15,13 @@ public class StudentService {
 
     public StudentResponseDTO getStudent(Long id) {
         Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Student " + id + " was not found"));
+                .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
         return mapToDTO(student);
     }
 
     public StudentResponseDTO updateStudent(Long id, StudentUpdateDTO updateDTO) {
         Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Student " + id + " was not found"));
+                .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
 
         if (updateDTO.getFullName() != null) {
             student.setFullName(updateDTO.getFullName());
