@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin(origins = "*\")
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/crash-incidents")
 public class CrashIncidentController {
