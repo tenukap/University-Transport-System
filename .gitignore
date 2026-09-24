@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Local credentials and temporary output ###
+.env
+.env.local
+.env.*.local
+*.log
+/target-preview/
