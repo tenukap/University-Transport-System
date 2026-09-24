@@ -6,8 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication(exclude = {
         org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class
 })
-public class FleetTrackApplication {
+public class UniTransportApplication {
     public static void main(String[] args) {
-        SpringApplication.run(FleetTrackApplication.class, args);
+        SpringApplication.run(UniTransportApplication.class, args);
     }
 }
