@@ -16,7 +16,7 @@ public class Bus {
 
     private String status = "Available";
 
-    // Add your standard Getters and Setters here
+    //  Getters and Setters
 
     public Long getBusId() { return busId; }
     public void setBusId(Long busId) { this.busId = busId; }

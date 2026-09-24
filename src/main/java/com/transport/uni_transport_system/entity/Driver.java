@@ -6,7 +6,7 @@ import java.time.LocalDate;
 @Table(name = "driver")
 public class Driver {
     @Id
-    private Long userId; // Linked to Tenuka's Users table
+    private Long userId; // Linked to  Users table
 
     @Column(nullable = false, unique = true)
     private String licenseNumber;
@@ -15,7 +15,7 @@ public class Driver {
 
     private String status = "Available";
 
-    // Add your standard Getters and Setters here
+    //  Getters and Setters
 
 
     public Long getUserId() { return userId; }

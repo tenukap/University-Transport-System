@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transitpass | Driver Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary: #35627A;
+            --accent1: #B46258;
+            --bg: #F5F5F5;
+            --surface: #FFFFFF;
+            --text-muted: #8E9A98;
+            --text-dark: #2C3E50;
+        }
+
+        body { font-family: 'Roboto Slab', serif; background-color: var(--bg); color: var(--text-dark); display: flex; min-height: 100vh; margin: 0; }
+        h1, h2, th { font-family: 'Montserrat', sans-serif; font-weight: 700; color: var(--primary); }
+
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+        .page-header { margin-bottom: 30px; font-size: 28px; }
+
+        .card { background-color: var(--surface); border-radius: 8px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; color: var(--text-muted); font-size: 14px; margin-bottom: 8px; }
+        input { width: 100%; max-width: 400px; padding: 10px 15px; border: 1px solid #A6A9D0; border-radius: 4px; font-family: 'Roboto Slab', serif; color: var(--text-dark); outline: none; }
+        input:focus { border-color: var(--primary); }
+
+        .btn { background-color: var(--primary); color: var(--surface); padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 14px; transition: 0.3s; }
+        .btn:hover { background-color: var(--accent1); }
+        .btn-delete { background-color: var(--accent1); padding: 6px 12px; font-size: 12px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: var(--bg); color: var(--primary); text-transform: uppercase; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<!-- Unified Tailwind Sidebar -->
+<aside class="w-64 bg-gray-900 text-white h-screen flex flex-col justify-between sticky top-0 shrink-0">
+    <div>
+        <div class="p-6 text-2xl font-bold border-b border-gray-800" style="font-family: 'Montserrat', sans-serif;">
+            Transitpass
+        </div>
+        <nav class="p-4 space-y-2" style="font-family: 'Roboto Slab', serif;">
+            <a href="index.html" class="block py-2 px-4 rounded hover:bg-gray-800 text-gray-400 no-underline">Dashboard</a>
+            <a href="bookings.html" class="block py-2 px-4 rounded hover:bg-gray-800 text-gray-400 no-underline">Bookings</a>
+            <a href="map.html" class="block py-2 px-4 rounded hover:bg-gray-800 text-gray-400 no-underline">Live Map</a>
+            <a href="buses.html" class="block py-2 px-4 rounded hover:bg-gray-800 text-gray-400 no-underline">🚌 Shuttle Routes</a>
+            <!-- Active Module -->
+            <a href="driver.html" class="block py-2 px-4 rounded no-underline text-white border-l-4" style="background-color: rgba(255,255,255,0.1); border-color: #B46258;">👤 Transit Operators</a>
+        </nav>
+    </div>
+
+    <!-- Profile UI -->
+    <div class="p-4 border-t border-gray-800" style="font-family: 'Roboto Slab', serif;">
+        <a href="profile.html" class="flex items-center space-x-3 hover:bg-gray-800 p-2 rounded transition no-underline">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold text-white shrink-0" style="background-color: #35627A;">
+                DK
+            </div>
+            <div class="overflow-hidden">
+                <p class="text-sm font-medium text-white m-0 truncate">Dinuja Akash Kandanearachchi</p>
+                <p class="text-xs text-gray-400 m-0 truncate">placeholder@email.com</p>
+            </div>
+        </a>
+    </div>
+</aside>
+
+<main class="main-content">
+    <h1 class="page-header">Transit Operators (Drivers)</h1>
+
+    <div class="card">
+        <h2>Assign New Operator</h2>
+        <form id="driverForm" style="margin-top: 20px;">
+            <div class="form-group">
+                <label>User ID</label>
+                <input type="number" id="userId" placeholder="Enter valid User ID" required>
+            </div>
+            <div class="form-group">
+                <label>License Number</label>
+                <input type="text" id="licenseNumber" placeholder="e.g., B-9876543" required>
+            </div>
+            <div class="form-group">
+                <label>Date of Birth</label>
+                <input type="date" id="dob" required>
+            </div>
+            <button type="submit" class="btn">Register Operator</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Active Operator Roster</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>User ID</th>
+                <th>License Number</th>
+                <th>Date of Birth</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody id="driverTableBody">
+            <!-- JavaScript injected data -->
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<script>
+    const API_BASE_URL = "http://localhost:8080/api/drivers";
+
+    async function loadDrivers() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/all`);
+            const drivers = await response.json();
+            const tableBody = document.getElementById('driverTableBody');
+            tableBody.innerHTML = '';
+
+            drivers.forEach(driver => {
+                const statusBadge = driver.status ? driver.status : 'Active';
+                const row = `<tr>
+                    <td><strong>#${driver.userId}</strong></td>
+                    <td>${driver.licenseNumber}</td>
+                    <td>${driver.dob}</td>
+                    <td><span style="color: #B46258; font-weight: bold;">${statusBadge}</span></td>
+                    <td><button class="btn btn-delete" onclick="deleteDriver(${driver.userId})">Remove</button></td>
+                </tr>`;
+                tableBody.innerHTML += row;
+            });
+        } catch (error) { console.error("Error loading drivers:", error); }
+    }
+
+    document.getElementById('driverForm').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        const driverData = {
+            userId: document.getElementById('userId').value,
+            licenseNumber: document.getElementById('licenseNumber').value,
+            dob: document.getElementById('dob').value
+        };
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(driverData)
+            });
+
+            if (response.ok) {
+                document.getElementById('driverForm').reset();
+                loadDrivers();
+                Swal.fire({ title: 'Operator Registered!', text: 'The driver has been successfully added to the roster.', icon: 'success', confirmButtonColor: '#35627A' });
+            } else {
+                Swal.fire({ title: 'Registration Failed', text: 'Ensure the User ID exists in the central database.', icon: 'error', confirmButtonColor: '#B46258' });
+            }
+        } catch (error) { console.error("Error saving driver:", error); }
+    });
+
+    async function deleteDriver(id) {
+        Swal.fire({
+            title: 'Revoke Operator Access?',
+            text: "This action cannot be undone.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#B46258',
+            cancelButtonColor: '#A6A9D0',
+            confirmButtonText: 'Yes, revoke access!'
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/delete/${id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        loadDrivers();
+                        Swal.fire({ title: 'Removed!', text: 'The operator access has been revoked.', icon: 'success', confirmButtonColor: '#35627A' });
+                    } else {
+                        Swal.fire('Error', 'Failed to remove operator.', 'error');
+                    }
+                } catch (error) { console.error("Error deleting driver:", error); }
+            }
+        });
+    }
+
+    loadDrivers();
+</script>
+</body>
+</html>

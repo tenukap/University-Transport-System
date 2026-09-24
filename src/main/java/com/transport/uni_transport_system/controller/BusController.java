@@ -8,6 +8,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/buses")
+@CrossOrigin(origins = "*")
 public class BusController {
 
     @Autowired
