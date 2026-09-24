@@ -18,7 +18,7 @@ function switchTab(tabId) {
 async function fetchReports() {
     const list = document.getElementById('reports-list');
     try {
-        const res = await fetch('/api/emergency-reports');
+        const res = await fetch('http://localhost:8080/api/emergency-reports');
         const data = await res.json();
         list.innerHTML = data.length === 0 ? '<p>No reports found.</p>' : '';
         data.forEach(report => {
@@ -54,12 +54,12 @@ document.getElementById('form-emergency').addEventListener('submit', async (e) =
 
     if(id) {
         payload.reportId = id;
-        await fetch(`/api/emergency-reports/${id}`, {
+        await fetch(`http://localhost:8080/api/emergency-reports/${id}`, {
             method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
         });
         cancelReportEdit();
     } else {
-        await fetch('/api/emergency-reports', {
+        await fetch('http://localhost:8080/api/emergency-reports', {
             method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
         });
         document.getElementById('form-emergency').reset();
@@ -89,7 +89,7 @@ window.cancelReportEdit = () => {
 
 window.resolveReport = async (report) => {
     report.resolutionStatus = 'Resolved';
-    await fetch(`/api/emergency-reports/${report.reportId}`, {
+    await fetch(`http://localhost:8080/api/emergency-reports/${report.reportId}`, {
         method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(report)
     });
     fetchReports();
@@ -97,7 +97,7 @@ window.resolveReport = async (report) => {
 
 window.deleteReport = async (id) => {
     if(confirm('Delete report?')) {
-        await fetch(`/api/emergency-reports/${id}`, { method: 'DELETE' });
+        await fetch(`http://localhost:8080/api/emergency-reports/${id}`, { method: 'DELETE' });
         fetchReports();
     }
 };
@@ -119,7 +119,7 @@ window.validateNumber = (input) => {
 async function fetchIncidents() {
     const list = document.getElementById('incidents-list');
     try {
-        const res = await fetch('/api/crash-incidents');
+        const res = await fetch('http://localhost:8080/api/crash-incidents');
         const data = await res.json();
         list.innerHTML = data.length === 0 ? '<p>No incidents found.</p>' : '';
         data.forEach(inc => {
@@ -158,7 +158,7 @@ document.getElementById('form-incident').addEventListener('submit', async (e) =>
         description: document.getElementById('incidentDesc').value
     };
 
-    await fetch('/api/crash-incidents', {
+    await fetch('http://localhost:8080/api/crash-incidents', {
         method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
     });
     document.getElementById('form-incident').reset();
@@ -167,7 +167,7 @@ document.getElementById('form-incident').addEventListener('submit', async (e) =>
 
 window.deleteIncident = async (id) => {
     if(confirm('Delete incident?')) {
-        await fetch(`/api/crash-incidents/${id}`, { method: 'DELETE' });
+        await fetch(`http://localhost:8080/api/crash-incidents/${id}`, { method: 'DELETE' });
         fetchIncidents();
     }
 };
@@ -181,7 +181,7 @@ fetchReports();
 async function fetchStatuses() {
     const list = document.getElementById('statuses-list');
     try {
-        const res = await fetch('/api/trip-statuses');
+        const res = await fetch('http://localhost:8080/api/trip-statuses');
         const data = await res.json();
         list.innerHTML = data.length === 0 ? '<p>No live trip statuses found.</p>' : '';
         data.forEach(st => {
@@ -207,7 +207,7 @@ document.getElementById('form-status').addEventListener('submit', async (e) => {
         tripId: document.getElementById('statusTripId').value,
         statusType: document.getElementById('statusType').value
     };
-    await fetch('/api/trip-statuses', {
+    await fetch('http://localhost:8080/api/trip-statuses', {
         method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
     });
     document.getElementById('form-status').reset();
@@ -216,7 +216,7 @@ document.getElementById('form-status').addEventListener('submit', async (e) => {
 
 window.deleteStatus = async (id) => {
     if(confirm('Delete status?')) {
-        await fetch(`/api/trip-statuses/${id}`, { method: 'DELETE' });
+        await fetch(`http://localhost:8080/api/trip-statuses/${id}`, { method: 'DELETE' });
         fetchStatuses();
     }
 };
@@ -227,7 +227,7 @@ window.deleteStatus = async (id) => {
 async function fetchLocations() {
     const list = document.getElementById('locations-list');
     try {
-        const res = await fetch('/api/location-updates');
+        const res = await fetch('http://localhost:8080/api/location-updates');
         const data = await res.json();
         list.innerHTML = data.length === 0 ? '<p>No location updates logged.</p>' : '';
         
@@ -266,7 +266,7 @@ document.getElementById('form-location').addEventListener('submit', async (e) =>
         latitude: document.getElementById('latitude').value,
         longitude: document.getElementById('longitude').value
     };
-    await fetch('/api/location-updates', {
+    await fetch('http://localhost:8080/api/location-updates', {
         method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
     });
     document.getElementById('form-location').reset();
@@ -275,7 +275,7 @@ document.getElementById('form-location').addEventListener('submit', async (e) =>
 
 window.deleteLocation = async (id) => {
     if(confirm('Delete location ping?')) {
-        await fetch(`/api/location-updates/${id}`, { method: 'DELETE' });
+        await fetch(`http://localhost:8080/api/location-updates/${id}`, { method: 'DELETE' });
         fetchLocations();
     }
 };

@@ -1,13 +1,14 @@
-package com.transport.uni_transport_system.controller;
+package com.bustrans.fleettrack.controller;
 
-import com.transport.uni_transport_system.entity.CrashIncident;
-import com.transport.uni_transport_system.service.CrashIncidentService;
+import com.bustrans.fleettrack.entity.CrashIncident;
+import com.bustrans.fleettrack.service.CrashIncidentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "*\")
 @RestController
 @RequestMapping("/api/crash-incidents")
 public class CrashIncidentController {

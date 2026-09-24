@@ -13,10 +13,10 @@
         <relativePath/>
     </parent>
 
-    <groupId>com.transport</groupId>
-    <artifactId>uni_transport_system</artifactId>
+    <groupId>com.bustrans</groupId>
+    <artifactId>fleettrack</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>uni_transport_system</name>
+    <name>fleettrack</name>
 
     <properties>
         <java.version>21</java.version>

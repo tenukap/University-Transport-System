@@ -1,7 +1,7 @@
-package com.transport.uni_transport_system.service;
+package com.bustrans.fleettrack.service;
 
-import com.transport.uni_transport_system.entity.LocationUpdate;
-import com.transport.uni_transport_system.repository.LocationUpdateRepository;
+import com.bustrans.fleettrack.entity.LocationUpdate;
+import com.bustrans.fleettrack.repository.LocationUpdateRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

@@ -1,4 +1,4 @@
-package com.transport.uni_transport_system.entity;
+package com.bustrans.fleettrack.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

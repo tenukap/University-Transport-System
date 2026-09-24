@@ -1,6 +1,6 @@
-package com.transport.uni_transport_system.repository;
+package com.bustrans.fleettrack.repository;
 
-import com.transport.uni_transport_system.entity.CrashIncident;
+import com.bustrans.fleettrack.entity.CrashIncident;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,13 +1,14 @@
-package com.transport.uni_transport_system.controller;
+package com.bustrans.fleettrack.controller;
 
-import com.transport.uni_transport_system.entity.LocationUpdate;
-import com.transport.uni_transport_system.service.LocationUpdateService;
+import com.bustrans.fleettrack.entity.LocationUpdate;
+import com.bustrans.fleettrack.service.LocationUpdateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "*\")
 @RestController
 @RequestMapping("/api/location-updates")
 public class LocationUpdateController {

@@ -1,13 +1,14 @@
-package com.transport.uni_transport_system.controller;
+package com.bustrans.fleettrack.controller;
 
-import com.transport.uni_transport_system.entity.TripStatus;
-import com.transport.uni_transport_system.service.TripStatusService;
+import com.bustrans.fleettrack.entity.TripStatus;
+import com.bustrans.fleettrack.service.TripStatusService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "*\")
 @RestController
 @RequestMapping("/api/trip-statuses")
 public class TripStatusController {

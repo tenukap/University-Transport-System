@@ -1,7 +1,7 @@
-package com.transport.uni_transport_system.service;
+package com.bustrans.fleettrack.service;
 
-import com.transport.uni_transport_system.entity.CrashIncident;
-import com.transport.uni_transport_system.repository.CrashIncidentRepository;
+import com.bustrans.fleettrack.entity.CrashIncident;
+import com.bustrans.fleettrack.repository.CrashIncidentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

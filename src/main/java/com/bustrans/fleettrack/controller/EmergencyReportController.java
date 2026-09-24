@@ -1,13 +1,14 @@
-package com.transport.uni_transport_system.controller;
+package com.bustrans.fleettrack.controller;
 
-import com.transport.uni_transport_system.entity.EmergencyReport;
-import com.transport.uni_transport_system.service.EmergencyReportService;
+import com.bustrans.fleettrack.entity.EmergencyReport;
+import com.bustrans.fleettrack.service.EmergencyReportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "*\")
 @RestController
 @RequestMapping("/api/emergency-reports")
 public class EmergencyReportController {
