@@ -20,7 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -37,16 +37,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 class FeedbackControllerTest {
     @Autowired MockMvc mvc;
+    @Autowired org.springframework.web.context.WebApplicationContext context;
     @MockBean FeedbackService service;
 
     @BeforeEach
     void setup() {
+        mvc = org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup(context)
+                .defaultRequest(get("/").principal(org.springframework.security.authentication.UsernamePasswordAuthenticationToken.authenticated(
+                        "11", null, List.of()))).build();
         Feedback record = new Feedback();
-        record.setFeedbackId(7L);
+        record.setFeedbackId(7);
         record.setComments("  Original text  ");
-        record.setFeedbackDate(LocalDate.of(2020, 1, 1));
-        when(service.getFeedbackById(7L)).thenReturn(record);
-        when(service.getAllFeedback()).thenReturn(List.of(record));
+        record.setSubmittedAt(LocalDateTime.of(2020, 1, 1, 12, 30));
+        record.setSubject("Original subject");
+        when(service.getFeedbackById(7, 11L)).thenReturn(record);
+        when(service.getAllFeedback(11L)).thenReturn(List.of(record));
     }
 
     @Test
@@ -67,13 +72,13 @@ class FeedbackControllerTest {
     @Test
     void createAndUpdateUseScalarFormsAndRouteTarget() throws Exception {
         mvc.perform(validPost("/feedback/save")).andExpect(redirectedUrl("/feedback"));
-        verify(service).createFeedback(argThat(form -> form.getComments().equals("  Submitted text  ")));
+        verify(service).createFeedback(argThat(form -> form.getComments().equals("  Submitted text  ") && form.getSubject().equals("Transport")), eq(11L));
         mvc.perform(validPost("/feedback/edit/7")).andExpect(redirectedUrl("/feedback"));
-        verify(service).updateFeedback(eq(7L), any(FeedbackForm.class));
+        verify(service).updateFeedback(eq(7), any(FeedbackForm.class), eq(11L));
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"feedbackId", "id", "feedbackDate", "student.id"})
+    @ValueSource(strings = {"feedbackId", "id", "feedbackDate", "student.id", "userId", "user.userId", "UserId", "status", "submittedAt"})
     void rejectsUnexpectedFieldsOnCreateAndUpdate(String field) throws Exception {
         for (String path : List.of("/feedback/save", "/feedback/edit/7")) {
             mvc.perform(validPost(path).param(field, "99"))
@@ -81,14 +86,14 @@ class FeedbackControllerTest {
                     .andExpect(model().attributeHasErrors("feedback"))
                     .andExpect(content().string(containsString("Unexpected form fields")));
         }
-        verify(service, never()).createFeedback(any());
-        verify(service, never()).updateFeedback(anyLong(), any());
+        verify(service, never()).createFeedback(any(), anyLong());
+        verify(service, never()).updateFeedback(anyInt(), any(), anyLong());
     }
 
     @Test
     void validationErrorsPreserveValuesAndEditAction() throws Exception {
-        when(service.createFeedback(any())).thenThrow(new IllegalArgumentException("Validation message"));
-        when(service.updateFeedback(eq(7L), any())).thenThrow(new IllegalArgumentException("Validation message"));
+        when(service.createFeedback(any(), anyLong())).thenThrow(new IllegalArgumentException("Validation message"));
+        when(service.updateFeedback(eq(7), any(), eq(11L))).thenThrow(new IllegalArgumentException("Validation message"));
         for (String path : List.of("/feedback/save", "/feedback/edit/7")) {
             mvc.perform(validPost(path))
                     .andExpect(status().isOk())
@@ -100,14 +105,14 @@ class FeedbackControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(longs = {0, -1, 99})
-    void missingTargetsReturn404ForEditUpdateAndDelete(long id) throws Exception {
-        when(service.getFeedbackById(id)).thenThrow(new NoSuchElementException("Feedback not found"));
-        doThrow(new NoSuchElementException("Feedback not found")).when(service).deleteFeedback(id);
+    @ValueSource(ints = {0, -1, 99})
+    void missingTargetsReturn404ForEditUpdateAndDelete(int id) throws Exception {
+        when(service.getFeedbackById(id, 11L)).thenThrow(new NoSuchElementException("Feedback not found"));
+        doThrow(new NoSuchElementException("Feedback not found")).when(service).deleteFeedback(id, 11L);
         mvc.perform(get("/feedback/edit/" + id)).andExpect(status().isNotFound());
         mvc.perform(validPost("/feedback/edit/" + id)).andExpect(status().isNotFound());
         mvc.perform(get("/feedback/delete/" + id)).andExpect(status().isNotFound());
-        verify(service, never()).updateFeedback(anyLong(), any());
+        verify(service, never()).updateFeedback(anyInt(), any(), anyLong());
     }
 
     @ParameterizedTest
@@ -116,19 +121,19 @@ class FeedbackControllerTest {
         mvc.perform(get("/feedback/edit/" + id)).andExpect(status().isBadRequest());
         mvc.perform(validPost("/feedback/edit/" + id)).andExpect(status().isBadRequest());
         mvc.perform(get("/feedback/delete/" + id)).andExpect(status().isBadRequest());
-        verify(service, never()).updateFeedback(anyLong(), any());
-        verify(service, never()).deleteFeedback(anyLong());
+        verify(service, never()).updateFeedback(anyInt(), any(), anyLong());
+        verify(service, never()).deleteFeedback(anyInt(), anyLong());
     }
 
     @Test
     void deletesExistingRecordAndRedirects() throws Exception {
         mvc.perform(get("/feedback/delete/7")).andExpect(redirectedUrl("/feedback"));
-        verify(service).deleteFeedback(7L);
+        verify(service).deleteFeedback(7, 11L);
     }
  
     @Test
     void commentsAreEscapedWhenRedisplayingErrors() throws Exception {
-        when(service.createFeedback(any())).thenThrow(new IllegalArgumentException("Invalid feedback"));
+        when(service.createFeedback(any(), anyLong())).thenThrow(new IllegalArgumentException("Invalid feedback"));
         mvc.perform(post("/feedback/save").param("comments", "<script>alert(1)</script>"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("&lt;script&gt;")))
@@ -171,7 +176,7 @@ class FeedbackControllerTest {
 
     @Test
     void emptyListStillRenders() throws Exception {
-        when(service.getAllFeedback()).thenReturn(List.of());
+        when(service.getAllFeedback(11L)).thenReturn(List.of());
         mvc.perform(get("/feedback")).andExpect(status().isOk())
                 .andExpect(content().string(containsString("No feedback submitted yet.")));
     }
@@ -188,7 +193,7 @@ class FeedbackControllerTest {
 
     @Test
     void invalidSaveDoesNotProduceSuccessMessage() throws Exception {
-        when(service.createFeedback(any())).thenThrow(new IllegalArgumentException("Invalid input"));
+        when(service.createFeedback(any(), anyLong())).thenThrow(new IllegalArgumentException("Invalid input"));
         mvc.perform(validPost("/feedback/save"))
                 .andExpect(model().attributeHasErrors("feedback"))
                 .andExpect(flash().attributeCount(0))
@@ -200,7 +205,7 @@ class FeedbackControllerTest {
         String html = mvc.perform(get("/feedback/new")).andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         java.util.Map<String, String> values = java.util.Map.of(
-                "comments", "Valid feedback");
+                "subject", "Transport", "comments", "Valid feedback");
         java.util.regex.Matcher controls = java.util.regex.Pattern
                 .compile("<(?:input|select|textarea)\\b[^>]*\\bname=\"([^\"]+)\"", java.util.regex.Pattern.DOTALL)
                 .matcher(html);
@@ -224,7 +229,7 @@ class FeedbackControllerTest {
         }
         org.junit.jupiter.api.Assertions.assertEquals(302, result.getResponse().getStatus());
         org.junit.jupiter.api.Assertions.assertEquals("/feedback", result.getResponse().getRedirectedUrl());
-        verify(service).createFeedback(any(FeedbackForm.class));
+        verify(service).createFeedback(any(FeedbackForm.class), eq(11L));
     }
 
 
@@ -238,8 +243,8 @@ class FeedbackControllerTest {
                     .andExpect(model().attributeHasErrors("feedback"))
                     .andExpect(content().string(containsString("Unexpected form fields")));
         }
-        verify(service, never()).createFeedback(any());
-        verify(service, never()).updateFeedback(anyLong(), any());
+        verify(service, never()).createFeedback(any(), anyLong());
+        verify(service, never()).updateFeedback(anyInt(), any(), anyLong());
     }
 
     @Test
@@ -248,16 +253,41 @@ class FeedbackControllerTest {
                         .contentType("application/x-www-form-urlencoded")
                         .header("User-Agent", "Mozilla/5.0").header("Sec-Fetch-Mode", "navigate"))
                 .andExpect(redirectedUrl("/feedback"));
-        verify(service).updateFeedback(eq(7L), any(FeedbackForm.class));
+        verify(service).updateFeedback(eq(7), any(FeedbackForm.class), eq(11L));
     }
 
     @Test
     void headersCannotSupplyMissingBusinessValues() throws Exception {
-        when(service.createFeedback(any())).thenThrow(new IllegalArgumentException("Required field missing"));
+        when(service.createFeedback(any(), anyLong())).thenThrow(new IllegalArgumentException("Required field missing"));
         mvc.perform(validPost("/feedback/save").header("comments", "999")
                         .with(request -> { request.removeParameter("comments"); return request; }))
                 .andExpect(model().attributeHasErrors("feedback"));
-        verify(service).createFeedback(argThat(form -> form.getComments() == null));
+        verify(service).createFeedback(argThat(form -> form.getComments() == null), eq(11L));
+    }
+
+    @Test
+    void oversizedHistoricalCommentsRemainVisibleWithWarning() throws Exception {
+        Feedback record = new Feedback();
+        record.setFeedbackId(7);
+        record.setSubject("Historical subject");
+        record.setComments("x".repeat(1500));
+        when(service.getFeedbackById(7, 11L)).thenReturn(record);
+        mvc.perform(get("/feedback/edit/7"))
+                .andExpect(content().string(containsString("x".repeat(1500))))
+                .andExpect(content().string(containsString("Its full text is preserved")));
+        when(service.getAllFeedback(11L)).thenReturn(List.of(record));
+        mvc.perform(get("/feedback"))
+                .andExpect(content().string(containsString("Not recorded")))
+                .andExpect(content().string(containsString("Historical subject")))
+                .andExpect(content().string(containsString("x".repeat(1500))));
+    }
+
+    @Test
+    void subjectIsEscapedAndRetainedOnValidationFailure() throws Exception {
+        when(service.createFeedback(any(), anyLong())).thenThrow(new IllegalArgumentException("Invalid input"));
+        mvc.perform(validPost("/feedback/save").param("subject", "<script>subject</script>"))
+                .andExpect(content().string(containsString("&lt;script&gt;subject&lt;/script&gt;")))
+                .andExpect(content().string(not(containsString("<script>subject</script>"))));
     }
 
     private MockHttpServletRequestBuilder browserPost(String path) {
@@ -272,10 +302,6 @@ class FeedbackControllerTest {
     }
 
     private MockHttpServletRequestBuilder validPost(String path) {
-        return post(path).param("comments", "  Submitted text  ");
+        return post(path).param("subject", "Transport").param("comments", "  Submitted text  ");
     }
 }
-
-
-
-
