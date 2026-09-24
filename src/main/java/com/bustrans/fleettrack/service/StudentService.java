@@ -19,6 +19,12 @@ public class StudentService {
         return mapToDTO(student);
     }
 
+    public StudentResponseDTO getStudentByUserId(Long userId) {
+        Student student = studentRepository.findByUser_UserId(userId)
+                .orElseThrow(() -> new RuntimeException("Student not found with userId: " + userId));
+        return mapToDTO(student);
+    }
+
     public StudentResponseDTO updateStudent(Long id, StudentUpdateDTO updateDTO) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));

@@ -18,6 +18,11 @@ public class StudentController {
         return studentService.getStudent(id);
     }
 
+    @GetMapping("/user/{userId}")
+    public StudentResponseDTO getStudentByUserId(@PathVariable Long userId) {
+        return studentService.getStudentByUserId(userId);
+    }
+
     @PutMapping("/{id}")
     public StudentResponseDTO updateStudent(@PathVariable Long id,
                                             @RequestBody StudentUpdateDTO updateDTO) {

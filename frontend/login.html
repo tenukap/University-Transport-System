@@ -80,6 +80,9 @@
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script>
+    // Declared first so early calls (e.g. redirectIfLoggedIn → showError) can use it.
+    const errorEl = document.getElementById('error');
+
     // If already signed in, send the user straight to their home page.
     (function redirectIfLoggedIn() {
       if (!isAuthenticated()) return;
@@ -98,7 +101,6 @@
     }
 
     const form = document.getElementById('login-form');
-    const errorEl = document.getElementById('error');
     const submitBtn = document.getElementById('submit-btn');
 
     function showError(msg) {

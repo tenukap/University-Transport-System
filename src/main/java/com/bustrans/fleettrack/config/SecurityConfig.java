@@ -30,11 +30,11 @@ public class SecurityConfig {
                 .exceptionHandling(exceptions -> exceptions
                     .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login.html", "/code.html", "/profile.html", "/screen.png",
-                                "/css/**", "/js/**", "/error", "/favicon.ico", "/actuator/health").permitAll()
+                        .requestMatchers("/", "/*.html", "/css/**", "/js/**", "/screen.png",
+                                "/error", "/favicon.ico", "/actuator/health").permitAll()
                         .requestMatchers("/api/auth/login", "/api/portal/login").permitAll()
                         // Admin-only management endpoints.
-                        .requestMatchers("/api/users/**", "/api/dashboard/**").hasRole("ADMIN")
+                        .requestMatchers("/api/users/**", "/api/dashboard/**", "/api/reports/**").hasRole("ADMIN")
                         // Student-facing endpoints (admin has access too).
                         .requestMatchers("/api/trips/**", "/api/locations/**", "/api/bookings/**", "/api/students/**")
                                 .hasAnyRole("STUDENT", "ADMIN")
