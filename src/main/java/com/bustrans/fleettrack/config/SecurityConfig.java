@@ -38,6 +38,7 @@ public class SecurityConfig {
                         // Student-facing endpoints (admin has access too).
                         .requestMatchers("/api/trips/**", "/api/locations/**", "/api/bookings/**", "/api/students/**")
                                 .hasAnyRole("STUDENT", "ADMIN")
+                        .requestMatchers("/api/emergency-reports/**", "/api/crash-incidents/**", "/api/trip-statuses/**", "/api/location-updates/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
