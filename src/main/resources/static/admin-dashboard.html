@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard — UniTransport</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #35627A; --primary-dark: #2B4F63; --accent: #E5AEA9;
+      --bg: #F5F5F5; --surface: #fff; --muted: #8E9A98; --line: #E2E6E9;
+      --text: #1E2C33; --ok: #10b981; --warn: #f59e0b; --danger: #B4463C;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text); }
+    h1,h2,h3,h4 { font-family: 'Montserrat', sans-serif; margin: 0; }
+
+    /* Sidebar */
+    .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: 240px; background: var(--primary); color: #fff; display: flex; flex-direction: column; z-index: 30; }
+    .sidebar__logo { display: flex; align-items: center; gap: 10px; height: 64px; padding: 0 20px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 18px; }
+    .sidebar__nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+    .nav-link { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: none; border: none; border-left: 3px solid transparent; color: rgba(255,255,255,.72); padding: 12px 20px; font-size: 14px; font-family: inherit; cursor: pointer; }
+    .nav-link:hover { background: rgba(255,255,255,.1); }
+    .nav-link.is-active { background: rgba(255,255,255,.15); border-left-color: var(--accent); color: #fff; font-weight: 600; }
+    .sidebar__foot { border-top: 1px solid rgba(255,255,255,.15); padding: 14px 20px; }
+    .sidebar__user-name { font-size: 14px; font-weight: 600; }
+    .sidebar__user-role { font-size: 12px; color: rgba(255,255,255,.7); }
+    .logout-btn { margin-top: 12px; width: 100%; background: rgba(255,255,255,.12); color: #fff; border: none; border-radius: 6px; padding: 9px; font-family: 'Montserrat',sans-serif; font-weight: 600; font-size: 13px; cursor: pointer; }
+    .logout-btn:hover { background: rgba(255,255,255,.22); }
+
+    /* Topbar + main */
+    .topbar { position: fixed; top: 0; left: 240px; right: 0; height: 64px; background: #fff; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; z-index: 20; }
+    .topbar__title { color: var(--primary); font-size: 18px; font-weight: 700; }
+    .topbar__user { font-size: 13px; color: var(--muted); }
+    .main { margin-left: 240px; margin-top: 64px; padding: 28px; }
+    .tab-panel { display: none; }
+    .tab-panel.is-active { display: block; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .panel-head p { color: var(--muted); font-size: 14px; margin: 4px 0 0; }
+
+    /* Cards */
+    .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+    .metric { background: var(--surface); border-radius: 10px; padding: 22px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .metric__label { color: var(--muted); font-size: 13px; }
+    .metric__value { font-family: 'Montserrat',sans-serif; font-weight: 700; font-size: 30px; margin-top: 6px; }
+    .metric__trend { font-size: 12px; margin-top: 6px; }
+    .trend-up { color: var(--ok); } .trend-down { color: var(--danger); } .trend-flat { color: var(--muted); }
+
+    /* Buttons */
+    .btn { font-family: 'Montserrat',sans-serif; font-weight: 600; font-size: 13px; border-radius: 8px; border: none; padding: 9px 16px; cursor: pointer; }
+    .btn--primary { background: var(--primary); color: #fff; } .btn--primary:hover { background: var(--primary-dark); }
+    .btn--outline { background: none; border: 1px solid var(--primary); color: var(--primary); }
+    .btn--danger { background: var(--danger); color: #fff; }
+    .btn--ghost { background: none; border: 1px solid var(--line); color: var(--muted); }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .btn--sm { padding: 6px 10px; font-size: 12px; }
+
+    /* Tables */
+    .table-wrap { background: var(--surface); border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.08); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    tbody tr:hover { background: #FAFBFC; }
+    .badge { border-radius: 9999px; padding: 3px 10px; font-size: 11px; font-weight: 700; }
+    .badge--active { background: rgba(16,185,129,.12); color: var(--ok); }
+    .badge--other { background: rgba(180,70,60,.12); color: var(--danger); }
+    .row-actions { display: flex; gap: 8px; }
+    .link-btn { background: none; border: none; color: var(--primary); font-weight: 600; cursor: pointer; font-size: 13px; }
+    .link-btn--danger { color: var(--danger); }
+    .state-msg { padding: 24px; color: var(--muted); text-align: center; }
+
+    /* Filters */
+    .filters { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; background: var(--surface); border-radius: 10px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 20px; }
+    .filters .field { display: flex; flex-direction: column; gap: 6px; }
+    .filters label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    input, select { font-family: inherit; font-size: 14px; padding: 9px 11px; border: 1px solid #C9D2D6; border-radius: 8px; outline: none; }
+    input:focus, select:focus { border-color: var(--primary); }
+    .report-summary { display: flex; gap: 40px; margin-bottom: 20px; }
+    .report-summary .metric__value { font-size: 24px; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.55); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: #fff; border-radius: 12px; width: 100%; max-width: 460px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,.25); }
+    .modal h3 { font-size: 18px; margin-bottom: 16px; }
+    .modal .field { margin-bottom: 14px; }
+    .modal .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; }
+    .modal .field input, .modal .field select { width: 100%; }
+    .modal__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    .modal__error { display: none; background: #FBEAE8; color: var(--danger); border: 1px solid #F0C9C4; border-radius: 8px; padding: 9px 11px; font-size: 13px; margin-bottom: 12px; }
+    .modal__error.show { display: block; }
+
+    @media (max-width: 820px) {
+      .sidebar { width: 64px; }
+      .sidebar__logo span, .nav-link span, .sidebar__foot .sidebar__user-name, .sidebar__foot .sidebar__user-role { display: none; }
+      .nav-link { justify-content: center; padding: 14px 0; }
+      .logout-btn { font-size: 0; padding: 9px 0; }
+      .topbar { left: 64px; } .main { margin-left: 64px; }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="sidebar__logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6M16 6v6M2 12h19.6M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v8c0 .4.1.8.2 1.2C2.5 16.3 3 18 3 18h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>
+      <span>UniTransport</span>
+    </div>
+    <nav class="sidebar__nav" id="nav">
+      <button class="nav-link is-active" data-tab="dashboard">📊 <span>Dashboard</span></button>
+      <button class="nav-link" data-tab="users">👥 <span>Users</span></button>
+      <button class="nav-link" data-tab="trips">🚌 <span>Trips</span></button>
+      <button class="nav-link" data-tab="bookings">🎫 <span>Bookings</span></button>
+      <button class="nav-link" data-tab="reports">📈 <span>Reports</span></button>
+    </nav>
+    <div class="sidebar__foot">
+      <div class="sidebar__user-name" id="side-name">—</div>
+      <div class="sidebar__user-role" id="side-role">Administrator</div>
+      <button class="logout-btn" id="logout-btn">Logout</button>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <div class="topbar__title" id="page-title">Dashboard</div>
+    <div class="topbar__user" id="top-user"></div>
+  </header>
+
+  <main class="main">
+    <!-- Dashboard -->
+    <section class="tab-panel is-active" id="panel-dashboard">
+      <div class="panel-head"><div><h2>Overview</h2><p>Live fleet and user activity.</p></div></div>
+      <div class="metric-grid" id="metric-grid">
+        <div class="state-msg">Loading metrics…</div>
+      </div>
+    </section>
+
+    <!-- Users -->
+    <section class="tab-panel" id="panel-users">
+      <div class="panel-head">
+        <div><h2>User Management</h2><p>Create, edit, and remove system accounts.</p></div>
+        <button class="btn btn--primary" id="create-user-btn">+ Create Account</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="users-body"><tr><td colspan="5" class="state-msg">Loading users…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Trips -->
+    <section class="tab-panel" id="panel-trips">
+      <div class="panel-head"><div><h2>Trips</h2><p>All scheduled bus trips.</p></div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Trip ID</th><th>Route</th><th>Date</th><th>Start</th><th>ETA</th></tr></thead>
+          <tbody id="trips-body"><tr><td colspan="5" class="state-msg">Loading trips…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Bookings -->
+    <section class="tab-panel" id="panel-bookings">
+      <div class="panel-head"><div><h2>Bookings</h2><p>All bookings across the system.</p></div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>User ID</th><th>Trip ID</th><th>Seat</th><th>Date Booked</th><th>Status</th><th>Fare</th></tr></thead>
+          <tbody id="bookings-body"><tr><td colspan="7" class="state-msg">Loading bookings…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Reports -->
+    <section class="tab-panel" id="panel-reports">
+      <div class="panel-head"><div><h2>Financial Report</h2><p>Revenue by date range, route, and student group.</p></div></div>
+      <div class="filters">
+        <div class="field"><label for="rp-start">Start date</label><input type="date" id="rp-start" /></div>
+        <div class="field"><label for="rp-end">End date</label><input type="date" id="rp-end" /></div>
+        <div class="field"><label for="rp-route">Route</label>
+          <select id="rp-route"><option>All Routes</option><option>Route A</option><option>Route B</option></select>
+        </div>
+        <div class="field"><label for="rp-group">Student group</label>
+          <select id="rp-group"><option>All Groups</option><option>Undergraduates</option><option>Postgraduates</option></select>
+        </div>
+        <button class="btn btn--primary" id="run-report-btn">Generate</button>
+      </div>
+      <div class="report-summary" id="report-summary"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>User ID</th><th>Trip ID</th><th>Seat</th><th>Date Booked</th><th>Status</th><th>Fare</th></tr></thead>
+          <tbody id="report-body"><tr><td colspan="7" class="state-msg">Run a report to see results.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- User Create/Edit modal -->
+  <div class="modal-overlay" id="user-modal">
+    <form class="modal" id="user-form">
+      <h3 id="user-modal-title">Create Account</h3>
+      <div class="modal__error" id="user-modal-error"></div>
+      <input type="hidden" id="uf-id" />
+      <div class="field"><label for="uf-name">Full name</label><input type="text" id="uf-name" required /></div>
+      <div class="field" id="uf-email-field"><label for="uf-email">Email</label><input type="email" id="uf-email" /></div>
+      <div class="field"><label for="uf-role">Role</label>
+        <select id="uf-role">
+          <option value="Student">Student</option>
+          <option value="Driver">Driver</option>
+          <option value="FinanceOfficer">Finance Officer</option>
+          <option value="Admin">Administrator</option>
+        </select>
+      </div>
+      <div class="field" id="uf-password-field"><label for="uf-password">Temporary password</label><input type="password" id="uf-password" placeholder="Min 6 characters" /></div>
+      <div class="field" id="uf-status-field" style="display:none;"><label for="uf-status">Account status</label>
+        <select id="uf-status"><option>Active</option><option>Suspended</option><option>Deactivated</option></select>
+      </div>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" id="uf-cancel">Cancel</button>
+        <button type="submit" class="btn btn--primary" id="uf-submit">Save</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Delete confirm modal -->
+  <div class="modal-overlay" id="delete-modal">
+    <div class="modal" style="max-width:400px;">
+      <h3>Delete User</h3>
+      <div class="modal__error" id="delete-modal-error"></div>
+      <p id="delete-msg" style="color:var(--muted);font-size:14px;">Are you sure?</p>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" id="del-cancel">Cancel</button>
+        <button type="button" class="btn btn--danger" id="del-confirm">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // ---- Guard: must be a signed-in ADMIN ----
+    const claims = checkAuth('ADMIN');
+    if (claims) initDashboard();
+
+    function initDashboard() {
+      const cachedUser = JSON.parse(localStorage.getItem('user') || 'null');
+      const name = (cachedUser && (cachedUser.fullName || cachedUser.name)) || 'Administrator';
+      document.getElementById('side-name').textContent = name;
+      document.getElementById('top-user').textContent = `${name} (ADMIN)`;
+      document.getElementById('logout-btn').addEventListener('click', logout);
+
+      setupTabs();
+      loadDashboard();
+    }
+
+    // ---- Authenticated fetch: attaches Bearer token, bounces on 401/403 ----
+    async function apiFetch(path, options = {}) {
+      const res = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers: { ...getAuthHeaders(), ...(options.headers || {}) },
+      });
+      if (res.status === 401 || res.status === 403) {
+        logout();
+        throw new Error('Session expired or not authorized');
+      }
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
+      if (!res.ok) {
+        const msg = (data && (data.message || data.error)) || (typeof data === 'string' ? data : '') || `Request failed (${res.status})`;
+        throw new Error(msg);
+      }
+      return res.status === 204 ? null : data;
+    }
+
+    // ---- Tabs ----
+    const TITLES = { dashboard: 'Dashboard', users: 'Users', trips: 'Trips', bookings: 'Bookings', reports: 'Reports' };
+    const loaded = {};
+    function setupTabs() {
+      document.querySelectorAll('.nav-link').forEach((btn) => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      });
+    }
+    function switchTab(tab) {
+      document.querySelectorAll('.nav-link').forEach((b) => b.classList.toggle('is-active', b.dataset.tab === tab));
+      document.querySelectorAll('.tab-panel').forEach((p) => p.classList.toggle('is-active', p.id === `panel-${tab}`));
+      document.getElementById('page-title').textContent = TITLES[tab];
+      // Lazy-load each tab's data once.
+      if (loaded[tab]) return;
+      loaded[tab] = true;
+      if (tab === 'users') loadUsers();
+      else if (tab === 'trips') loadTrips();
+      else if (tab === 'bookings') loadBookings();
+    }
+
+    // ---- Dashboard metrics ----
+    async function loadDashboard() {
+      const grid = document.getElementById('metric-grid');
+      try {
+        const d = await apiFetch('/dashboard');
+        // Backend /dashboard returns plain numbers: { totalUsers, activeBookings, upcomingTrips, activeUsers }
+        const cards = [
+          ['Active Bookings', d.activeBookings],
+          ['Upcoming Trips', d.upcomingTrips],
+          ['Total Users', d.totalUsers],
+          ['Active Users', d.activeUsers],
+        ];
+        grid.innerHTML = cards.map(([label, val]) =>
+          `<div class="metric"><div class="metric__label">${label}</div><div class="metric__value">${val ?? '—'}</div></div>`
+        ).join('');
+      } catch (err) {
+        grid.innerHTML = `<div class="state-msg">${err.message}</div>`;
+      }
+    }
+
+    // ---- Users ----
+    let usersCache = [];
+    async function loadUsers() {
+      const body = document.getElementById('users-body');
+      body.innerHTML = '<tr><td colspan="5" class="state-msg">Loading users…</td></tr>';
+      try {
+        const users = await apiFetch('/users');
+        usersCache = Array.isArray(users) ? users : [];
+        if (!usersCache.length) { body.innerHTML = '<tr><td colspan="5" class="state-msg">No users found.</td></tr>'; return; }
+        body.innerHTML = usersCache.map((u) => {
+          const nm = u.fullName || u.name || '';
+          const rl = u.roleName || u.role || '';
+          const st = u.accountStatus || u.status || 'Active';
+          const badge = st === 'Active' ? 'badge--active' : 'badge--other';
+          return `<tr>
+            <td>${esc(nm)}</td><td>${esc(u.email || '')}</td><td>${esc(rl)}</td>
+            <td><span class="badge ${badge}">${esc(st)}</span></td>
+            <td><div class="row-actions">
+              <button class="link-btn" data-edit="${u.userId}">Edit</button>
+              <button class="link-btn link-btn--danger" data-del="${u.userId}">Delete</button>
+            </div></td></tr>`;
+        }).join('');
+        body.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => openEditUser(b.dataset.edit)));
+        body.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', () => openDeleteUser(b.dataset.del)));
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="5" class="state-msg">${err.message}</td></tr>`;
+      }
+    }
+
+    // ---- Trips ----
+    async function loadTrips() {
+      const body = document.getElementById('trips-body');
+      try {
+        const trips = await apiFetch('/trips');
+        const list = Array.isArray(trips) ? trips : [];
+        if (!list.length) { body.innerHTML = '<tr><td colspan="5" class="state-msg">No trips found.</td></tr>'; return; }
+        body.innerHTML = list.map((t) => `<tr>
+          <td>${t.tripId ?? '—'}</td>
+          <td>${esc(t.pickupLocationName || '')} → ${esc(t.dropLocationName || '')}</td>
+          <td>${esc(t.tripDate || '—')}</td>
+          <td>${esc(t.startTime || '—')}</td>
+          <td>${esc(t.eta || '—')}</td></tr>`).join('');
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="5" class="state-msg">${err.message}</td></tr>`;
+      }
+    }
+
+    // ---- Bookings ----
+    async function loadBookings() {
+      const body = document.getElementById('bookings-body');
+      try {
+        const list = await apiFetch('/dashboard/bookings');
+        const rows = Array.isArray(list) ? list : [];
+        if (!rows.length) { body.innerHTML = '<tr><td colspan="7" class="state-msg">No bookings found.</td></tr>'; return; }
+        body.innerHTML = rows.map(bookingRow).join('');
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="7" class="state-msg">${err.message}</td></tr>`;
+      }
+    }
+    function bookingRow(b) {
+      const st = b.status || '';
+      const badge = /confirm|active/i.test(st) ? 'badge--active' : 'badge--other';
+      return `<tr>
+        <td>${b.id ?? '—'}</td><td>${b.userId ?? '—'}</td><td>${b.tripId ?? '—'}</td>
+        <td>${b.seatNumber ?? '—'}</td><td>${esc(b.createdAt || '—')}</td>
+        <td><span class="badge ${badge}">${esc(st || '—')}</span></td>
+        <td>${b.fareAmount != null ? 'Rs. ' + b.fareAmount : '—'}</td></tr>`;
+    }
+
+    // ---- Reports ----
+    document.getElementById('run-report-btn').addEventListener('click', runReport);
+    async function runReport() {
+      const start = document.getElementById('rp-start').value;
+      const end = document.getElementById('rp-end').value;
+      const params = new URLSearchParams();
+      if (start) params.set('startDate', start);
+      if (end) params.set('endDate', end);
+
+      const summary = document.getElementById('report-summary');
+      const body = document.getElementById('report-body');
+      summary.innerHTML = '';
+      body.innerHTML = '<tr><td colspan="7" class="state-msg">Generating…</td></tr>';
+      try {
+        const r = await apiFetch(`/reports/financial?${params.toString()}`);
+        summary.innerHTML = `
+          <div class="metric"><div class="metric__label">Total Bookings</div><div class="metric__value">${r.totalBookings ?? 0}</div></div>
+          <div class="metric"><div class="metric__label">Gross Revenue</div><div class="metric__value">Rs. ${r.grossRevenue ?? 0}</div></div>
+          <div class="metric"><div class="metric__label">Pending</div><div class="metric__value">${r.pendingBookings ?? 0}</div></div>
+          <div class="metric"><div class="metric__label">Cancelled</div><div class="metric__value">${r.cancelledBookings ?? 0}</div></div>`;
+        body.innerHTML = '<tr><td colspan="7" class="state-msg">Summary shown above. See the Bookings tab for individual rows.</td></tr>';
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="7" class="state-msg">${err.message}</td></tr>`;
+      }
+    }
+
+    // ---- User modal (create + edit) ----
+    const userModal = document.getElementById('user-modal');
+    const userForm = document.getElementById('user-form');
+    const ufError = document.getElementById('user-modal-error');
+
+    document.getElementById('create-user-btn').addEventListener('click', openCreateUser);
+    document.getElementById('uf-cancel').addEventListener('click', () => userModal.classList.remove('show'));
+
+    function openCreateUser() {
+      userForm.reset();
+      document.getElementById('uf-id').value = '';
+      document.getElementById('user-modal-title').textContent = 'Create Account';
+      document.getElementById('uf-email-field').style.display = '';
+      document.getElementById('uf-password-field').style.display = '';
+      document.getElementById('uf-status-field').style.display = 'none';
+      hide(ufError);
+      userModal.classList.add('show');
+    }
+    function openEditUser(id) {
+      const u = usersCache.find((x) => String(x.userId) === String(id));
+      if (!u) return;
+      userForm.reset();
+      document.getElementById('uf-id').value = u.userId;
+      document.getElementById('user-modal-title').textContent = 'Edit Account';
+      document.getElementById('uf-name').value = u.fullName || u.name || '';
+      document.getElementById('uf-role').value = normalizeRoleForSelect(u.roleName || u.role);
+      // Email + password are create-only in the backend; status is edit-only.
+      document.getElementById('uf-email-field').style.display = 'none';
+      document.getElementById('uf-password-field').style.display = 'none';
+      const statusField = document.getElementById('uf-status-field');
+      statusField.style.display = '';
+      document.getElementById('uf-status').value = u.accountStatus || u.status || 'Active';
+      hide(ufError);
+      userModal.classList.add('show');
+    }
+    function normalizeRoleForSelect(role) {
+      if (!role) return 'Student';
+      const r = role.replace(/[_\s-]/g, '').toLowerCase();
+      if (r === 'financeofficer') return 'FinanceOfficer';
+      if (r === 'admin') return 'Admin';
+      if (r === 'driver') return 'Driver';
+      return 'Student';
+    }
+
+    userForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hide(ufError);
+      const id = document.getElementById('uf-id').value;
+      const submit = document.getElementById('uf-submit');
+      submit.disabled = true; submit.textContent = 'Saving…';
+      try {
+        if (id) {
+          const body = {
+            fullName: document.getElementById('uf-name').value.trim(),
+            roleName: document.getElementById('uf-role').value,
+            accountStatus: document.getElementById('uf-status').value,
+          };
+          await apiFetch(`/users/${id}`, { method: 'PUT', body: JSON.stringify(body) });
+        } else {
+          const body = {
+            fullName: document.getElementById('uf-name').value.trim(),
+            email: document.getElementById('uf-email').value.trim(),
+            password: document.getElementById('uf-password').value,
+            roleName: document.getElementById('uf-role').value,
+          };
+          await apiFetch('/users', { method: 'POST', body: JSON.stringify(body) });
+        }
+        userModal.classList.remove('show');
+        await loadUsers();
+      } catch (err) {
+        show(ufError, err.message);
+      } finally {
+        submit.disabled = false; submit.textContent = 'Save';
+      }
+    });
+
+    // ---- Delete modal ----
+    const deleteModal = document.getElementById('delete-modal');
+    const delError = document.getElementById('delete-modal-error');
+    let pendingDeleteId = null;
+    document.getElementById('del-cancel').addEventListener('click', () => deleteModal.classList.remove('show'));
+    function openDeleteUser(id) {
+      const u = usersCache.find((x) => String(x.userId) === String(id));
+      pendingDeleteId = id;
+      document.getElementById('delete-msg').textContent = `Permanently delete ${u ? (u.fullName || u.name) : 'user #' + id}? This cannot be undone.`;
+      hide(delError);
+      deleteModal.classList.add('show');
+    }
+    document.getElementById('del-confirm').addEventListener('click', async () => {
+      if (!pendingDeleteId) return;
+      const btn = document.getElementById('del-confirm');
+      btn.disabled = true; btn.textContent = 'Deleting…';
+      try {
+        await apiFetch(`/users/${pendingDeleteId}`, { method: 'DELETE' });
+        deleteModal.classList.remove('show');
+        pendingDeleteId = null;
+        await loadUsers();
+      } catch (err) {
+        show(delError, err.message);
+      } finally {
+        btn.disabled = false; btn.textContent = 'Delete';
+      }
+    });
+
+    // Close modals on backdrop click.
+    [userModal, deleteModal].forEach((m) => m.addEventListener('click', (e) => { if (e.target === m) m.classList.remove('show'); }));
+
+    // ---- utils ----
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+    function show(el, msg) { el.textContent = msg; el.classList.add('show'); }
+    function hide(el) { el.textContent = ''; el.classList.remove('show'); }
+  </script>
+</body>
+</html>
