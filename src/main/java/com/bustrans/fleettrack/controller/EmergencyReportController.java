@@ -1,5 +1,7 @@
 package com.bustrans.fleettrack.controller;
 
+import org.springframework.web.bind.annotation.CrossOrigin;
+
 import com.bustrans.fleettrack.entity.EmergencyReport;
 import com.bustrans.fleettrack.service.EmergencyReportService;
 import org.springframework.beans.factory.annotation.Autowired;
