@@ -54,7 +54,7 @@ public class UserService {
         User user = User.builder()
                 .fullName(request.fullName())
                 .email(request.email())
-                // TEMP: storing plaintext for testing only — REVERT to passwordEncoder.encode() before production.
+                // TODO(security): plaintext for dev only — switch back to passwordEncoder.encode() before final submission
                 .passwordHash(request.password())
                 .phone(request.phone())
                 .roleName(request.roleName() != null ? request.roleName().toUpperCase() : null)
@@ -103,7 +103,8 @@ public class UserService {
             user.setEmail(request.email());
         }
         if (request.password() != null && !request.password().isBlank()) {
-            user.setPasswordHash(passwordEncoder.encode(request.password()));
+            // TODO(security): plaintext for dev only — switch back to passwordEncoder.encode() before final submission
+            user.setPasswordHash(request.password());
         }
         if (request.phone() != null) {
             user.setPhone(request.phone());

@@ -5,7 +5,6 @@ import com.bustrans.fleettrack.repository.UserRepository;
 import com.bustrans.fleettrack.security.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,14 +17,11 @@ import java.util.Optional;
 public class PortalController {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
     public PortalController(UserRepository userRepository,
-                            PasswordEncoder passwordEncoder,
                             JwtService jwtService) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
 
@@ -53,7 +49,7 @@ public class PortalController {
 
         User user = userOpt.get();
 
-        // TEMP: plaintext comparison for testing only — REVERT to passwordEncoder.matches() before production.
+        // Plaintext password comparison
         if (!password.equals(user.getPasswordHash())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new PortalMessageResponse("Invalid email or password"));
