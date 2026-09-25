@@ -1,10 +1,5 @@
 package com.bustrans.fleettrack.controller;
 
-import com.bustrans.fleettrack.entity.Invoice;
-import com.bustrans.fleettrack.entity.Payment;
-import com.bustrans.fleettrack.form.PaymentForm;
-import com.bustrans.fleettrack.service.InvoiceService;
-import com.bustrans.fleettrack.service.PaymentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -15,9 +10,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.FilterType;
-import com.bustrans.fleettrack.security.JwtAuthenticationFilter;
-import com.bustrans.fleettrack.exception.ApiExceptionHandler;
-import com.bustrans.fleettrack.exception.GlobalExceptionHandler;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;

@@ -1,7 +1,0 @@
-package com.transport.uni_transport_system.repository;
-
-import com.transport.uni_transport_system.entity.BusTrip;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface BusTripRepository extends JpaRepository<BusTrip, Integer> {
-}
