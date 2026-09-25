@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Transport Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <span>🚌</span> TransitPass
+        </div>
+        <nav class="sidebar-nav">
+            <button class="nav-btn active" onclick="switchTab('emergency')">🚨 Emergency Reports</button>
+            <button class="nav-btn" onclick="switchTab('incidents')">🗺️ Crash Incidents</button>
+            <button class="nav-btn" onclick="switchTab('status')">📋 Trip Status</button>
+            <button class="nav-btn" onclick="switchTab('location')">📍 Live Tracking</button>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-nav">
+            <h2>Transit Operations</h2>
+        </header>
+
+        <div class="content-wrapper">
+            <!-- Emergency Reports Tab -->
+            <section id="tab-emergency" class="tab-pane active">
+                <div class="card">
+                    <h2 id="report-form-title">File a New Emergency Report</h2>
+                    <form id="form-emergency">
+                        <input type="hidden" id="reportId">
+                        <div class="form-group">
+                            <label>Report Title</label>
+                            <input type="text" id="reportTitle" required placeholder="e.g. Bus 45 Breakdown">
+                        </div>
+                        <div class="form-group">
+                            <label>Emergency Type</label>
+                            <select id="emergencyType">
+                                <option value="Mechanical">Mechanical Failure</option>
+                                <option value="Medical">Medical Emergency</option>
+                                <option value="Security">Security Issue</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="reportDesc" rows="4" required placeholder="Describe..."></textarea>
+                        </div>
+                        <div class="flex-row">
+                            <button type="submit" class="btn btn-primary" id="report-submit-btn">Submit Report</button>
+                            <button type="button" class="btn" style="background:#95a5a6; display:none;" id="report-cancel-btn" onclick="cancelReportEdit()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card">
+                    <h2>Active Reports</h2>
+                    <div id="reports-list">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Crash Incidents Tab -->
+            <section id="tab-incidents" class="tab-pane">
+                <div class="card">
+                    <h2>Log a Crash Incident</h2>
+                    <form id="form-incident">
+                        <div class="flex-row">
+                            <div class="form-group">
+                                <label>Bus Number</label>
+                                <input type="text" id="busNo" required oninput="validateNumber(this)">
+                                <span id="busNo-error" style="color:red; font-size:12px; display:none;">❌ Must be a number</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Driver Number</label>
+                                <input type="text" id="driverNo" required oninput="validateNumber(this)">
+                                <span id="driverNo-error" style="color:red; font-size:12px; display:none;">❌ Must be a number</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Location Coordinates</label>
+                            <input type="text" id="incidentLocation" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Severity Level</label>
+                            <select id="severityLevel">
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea id="incidentDesc" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger" style="width:100%">Log Incident</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <h2>Crash History</h2>
+                    <div id="incidents-list">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Trip Status Tab -->
+            <section id="tab-status" class="tab-pane">
+                <div class="card">
+                    <h2>Update Trip Status</h2>
+                    <form id="form-status">
+                        <div class="form-group">
+                            <label>Trip ID</label>
+                            <input type="number" id="statusTripId" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Current Status</label>
+                            <select id="statusType">
+                                <option value="On Route">On Route</option>
+                                <option value="Delayed">Delayed</option>
+                                <option value="Arrived">Arrived</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="background:#3498db">Update Status</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <h2>Live Trip Updates</h2>
+                    <div id="statuses-list">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Location Tracking Tab -->
+            <section id="tab-location" class="tab-pane">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h2>Submit GPS Ping (Manual)</h2>
+                        <button type="button" class="btn btn-warning btn-sm" onclick="autoFillLocation()">📍 Auto-Fill My Location</button>
+                    </div>
+                    
+                    <div class="form-group" style="position:relative;">
+                        <label>Search Location (Sri Lanka Auto-Suggest)</label>
+                        <input type="text" id="autoSuggestInput" placeholder="Type a place name (e.g., Maradana)..." oninput="searchLocation(this.value)">
+                        <ul id="autoSuggestResults" style="position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #ccc; z-index:10; list-style:none; display:none; max-height:200px; overflow-y:auto; border-radius:4px;"></ul>
+                    </div>
+
+                    <form id="form-location">
+                        <div class="form-group">
+                            <label>Trip ID</label>
+                            <input type="number" id="locTripId" required>
+                        </div>
+                        <div class="flex-row">
+                            <div class="form-group">
+                                <label>Latitude</label>
+                                <input type="number" step="0.000001" id="latitude" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Longitude</label>
+                                <input type="number" step="0.000001" id="longitude" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success" style="width:100%">Broadcast Location</button>
+                    </form>
+                </div>
+                <div class="card">
+                    <h2>GPS Trace History</h2>
+                    <div id="locations-list">Loading...</div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
