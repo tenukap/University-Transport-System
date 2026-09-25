@@ -6,7 +6,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Data
 @NoArgsConstructor
@@ -23,4 +25,10 @@ public class BookingResponseDTO {
     private BigDecimal fareAmount;
     private String status;
     private LocalDateTime createdAt;
+
+    // Trip details, so the UI can show real dates/routes and detect past ("completed") trips.
+    private LocalDate tripDate;
+    private LocalTime startTime;
+    private String pickupName;
+    private String dropoffName;
 }
