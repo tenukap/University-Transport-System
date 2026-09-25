@@ -1,48 +1,47 @@
 package com.bustrans.fleettrack.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
-@Table(name = "Feedback")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Table(name = "feedback")
 public class Feedback {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "FeedbackId")
-    private Integer feedbackId;
+    @Column(name = "feedback_id")
+    private Long feedbackId;
 
-    @Column(name = "UserId", nullable = false)
-    private Long userId;
+    @Column(name = "feedback_date", nullable = false)
+    private LocalDate feedbackDate;
 
-    // The completed booking this feedback is about. Nullable so the generic
-    // Feedback table can still hold non-booking feedback if ever needed.
-    @Column(name = "BookingId")
-    private Long bookingId;
+    @Column(name = "comments", nullable = false, length = 1000)
+    private String comments;
 
-    @Column(name = "Subject", nullable = false, length = 150)
-    private String subject;
+    public Feedback() {
+    }
 
-    @Column(name = "Message", nullable = false, columnDefinition = "NVARCHAR(MAX)")
-    private String message;
+    public Long getFeedbackId() {
+        return feedbackId;
+    }
 
-    @Column(name = "Rating")
-    private Integer rating;
+    public void setFeedbackId(Long feedbackId) {
+        this.feedbackId = feedbackId;
+    }
 
-    @Builder.Default
-    @Column(name = "Status", length = 20)
-    private String status = "Pending";
+    public LocalDate getFeedbackDate() {
+        return feedbackDate;
+    }
 
-    // Populated by the DB default (GETDATE()); never written from the app.
-    @Column(name = "SubmittedAt", insertable = false, updatable = false)
-    private LocalDateTime submittedAt;
+    public void setFeedbackDate(LocalDate feedbackDate) {
+        this.feedbackDate = feedbackDate;
+    }
+
+    public String getComments() {
+        return comments;
+    }
+
+    public void setComments(String comments) {
+        this.comments = comments;
+    }
 }
