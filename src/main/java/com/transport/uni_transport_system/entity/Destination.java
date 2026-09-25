@@ -9,11 +9,15 @@ import lombok.Data;
 public class Destination {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "DestinationId")
     private int destinationId;
 
+    @Column(name = "DestinationName")
     private String destinationName;
+
+    @Column(name = "Location")
     private String location;
 
-    @Column(name = "route_id")
-    private int routeId; // Links to BusRoute
+    @Column(name = "RouteId")
+    private int routeId;
 }

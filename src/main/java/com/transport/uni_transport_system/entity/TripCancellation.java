@@ -10,11 +10,15 @@ import java.time.LocalDateTime;
 public class TripCancellation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "CancellationId")
     private int cancellationId;
 
-    @Column(name = "trip_id")
+    @Column(name = "TripId")
     private int tripId;
 
+    @Column(name = "Reason")
     private String reason;
+
+    @Column(name = "CancelledAt")
     private LocalDateTime cancelledAt;
 }

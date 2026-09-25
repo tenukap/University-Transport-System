@@ -11,17 +11,24 @@ import java.time.LocalTime;
 public class BusTrip {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "TripId")
     private int tripId;
 
+    @Column(name = "TripDate")
     private LocalDate tripDate;
+
+    @Column(name = "StartTime")
     private LocalTime startTime;
+
+    @Column(name = "ETA")
     private LocalTime eta;
 
-    @Column(name = "pickup_location_id")
+    @Column(name = "PickupLocationId")
     private int pickupLocationId;
 
-    @Column(name = "drop_location_id")
+    @Column(name = "DropLocationId")
     private int dropLocationId;
 
-    private String status; // "Scheduled", "Cancelled", "Completed"
+    @Column(name = "Status")
+    private String status;
 }

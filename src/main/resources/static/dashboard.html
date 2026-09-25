@@ -11,6 +11,10 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- Leaflet Map Library (free, no API key needed) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
         :root {
             --primary: #35627A;
@@ -23,11 +27,7 @@
             --text-dark: #2C3E50;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Roboto Slab', serif;
@@ -40,330 +40,191 @@
 
         /* --- Sidebar --- */
         .sidebar {
-            width: 260px;
-            background-color: var(--primary);
-            color: white;
-            display: flex;
-            flex-direction: column;
-            padding: 24px 0;
-            flex-shrink: 0;
+            width: 260px; background-color: var(--primary); color: white;
+            display: flex; flex-direction: column; padding: 24px 0; flex-shrink: 0;
+            position: relative;    /* ✅ Creates stacking context */
+            z-index: 1001;         /* ✅ Higher than Leaflet's max (1000) */
         }
-
-        .sidebar-header {
-            padding: 0 24px 24px 24px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            margin-bottom: 24px;
-        }
-
-        .sidebar-header h2 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .nav-links {
-            list-style: none;
-            flex: 1;
-        }
-
+        .sidebar-header { padding: 0 24px 24px 24px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 24px; }
+        .sidebar-header h2 { font-family: 'Montserrat', sans-serif; font-size: 20px; display: flex; align-items: center; gap: 10px; }
+        .nav-links { list-style: none; flex: 1; }
         .nav-links li {
-            padding: 14px 24px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            border-left: 4px solid transparent;
+            padding: 14px 24px; cursor: pointer; display: flex; align-items: center; gap: 12px;
+            font-size: 14px; transition: all 0.3s ease; border-left: 4px solid transparent;
         }
-
-        .nav-links li:hover {
-            background-color: rgba(255,255,255,0.05);
-            border-left-color: var(--accent-2);
-        }
-
-        .nav-links li.active {
-            background-color: rgba(180, 98, 88, 0.2);
-            border-left-color: var(--accent-1);
-            color: var(--accent-2);
-            font-weight: 500;
-        }
-
-        .user-profile-bottom {
-            padding: 20px 24px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 13px;
-        }
-
-        .user-profile-bottom img {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: #ccc;
-        }
+        .nav-links li:hover { background-color: rgba(255,255,255,0.05); border-left-color: var(--accent-2); }
+        .nav-links li.active { background-color: rgba(180, 98, 88, 0.2); border-left-color: var(--accent-1); color: var(--accent-2); font-weight: 500; }
+        .user-profile-bottom { padding: 20px 24px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 12px; font-size: 13px; }
+        .user-profile-bottom img { width: 36px; height: 36px; border-radius: 50%; background: #ccc; }
 
         /* --- Main Content --- */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
-
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
         .topbar {
-            background-color: var(--surface);
-            padding: 16px 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #E0E0E0;
-            position: sticky;
-            top: 0;
-            z-index: 10;
+            background-color: var(--surface); padding: 16px 32px; display: flex; justify-content: space-between;
+            align-items: center; border-bottom: 1px solid #E0E0E0;
+            position: sticky; top: 0;
+            z-index: 1001;         /* ✅ Higher than Leaflet */
         }
+        .topbar h1 { font-family: 'Montserrat', sans-serif; font-size: 22px; color: var(--primary); }
+        .topbar-actions { display: flex; align-items: center; gap: 20px; }
+        .topbar-actions i { color: var(--text-muted); cursor: pointer; font-size: 18px; }
+        .profile-badge { display: flex; align-items: center; gap: 10px; font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 600; }
+        .profile-badge span { color: var(--text-muted); font-weight: 400; font-size: 12px; display: block; }
 
-        .topbar h1 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 22px;
-            color: var(--primary);
-        }
-
-        .topbar-actions {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .topbar-actions i {
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 18px;
-        }
-
-        .profile-badge {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .profile-badge span {
-            color: var(--text-muted);
-            font-weight: 400;
-            font-size: 12px;
-            display: block;
-        }
-
-        .content-body {
-            padding: 32px;
-            max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
-        }
+        .content-body { padding: 32px; max-width: 1400px; margin: 0 auto; width: 100%; }
 
         /* --- Cards & Sections --- */
-        .card {
-            background: var(--surface);
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            padding: 24px;
-            margin-bottom: 24px;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid #F0F0F0;
-        }
-
-        .card-header h3 {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 16px;
-            color: var(--primary);
-        }
+        .card { background: var(--surface); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); padding: 24px; margin-bottom: 24px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #F0F0F0; }
+        .card-header h3 { font-family: 'Montserrat', sans-serif; font-size: 16px; color: var(--primary); }
 
         /* --- Buttons --- */
         .btn {
-            padding: 10px 18px;
-            border: none;
-            border-radius: 6px;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            padding: 10px 18px; border: none; border-radius: 6px; font-family: 'Montserrat', sans-serif;
+            font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+            display: inline-flex; align-items: center; gap: 8px;
         }
-
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-        }
+        .btn-primary { background-color: var(--primary); color: white; }
         .btn-primary:hover { background-color: #2a4d61; }
-
-        .btn-accent {
-            background-color: var(--accent-1);
-            color: white;
-        }
+        .btn-accent { background-color: var(--accent-1); color: white; }
         .btn-accent:hover { background-color: #9a4f46; }
-
-        .btn-outline {
-            background-color: transparent;
-            border: 1px solid var(--muted);
-            color: var(--text-dark);
-        }
+        .btn-outline { background-color: transparent; border: 1px solid var(--muted); color: var(--text-dark); }
         .btn-outline:hover { background-color: #f0f0f0; }
-
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 12px;
-        }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
 
         /* --- Tables --- */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
         th {
-            text-align: left;
-            padding: 12px 16px;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
-            border-bottom: 1px solid #E0E0E0;
+            text-align: left; padding: 12px 16px; font-family: 'Montserrat', sans-serif;
+            font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;
+            color: var(--text-muted); border-bottom: 1px solid #E0E0E0;
         }
-
-        td {
-            padding: 14px 16px;
-            border-bottom: 1px solid #F5F5F5;
-            color: var(--text-dark);
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr:hover {
-            background-color: #FAFAFA;
-        }
+        td { padding: 14px 16px; border-bottom: 1px solid #F5F5F5; color: var(--text-dark); }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #FAFAFA; }
 
         /* --- Badges --- */
-        .badge {
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-            font-family: 'Montserrat', sans-serif;
-        }
-
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: 'Montserrat', sans-serif; }
         .badge-scheduled { background-color: #E8F0FE; color: #1A73E8; }
         .badge-cancelled { background-color: #FCE8E6; color: #C5221F; }
         .badge-completed { background-color: #E6F4EA; color: #137333; }
         .badge-pending { background-color: #FEF7E0; color: #B06000; }
 
         /* --- Form Elements --- */
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .form-group label {
-            font-family: 'Montserrat', sans-serif;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-muted); }
         .form-group input, .form-group select {
-            padding: 10px 14px;
-            border: 1px solid #D1D5DB;
-            border-radius: 6px;
-            font-family: 'Roboto Slab', serif;
-            font-size: 14px;
-            outline: none;
-            transition: border 0.2s ease;
+            padding: 10px 14px; border: 1px solid #D1D5DB; border-radius: 6px;
+            font-family: 'Roboto Slab', serif; font-size: 14px; outline: none; transition: border 0.2s ease;
         }
-
-        .form-group input:focus, .form-group select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(53, 98, 122, 0.1);
-        }
+        .form-group input:focus, .form-group select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(53, 98, 122, 0.1); }
 
         /* --- Map Placeholder --- */
         .map-container {
-            width: 100%;
-            height: 300px;
-            background-color: #E5E7EB;
+            width: 100%; height: 300px; background-color: #E5E7EB; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-muted); font-family: 'Montserrat', sans-serif; position: relative; overflow: hidden;
+        }
+        .map-container::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-image: radial-gradient(circle, #D1D5DB 1px, transparent 1px);
+            background-size: 20px 20px; opacity: 0.5;
+        }
+        .map-overlay {
+            position: absolute; top: 16px; left: 16px; background: var(--surface);
+            padding: 8px 16px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            font-size: 13px; display: flex; align-items: center; gap: 8px;
+        }
+        .map-overlay .dot { width: 8px; height: 8px; border-radius: 50%; background-color: var(--accent-1); }
+
+        /* --- Tab Switching --- */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Map legend and pulse animation */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+
+        .trip-marker-active {
+            background: var(--primary);
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(53, 98, 122, 0.6);
+            width: 18px !important;
+            height: 18px !important;
+        }
+
+        .trip-marker-complete {
+            background: #137333;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(19, 115, 51, 0.6);
+            width: 18px !important;
+            height: 18px !important;
+        }
+
+        .trip-marker-cancelled {
+            background: #B46258;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(180, 98, 88, 0.6);
+            width: 18px !important;
+            height: 18px !important;
+        }
+
+        .map-legend {
+            background: white;
+            padding: 10px 14px;
             border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-muted);
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .stat-label {
             font-family: 'Montserrat', sans-serif;
-            position: relative;
-            overflow: hidden;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .stat-value {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--primary);
         }
 
-        .map-container::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image: radial-gradient(circle, #D1D5DB 1px, transparent 1px);
-            background-size: 20px 20px;
-            opacity: 0.5;
-        }
-
-        .map-overlay {
-            position: absolute;
-            top: 16px;
-            left: 16px;
-            background: var(--surface);
-            padding: 8px 16px;
-            border-radius: 6px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .map-overlay .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: var(--accent-1);
-        }
-
-        /* --- Tab Switching --- */
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
     </style>
 </head>
 <body>
@@ -371,7 +232,7 @@
 <!-- SIDEBAR -->
 <aside class="sidebar">
     <div class="sidebar-header">
-        <h2><i class="fa-solid fa-bus"></i> TransitOps</h2>
+        <h2><i class="fa-solid fa-bus"></i> TransitPass</h2>
     </div>
     <ul class="nav-links">
         <li class="active" onclick="switchTab('dashboard', this)"><i class="fa-solid fa-chart-pie"></i> Dashboard</li>
@@ -381,27 +242,23 @@
         <li onclick="switchTab('payments', this)"><i class="fa-solid fa-credit-card"></i> Payments</li>
     </ul>
     <div class="user-profile-bottom">
-        <img src="https://ui-avatars.com/api/?name=Elena+Rostova&background=35627A&color=fff" alt="Profile">
+        <img src="https://ui-avatars.com/api/?name=Amalka+Amarasekara&background=35627A&color=fff" alt="Profile">
         <div>
-            <strong>Elena Rostova</strong>
-            <span>Transport Officer</span>
+            <strong>Amalka Amarasekara</strong>
+            <br><span>Transport Officer</span></br>
         </div>
     </div>
 </aside>
 
 <!-- MAIN CONTENT -->
 <main class="main-content">
-    <!-- TOPBAR -->
     <header class="topbar">
         <h1 id="page-title">Dashboard Overview</h1>
         <div class="topbar-actions">
             <i class="fa-regular fa-bell"></i>
             <div class="profile-badge">
-                <img src="https://ui-avatars.com/api/?name=Elena+Rostova&background=35627A&color=fff" width="36" style="border-radius: 50%;">
-                <div>
-                    Elena Rostova
-                    <span>Transport Officer</span>
-                </div>
+                <img src="https://ui-avatars.com/api/?name=Amalka+Amarasekara&background=35627A&color=fff" width="36" style="border-radius: 50%;">
+                <div>Amalka Amarasekara <span>Transport Officer</span></div>
             </div>
         </div>
     </header>
@@ -409,96 +266,132 @@
     <div class="content-body">
 
         <!-- 1. DASHBOARD TAB -->
-        <div id="dashboard" class="tab-content active">
+        <!-- <div id="dashboard" class="tab-content active">
             <div class="card">
                 <div class="card-header">
                     <h3>Live Trip Map</h3>
                     <span class="badge badge-scheduled">Live Tracking Active</span>
                 </div>
                 <div class="map-container">
-                    <div class="map-overlay">
-                        <div class="dot"></div> Bus #104 - In Transit
-                    </div>
+                    <div class="map-overlay"><div class="dot"></div> Bus #104 - In Transit</div>
                     <p style="z-index: 1;">Interactive Map View (Google Maps API / Leaflet Integration)</p>
                 </div>
             </div>
-
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
                 <div class="card">
-                    <div class="card-header">
-                        <h3>Fleet Status</h3>
-                    </div>
-                    <p style="font-size: 14px; color: var(--text-muted);">3 Active Trips • 1 Delayed • 0 Cancelled</p>
+                    <div class="card-header"><h3>Fleet Status</h3></div>
+                    <p id="fleet-status-text" style="font-size: 14px; color: var(--text-muted);">Loading...</p>
                 </div>
                 <div class="card">
-                    <div class="card-header">
-                        <h3>Quick Actions</h3>
-                    </div>
+                    <div class="card-header"><h3>Quick Actions</h3></div>
                     <button class="btn btn-primary" onclick="switchTab('trips')"><i class="fa-solid fa-plus"></i> Schedule New Trip</button>
+                </div>
+            </div>
+        </div> -->
+
+        <!-- 1. DASHBOARD TAB -->
+        <div id="dashboard" class="tab-content active">
+
+            <!-- STAT CARDS -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px;">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(53, 98, 122, 0.1); color: #35627A;">
+                        <i class="fa-solid fa-route"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Total Trips</div>
+                        <div class="stat-value" id="statTotalTrips">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(19, 115, 51, 0.1); color: #137333;">
+                        <i class="fa-solid fa-truck-fast"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Active Now</div>
+                        <div class="stat-value" id="statActive">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(19, 115, 51, 0.1); color: #137333;">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Completed</div>
+                        <div class="stat-value" id="statCompleted">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: rgba(180, 98, 88, 0.1); color: #B46258;">
+                        <i class="fa-solid fa-ban"></i>
+                    </div>
+                    <div>
+                        <div class="stat-label">Cancelled</div>
+                        <div class="stat-value" id="statCancelled">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MINI LIVE MAP -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-map-location-dot"></i> Live Trip Overview</h3>
+                    <button class="btn btn-primary btn-sm" onclick="goToTrackingTab()">
+                        <i class="fa-solid fa-expand"></i> View Full Map
+                    </button>
+                </div>
+                <div id="miniMap" style="height: 350px; border-radius: 8px; border: 1px solid #E0E0E0;
+             position: relative; z-index: 1; overflow: hidden;"></div>
+            </div>
+
+            <!-- QUICK ACTIONS -->
+            <div class="card">
+                <div class="card-header"><h3>Quick Actions</h3></div>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="goToTripsTab()">
+                        <i class="fa-solid fa-calendar-plus"></i> Schedule New Trip
+                    </button>
+                    <button class="btn btn-outline" onclick="goToRoutesTab()">
+                        <i class="fa-solid fa-route"></i> Manage Routes
+                    </button>
+                    <button class="btn btn-outline" onclick="goToPaymentsTab()">
+                        <i class="fa-solid fa-credit-card"></i> View Payments
+                    </button>
                 </div>
             </div>
         </div>
 
+
         <!-- 2. MANAGE ROUTES TAB -->
         <div id="routes" class="tab-content">
             <div class="card">
-                <div class="card-header">
-                    <h3>Add New Route</h3>
-                </div>
-                <form class="form-grid">
+                <div class="card-header"><h3>Add New Route</h3></div>
+                <form class="form-grid" id="routeForm">
                     <div class="form-group">
                         <label>Route Name</label>
-                        <input type="text" placeholder="e.g., Kaduwela - SLIIT Express">
+                        <input type="text" id="routeName" placeholder="e.g., Kaduwela - SLIIT Express" required>
                     </div>
                     <div class="form-group">
                         <label>Start Point</label>
-                        <input type="text" placeholder="e.g., Kaduwela">
+                        <input type="text" id="startPoint" placeholder="e.g., Kaduwela" required>
                     </div>
                     <div class="form-group">
                         <label>End Point</label>
-                        <input type="text" placeholder="e.g., SLIIT Malabe">
+                        <input type="text" id="endPoint" placeholder="e.g., SLIIT Malabe" required>
                     </div>
                     <div class="form-group" style="justify-content: flex-end;">
-                        <button type="button" class="btn btn-primary" onclick="alert('Route Added Successfully!')"><i class="fa-solid fa-save"></i> Save Route</button>
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Save Route</button>
                     </div>
                 </form>
             </div>
-
             <div class="card">
-                <div class="card-header">
-                    <h3>Existing Routes</h3>
-                </div>
+                <div class="card-header"><h3>Existing Routes</h3></div>
                 <table>
                     <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Route Name</th>
-                        <th>Start Point</th>
-                        <th>End Point</th>
-                        <th>Actions</th>
-                    </tr>
+                    <tr><th>ID</th><th>Route Name</th><th>Start Point</th><th>End Point</th><th>Actions</th></tr>
                     </thead>
-                    <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>Kaduwela - SLIIT Express</td>
-                        <td>Kaduwela</td>
-                        <td>SLIIT Malabe</td>
-                        <td>
-                            <button class="btn btn-outline btn-sm"><i class="fa-solid fa-pen"></i> Edit</button>
-                            <button class="btn btn-accent btn-sm" onclick="alert('Route Deleted')"><i class="fa-solid fa-trash"></i> Delete</button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>Kandy - SLIIT Route</td>
-                        <td>Kandy</td>
-                        <td>SLIIT Malabe</td>
-                        <td>
-                            <button class="btn btn-outline btn-sm"><i class="fa-solid fa-pen"></i> Edit</button>
-                            <button class="btn btn-accent btn-sm" onclick="alert('Route Deleted')"><i class="fa-solid fa-trash"></i> Delete</button>
-                        </td>
-                    </tr>
+                    <tbody id="routesTableBody">
+                    <!-- Data loaded via JS -->
                     </tbody>
                 </table>
             </div>
@@ -506,73 +399,88 @@
 
         <!-- 3. SCHEDULE TRIPS TAB -->
         <div id="trips" class="tab-content">
+
+            <!-- ADD LOCATION (Collapsible) -->
             <div class="card">
-                <div class="card-header">
-                    <h3>Schedule New Bus Trip</h3>
+                <div class="card-header" style="cursor: pointer;" onclick="toggleLocationForm()">
+                    <h3><i class="fa-solid fa-map-pin"></i> Manage Locations</h3>
+                    <i class="fa-solid fa-chevron-down" id="locationFormChevron"></i>
                 </div>
-                <form class="form-grid">
+                <div id="locationFormBody" style="display: none;">
+                    <form class="form-grid" id="locationForm" style="margin-bottom: 20px;">
+                        <div class="form-group">
+                            <label>Location Name</label>
+                            <input type="text" id="locationName" placeholder="e.g., Kaduwela" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Latitude</label>
+                            <input type="number" step="0.00000001" id="locationLat" placeholder="e.g., 6.9350" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Longitude</label>
+                            <input type="number" step="0.00000001" id="locationLng" placeholder="e.g., 79.9800" required>
+                        </div>
+                        <div class="form-group" style="justify-content: flex-end;">
+                            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Add Location</button>
+                        </div>
+                    </form>
+
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Latitude</th>
+                            <th>Longitude</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="locationsTableBody">
+                        <!-- Loaded via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SCHEDULE NEW TRIP -->
+            <div class="card">
+                <div class="card-header"><h3>Schedule New Bus Trip</h3></div>
+                <form class="form-grid" id="tripForm">
                     <div class="form-group">
                         <label>Trip Date</label>
-                        <input type="date">
+                        <input type="date" id="tripDate" required>
                     </div>
                     <div class="form-group">
                         <label>Start Time</label>
-                        <input type="time">
+                        <input type="time" id="startTime" required>
                     </div>
                     <div class="form-group">
                         <label>Pickup Location</label>
-                        <select>
-                            <option>Kaduwela</option>
-                            <option>Kandy</option>
-                            <option>SLIIT Malabe</option>
+                        <select id="pickupLocation" required>
+                            <option value="">-- Select Pickup --</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Drop Location</label>
-                        <select>
-                            <option>SLIIT Malabe</option>
-                            <option>Kaduwela</option>
-                            <option>Kandy</option>
+                        <select id="dropLocation" required>
+                            <option value="">-- Select Drop --</option>
                         </select>
                     </div>
                     <div class="form-group" style="grid-column: span 2; justify-content: flex-end;">
-                        <button type="button" class="btn btn-primary" onclick="alert('Trip Scheduled!')"><i class="fa-solid fa-calendar-check"></i> Schedule Trip</button>
+                        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-calendar-check"></i> Schedule Trip</button>
                     </div>
                 </form>
             </div>
 
+            <!-- UPCOMING TRIPS -->
             <div class="card">
-                <div class="card-header">
-                    <h3>Upcoming Trips</h3>
-                </div>
+                <div class="card-header"><h3>Upcoming Trips</h3></div>
                 <table>
                     <thead>
-                    <tr>
-                        <th>Trip ID</th>
-                        <th>Date</th>
-                        <th>Time</th>
-                        <th>Route</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
+                    <tr><th>Trip ID</th><th>Date</th><th>Time</th><th>Route</th><th>Status</th><th>Actions</th></tr>
                     </thead>
-                    <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>2026-09-20</td>
-                        <td>07:00 AM</td>
-                        <td>Kaduwela → SLIIT</td>
-                        <td><span class="badge badge-scheduled">Scheduled</span></td>
-                        <td><button class="btn btn-accent btn-sm" onclick="alert('Trip Cancelled')"><i class="fa-solid fa-ban"></i> Cancel</button></td>
-                    </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>2026-09-20</td>
-                        <td>06:00 AM</td>
-                        <td>Kandy → SLIIT</td>
-                        <td><span class="badge badge-scheduled">Scheduled</span></td>
-                        <td><button class="btn btn-accent btn-sm" onclick="alert('Trip Cancelled')"><i class="fa-solid fa-ban"></i> Cancel</button></td>
-                    </tr>
+                    <tbody id="tripsTableBody">
+                    <!-- Loaded via JS -->
                     </tbody>
                 </table>
             </div>
@@ -580,33 +488,45 @@
 
         <!-- 4. DRIVER TRACKING TAB -->
         <div id="tracking" class="tab-content">
+
+            <!-- LIVE MAP -->
             <div class="card">
                 <div class="card-header">
-                    <h3>Active Driver Progress</h3>
+                    <h3><i class="fa-solid fa-map-location-dot"></i> Live Trip Map</h3>
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                <span class="badge badge-scheduled" id="liveBadge">
+                    <span class="dot" style="display:inline-block; width:8px; height:8px; background:#137333; border-radius:50%; margin-right:6px; animation: pulse 1.5s infinite;"></span>
+                    Live
+                </span>
+                        <button class="btn btn-outline btn-sm" onclick="loadTrackingData()">
+                            <i class="fa-solid fa-rotate"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <div id="map" style="height: 400px; border-radius: 8px; border: 1px solid #E0E0E0;
+                    position: relative; z-index: 1; overflow: hidden;"></div>
+            </div>
+
+            <!-- ACTIVE TRIPS TABLE -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-truck-fast"></i> Active Driver Progress</h3>
+                    <span class="badge badge-scheduled" id="activeTripsBadge">0 Active</span>
                 </div>
                 <table>
                     <thead>
                     <tr>
                         <th>Trip ID</th>
-                        <th>Driver</th>
+                        <th>Route</th>
+                        <th>Driver / Bus</th>
                         <th>Current Location</th>
                         <th>ETA</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
                     </thead>
-                    <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>M. Vance</td>
-                        <td>Kaduwela Junction</td>
-                        <td>08:15 AM</td>
-                        <td><span class="badge badge-scheduled">On Route</span></td>
-                        <td>
-                            <button class="btn btn-outline btn-sm" onclick="alert('Location Updated!')"><i class="fa-solid fa-location-crosshairs"></i> Update Loc</button>
-                            <button class="btn btn-primary btn-sm" onclick="alert('Trip Marked Complete!')"><i class="fa-solid fa-flag-checkered"></i> Complete</button>
-                        </td>
-                    </tr>
+                    <tbody id="trackingTableBody">
+                    <!-- Loaded via JS -->
                     </tbody>
                 </table>
             </div>
@@ -614,9 +534,11 @@
 
         <!-- 5. PAYMENTS TAB -->
         <div id="payments" class="tab-content">
+
+            <!-- PAYMENT RECORDS -->
             <div class="card">
                 <div class="card-header">
-                    <h3>Student Payment Records</h3>
+                    <h3><i class="fa-solid fa-receipt"></i> Student Payment Records</h3>
                 </div>
                 <table>
                     <thead>
@@ -628,28 +550,29 @@
                         <th>Actions</th>
                     </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="paymentsTableBody">
+                    <!-- Loaded via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- PAYMENT CANCELLATIONS HISTORY -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fa-solid fa-ban"></i> Payment Cancellation Records</h3>
+                    <span class="badge badge-cancelled" id="cancelCountBadge">0 Cancellations</span>
+                </div>
+                <table>
+                    <thead>
                     <tr>
-                        <td>1</td>
-                        <td>1001</td>
-                        <td>LKR 5,000.00</td>
-                        <td><span class="badge badge-completed">Completed</span></td>
-                        <td><button class="btn btn-accent btn-sm" onclick="alert('Payment Cancelled')"><i class="fa-solid fa-xmark"></i> Cancel</button></td>
+                        <th>Cancellation ID</th>
+                        <th>Payment ID</th>
+                        <th>Reason</th>
+                        <th>Cancelled At</th>
                     </tr>
-                    <tr>
-                        <td>2</td>
-                        <td>1002</td>
-                        <td>LKR 15,000.00</td>
-                        <td><span class="badge badge-completed">Completed</span></td>
-                        <td><button class="btn btn-accent btn-sm" onclick="alert('Payment Cancelled')"><i class="fa-solid fa-xmark"></i> Cancel</button></td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>1003</td>
-                        <td>LKR 5,000.00</td>
-                        <td><span class="badge badge-cancelled">Cancelled</span></td>
-                        <td><button class="btn btn-outline btn-sm" disabled><i class="fa-solid fa-check"></i> Done</button></td>
-                    </tr>
+                    </thead>
+                    <tbody id="cancellationsTableBody">
+                    <!-- Loaded via JS -->
                     </tbody>
                 </table>
             </div>
@@ -659,22 +582,16 @@
 </main>
 
 <script>
+    // Base URL for your Spring Boot Backend
+    const API_BASE = 'http://localhost:8080/api';
+
+    // --- TAB SWITCHING LOGIC ---
     function switchTab(tabId, element) {
-        // 1. Hide all tab contents
-        document.querySelectorAll('.tab-content').forEach(tab => {
-            tab.classList.remove('active');
-        });
-
-        // 2. Show the selected tab content
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
-
-        // 3. Update active state in sidebar
-        document.querySelectorAll('.nav-links li').forEach(li => {
-            li.classList.remove('active');
-        });
+        document.querySelectorAll('.nav-links li').forEach(li => li.classList.remove('active'));
         element.classList.add('active');
 
-        // 4. Update Page Title
         const titles = {
             'dashboard': 'Dashboard Overview',
             'routes': 'Manage Bus Routes',
@@ -683,7 +600,808 @@
             'payments': 'Payment Cancellations'
         };
         document.getElementById('page-title').innerText = titles[tabId];
+
+        // Load data dynamically when tab is clicked
+        if (tabId === 'dashboard') {
+            loadDashboardData();
+            // Resize the mini map so it renders correctly when the tab is shown
+            setTimeout(() => { if (miniMap) miniMap.invalidateSize(); }, 100);
+        }
+        if (tabId === 'routes') loadRoutes();
+        if (tabId === 'trips') { loadTrips(); loadLocations(); }
+        if (tabId === 'tracking') {
+            loadTrackingData();
+            startTrackingAutoRefresh();
+            setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+        }
+        if (tabId === 'payments') { loadPayments(); loadPaymentCancellations(); }
     }
+
+    // ==========================================
+    // LOCATION MANAGEMENT
+    // ==========================================
+
+    function toggleLocationForm() {
+        const body = document.getElementById('locationFormBody');
+        const chevron = document.getElementById('locationFormChevron');
+        if (body.style.display === 'none') {
+            body.style.display = 'block';
+            chevron.style.transform = 'rotate(180deg)';
+        } else {
+            body.style.display = 'none';
+            chevron.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    async function loadLocations() {
+        try {
+            const response = await fetch(`${API_BASE}/locations`);
+            const locations = await response.json();
+
+            // Fill the dropdowns
+            const pickupSelect = document.getElementById('pickupLocation');
+            const dropSelect = document.getElementById('dropLocation');
+            const currentPickup = pickupSelect.value;
+            const currentDrop = dropSelect.value;
+
+            pickupSelect.innerHTML = '<option value="">-- Select Pickup --</option>';
+            dropSelect.innerHTML = '<option value="">-- Select Drop --</option>';
+
+            locations.forEach(loc => {
+                pickupSelect.innerHTML += `<option value="${loc.locationId}">${loc.locationName}</option>`;
+                dropSelect.innerHTML += `<option value="${loc.locationId}">${loc.locationName}</option>`;
+            });
+
+            // Restore previous selections if they still exist
+            pickupSelect.value = currentPickup;
+            dropSelect.value = currentDrop;
+
+            // Fill the locations table
+            const tbody = document.getElementById('locationsTableBody');
+            tbody.innerHTML = '';
+            if (locations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color: #8E9A98;">No locations yet. Add one above.</td></tr>';
+            } else {
+                locations.forEach(loc => {
+                    tbody.innerHTML += `
+                    <tr>
+                        <td>${loc.locationId}</td>
+                        <td>${loc.locationName}</td>
+                        <td>${loc.latitude ?? '-'}</td>
+                        <td>${loc.longitude ?? '-'}</td>
+                        <td>
+                            <button class="btn btn-accent btn-sm" onclick="deleteLocation(${loc.locationId})">
+                                <i class="fa-solid fa-trash"></i> Delete
+                            </button>
+                        </td>
+                    </tr>`;
+                });
+            }
+        } catch (error) {
+            console.error('Error loading locations:', error);
+        }
+    }
+
+    // Add Location Form Submit
+    document.getElementById('locationForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newLocation = {
+            locationName: document.getElementById('locationName').value,
+            latitude: parseFloat(document.getElementById('locationLat').value),
+            longitude: parseFloat(document.getElementById('locationLng').value)
+        };
+        try {
+            const response = await fetch(`${API_BASE}/locations`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newLocation)
+            });
+            if (response.ok) {
+                alert('Location added successfully!');
+                document.getElementById('locationForm').reset();
+                loadLocations();
+            } else {
+                alert('Failed to add location.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+
+    async function deleteLocation(id) {
+        if (!confirm('Are you sure you want to delete this location?')) return;
+        try {
+            await fetch(`${API_BASE}/locations/${id}`, { method: 'DELETE' });
+            loadLocations();
+        } catch (error) {
+            console.error('Error deleting location:', error);
+        }
+    }
+
+    // --- API CALLS ---
+
+    // 1. DASHBOARD
+    async function loadDashboardData() {
+        try {
+            const response = await fetch(`${API_BASE}/trips`);
+            const trips = await response.json();
+            const scheduled = trips.filter(t => t.status === 'Scheduled').length;
+            const cancelled = trips.filter(t => t.status === 'Cancelled').length;
+            document.getElementById('fleet-status-text').innerText = `${trips.length} Total Trips • ${scheduled} Scheduled • ${cancelled} Cancelled`;
+        } catch (error) { console.error('Error loading dashboard:', error); }
+    }
+
+    // 2. ROUTES
+    async function loadRoutes() {
+        try {
+            const response = await fetch(`${API_BASE}/routes`);
+            const routes = await response.json();
+            const tbody = document.getElementById('routesTableBody');
+            tbody.innerHTML = '';
+            routes.forEach(route => {
+                tbody.innerHTML += `
+                        <tr>
+                            <td>${route.routeId}</td>
+                            <td>${route.routeName}</td>
+                            <td>${route.startPoint}</td>
+                            <td>${route.endPoint}</td>
+                            <td>
+                                <button class="btn btn-accent btn-sm" onclick="deleteRoute(${route.routeId})"><i class="fa-solid fa-trash"></i> Delete</button>
+                            </td>
+                        </tr>`;
+            });
+        } catch (error) { console.error('Error loading routes:', error); }
+    }
+
+    document.getElementById('routeForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newRoute = {
+            routeName: document.getElementById('routeName').value,
+            startPoint: document.getElementById('startPoint').value,
+            endPoint: document.getElementById('endPoint').value
+        };
+        try {
+            const response = await fetch(`${API_BASE}/routes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newRoute)
+            });
+            if (response.ok) {
+                alert('Route added successfully!');
+                document.getElementById('routeForm').reset();
+                loadRoutes();
+            } else { alert('Error adding route. Check if duplicate.'); }
+        } catch (error) { console.error('Error:', error); }
+    });
+
+    async function deleteRoute(id) {
+        if (!confirm('Are you sure you want to delete this route?')) return;
+        try {
+            await fetch(`${API_BASE}/routes/${id}`, { method: 'DELETE' });
+            loadRoutes();
+        } catch (error) { console.error('Error deleting route:', error); }
+    }
+
+    // 3. TRIPS
+    async function loadTrips() {
+        try {
+            // 1. Fetch all trips
+            const response = await fetch(`${API_BASE}/trips`);
+            const trips = await response.json();
+
+            // 2. Fetch locations to convert IDs to names
+            const locRes = await fetch(`${API_BASE}/locations`);
+            const locations = await locRes.json();
+
+            // 3. Build a lookup map: { 1: "SLIIT Malabe", 2: "Kaduwela", ... }
+            const locMap = {};
+            locations.forEach(l => locMap[l.locationId] = l.locationName);
+
+            // 4. Render the table
+            const tbody = document.getElementById('tripsTableBody');
+            tbody.innerHTML = '';
+
+            if (trips.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color: #8E9A98;">No trips scheduled yet.</td></tr>';
+                return;
+            }
+
+            trips.forEach(trip => {
+                // Choose badge color based on status
+                let badgeClass = 'badge-scheduled';
+                if (trip.status === 'Cancelled') badgeClass = 'badge-cancelled';
+                if (trip.status === 'Completed') badgeClass = 'badge-completed';
+
+                // Action button (only allowed if Scheduled)
+                const actionBtn = trip.status === 'Scheduled'
+                    ? `<button class="btn btn-accent btn-sm" onclick="cancelTrip(${trip.tripId})"><i class="fa-solid fa-ban"></i> Cancel</button>`
+                    : `<button class="btn btn-outline btn-sm" disabled>No Action</button>`;
+
+                // Convert IDs to Location Names
+                const pickupName = locMap[trip.pickupLocationId] || `ID ${trip.pickupLocationId}`;
+                const dropName = locMap[trip.dropLocationId] || `ID ${trip.dropLocationId}`;
+
+                tbody.innerHTML += `
+                <tr>
+                    <td>${trip.tripId}</td>
+                    <td>${trip.tripDate}</td>
+                    <td>${trip.startTime}</td>
+                    <td>${pickupName} → ${dropName}</td>
+                    <td><span class="badge ${badgeClass}">${trip.status}</span></td>
+                    <td>${actionBtn}</td>
+                </tr>`;
+            });
+        } catch (error) {
+            console.error('Error loading trips:', error);
+        }
+    }
+
+    document.getElementById('tripForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const pickupId = parseInt(document.getElementById('pickupLocation').value);
+        const dropId = parseInt(document.getElementById('dropLocation').value);
+
+        // Validation: pickup and drop cannot be the same
+        if (!pickupId || !dropId) {
+            alert('Please select both pickup and drop locations.');
+            return;
+        }
+        if (pickupId === dropId) {
+            alert('❌ Pickup and Drop locations cannot be the same!');
+            return;
+        }
+
+        const newTrip = {
+            tripDate: document.getElementById('tripDate').value,
+            startTime: document.getElementById('startTime').value + ':00',
+            pickupLocationId: pickupId,
+            dropLocationId: dropId
+        };
+
+        try {
+            const response = await fetch(`${API_BASE}/trips`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newTrip)
+            });
+            if (response.ok) {
+                alert('✅ Trip scheduled successfully!');
+                document.getElementById('tripForm').reset();
+                loadTrips();
+            } else {
+                alert('Failed to schedule trip.');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+
+    async function cancelTrip(id) {
+        const reason = prompt("Enter cancellation reason:");
+        if (reason === null) return;
+        try {
+            await fetch(`${API_BASE}/trips/${id}/cancel?reason=${encodeURIComponent(reason)}`, { method: 'PUT' });
+            alert('Trip Cancelled!');
+            loadTrips();
+        } catch (error) { console.error('Error cancelling trip:', error); }
+    }
+
+    // 4. DRIVER TRACKING WITH LIVE MAP
+    // ==========================================
+
+    let map = null;
+    let mapMarkers = {};
+    let mapPolylines = {};
+    let trackingInterval = null;
+
+    // Initialize the Leaflet map
+    function initMap() {
+        if (map) return; // Already initialized
+
+        // Center on Sri Lanka
+        map = L.map('map').setView([6.9271, 79.8612], 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Add a legend
+        const legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function () {
+            const div = L.DomUtil.create('div', 'map-legend');
+            div.innerHTML = `
+            <div style="font-weight:600; margin-bottom:6px; color:#35627A;">Map Legend</div>
+            <div><span style="display:inline-block; width:12px; height:12px; background:#35627A; border-radius:50%; margin-right:6px;"></span> Active Trip</div>
+            <div><span style="display:inline-block; width:12px; height:12px; background:#137333; border-radius:50%; margin-right:6px;"></span> Completed Trip</div>
+            <div><span style="display:inline-block; width:12px; height:12px; background:#B46258; border-radius:50%; margin-right:6px;"></span> Cancelled Trip</div>
+            <div style="margin-top:6px; border-top:1px solid #eee; padding-top:6px;">
+                <span style="display:inline-block; width:20px; height:0; border-top:3px dashed #35627A; margin-right:6px; vertical-align:middle;"></span> Location Trail (Active)
+            </div>
+            <div>
+                <span style="display:inline-block; width:20px; height:0; border-top:3px solid #137333; margin-right:6px; vertical-align:middle;"></span> Location Trail (Completed)
+            </div>
+            <div>
+                <span style="display:inline-block; width:20px; height:0; border-top:3px solid #B46258; margin-right:6px; vertical-align:middle;"></span> Location Trail (Cancelled)
+            </div>
+        `;
+            return div;
+        };
+        legend.addTo(map);
+    }
+
+    async function loadTrackingData() {
+        try {
+            // 1. Ensure map is initialized
+            initMap();
+
+            // 2. Fetch all trips
+            const tripsRes = await fetch(`${API_BASE}/trips`);
+            const trips = await tripsRes.json();
+
+            // 3. Fetch all locations for name lookup
+            const locRes = await fetch(`${API_BASE}/locations`);
+            const locations = await locRes.json();
+            const locMap = {};
+            locations.forEach(l => locMap[l.locationId] = l.locationName);
+
+            // 4. Filter only scheduled + completed trips (skip cancelled)
+            // Include cancelled trips too, but only if they have location history
+            const activeTrips = trips.filter(t =>
+                t.status === 'Scheduled' || t.status === 'Completed' || t.status === 'Cancelled'
+            );
+
+            // Update badge
+            const activeCount = trips.filter(t => t.status === 'Scheduled').length;
+            const cancelledCount = trips.filter(t => t.status === 'Cancelled').length;
+            const completedCount = trips.filter(t => t.status === 'Completed').length;
+            document.getElementById('activeTripsBadge').innerText =
+                `${activeCount} Active • ${completedCount} Completed • ${cancelledCount} Cancelled`;
+
+            // 5. Render table rows
+            const tbody = document.getElementById('trackingTableBody');
+            tbody.innerHTML = '';
+
+            if (activeTrips.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#8E9A98;">No active trips to track.</td></tr>';
+                return;
+            }
+
+            // 6. Clear existing markers/lines from map
+            Object.values(mapMarkers).forEach(m => map.removeLayer(m));
+            Object.values(mapPolylines).forEach(p => map.removeLayer(p));
+            mapMarkers = {};
+            mapPolylines = {};
+
+            const bounds = [];
+
+            for (const trip of activeTrips) {
+                // Fetch location history for this trip
+                const locHistRes = await fetch(`${API_BASE}/trips/${trip.tripId}/locations`);
+                const locHistory = await locHistRes.json();
+
+                const pickupName = locMap[trip.pickupLocationId] || `ID ${trip.pickupLocationId}`;
+                const dropName = locMap[trip.dropLocationId] || `ID ${trip.dropLocationId}`;
+
+                // Determine latest known location
+                let latestLat = null, latestLng = null, latestTime = 'No updates yet';
+                let progressPercent = 0;
+
+                if (locHistory.length > 0) {
+                    const latest = locHistory[locHistory.length - 1];
+                    latestLat = latest.latitude;
+                    latestLng = latest.longitude;
+                    latestTime = new Date(latest.recordedAt).toLocaleTimeString();
+                }
+
+                // Calculate progress based on number of updates (simple heuristic)
+                if (trip.status === 'Completed') {
+                    progressPercent = 100;
+                } else if (locHistory.length > 0) {
+                    progressPercent = Math.min(20 + (locHistory.length * 20), 95);
+                }
+
+                // Determine ETA text
+                let etaText = '--:--';
+                if (trip.eta) {
+                    // trip.eta comes as "HH:mm:ss" — trim to HH:mm
+                    etaText = trip.eta.substring(0, 5);
+
+                    // Show if it's approaching now
+                    if (trip.status === 'Completed') {
+                        etaText = '✅ Arrived';
+                    } else if (trip.status === 'Cancelled') {
+                        etaText = '❌ Cancelled';
+                    }
+                }
+
+                // Determine status badge
+                let badgeClass = 'badge-scheduled';
+                let statusText = 'On Route';
+                if (trip.status === 'Completed') { badgeClass = 'badge-completed'; statusText = 'Completed'; }
+                if (trip.status === 'Cancelled') { badgeClass = 'badge-cancelled'; statusText = 'Cancelled'; }
+
+                // Build action buttons
+                let actions = '';
+                if (trip.status === 'Scheduled') {
+                    actions = `
+                        <button class="btn btn-outline btn-sm" onclick="updateLocation(${trip.tripId})">
+                            <i class="fa-solid fa-location-crosshairs"></i> Update GPS
+                        </button>
+                        <button class="btn btn-primary btn-sm" onclick="completeTrip(${trip.tripId})">
+                            <i class="fa-solid fa-flag-checkered"></i> Complete
+                        </button>`;
+                } else if (trip.status === 'Cancelled') {
+                    actions = `<button class="btn btn-outline btn-sm" disabled style="color:#B46258;"><i class="fa-solid fa-ban"></i> Cancelled</button>`;
+                } else {
+                    actions = `<button class="btn btn-outline btn-sm" disabled><i class="fa-solid fa-check"></i> Done</button>`;
+                }
+
+                tbody.innerHTML += `
+                <tr>
+                    <td>#${trip.tripId}</td>
+                    <td>${pickupName} → ${dropName}</td>
+                    <td>Auto-assigned</td>
+                    <td>${latestLat ? `${latestLat.toFixed(4)}, ${latestLng.toFixed(4)}` : 'No GPS data'}</td>
+                    <td>${etaText}</td>
+                    <td><span class="badge ${badgeClass}">${statusText}</span></td>
+                    <td>${actions}</td>
+                </tr>`;
+
+                // 7. Add markers to map
+                if (latestLat && latestLng) {
+                    let markerClass = 'trip-marker-active';
+                    if (trip.status === 'Completed') markerClass = 'trip-marker-complete';
+                    if (trip.status === 'Cancelled') markerClass = 'trip-marker-cancelled';
+                    const markerIcon = L.divIcon({
+                        className: markerClass,
+                        iconSize: [18, 18],
+                        iconAnchor: [9, 9]
+                    });
+
+                    // Main current location marker
+                    const marker = L.marker([latestLat, latestLng], { icon: markerIcon })
+                        .bindPopup(`
+                        <b>Trip #${trip.tripId}</b><br>
+                        ${pickupName} → ${dropName}<br>
+                        <b>Status:</b> ${statusText}<br>
+                        <b>Last update:</b> ${latestTime}<br>
+                        <b>ETA:</b> ${etaText}
+                    `)
+                        .addTo(map);
+
+                    mapMarkers[trip.tripId] = marker;
+                    bounds.push([latestLat, latestLng]);
+
+                    // Draw the route path (history of all location updates)
+                    if (locHistory.length > 1) {
+                        const pathCoords = locHistory.map(u => [u.latitude, u.longitude]);
+
+                        let lineColor = '#35627A';   // Active - blue
+                        let dashPattern = '5, 8';    // Dashed for active
+                        if (trip.status === 'Completed') { lineColor = '#137333'; dashPattern = null; } // Solid green
+                        if (trip.status === 'Cancelled') { lineColor = '#B46258'; dashPattern = null; } // Solid red
+
+                        const polyline = L.polyline(pathCoords, {
+                            color: lineColor,
+                            weight: 3,
+                            opacity: 0.8,
+                            dashArray: dashPattern
+                        }).addTo(map);
+                        mapPolylines[trip.tripId] = polyline;
+                    }
+                }
+            }
+
+            // 8. Fit map to show all markers
+            if (bounds.length > 0) {
+                map.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
+            }
+
+        } catch (error) {
+            console.error('Error loading tracking data:', error);
+        }
+    }
+
+    // Simulate a GPS update (in real life, this comes from the driver's phone)
+    async function updateLocation(id) {
+        try {
+            // Get the trip details to know pickup & drop locations
+            const tripRes = await fetch(`${API_BASE}/trips/${id}`);
+            const trip = await tripRes.json();
+
+            // Get all locations for coordinate lookup
+            const locRes = await fetch(`${API_BASE}/locations`);
+            const locations = await locRes.json();
+
+            const pickup = locations.find(l => l.locationId === trip.pickupLocationId);
+            const drop = locations.find(l => l.locationId === trip.dropLocationId);
+
+            if (!pickup || !drop) {
+                alert('Location data missing for this trip.');
+                return;
+            }
+
+            // Get existing location history to interpolate position
+            const histRes = await fetch(`${API_BASE}/trips/${id}/locations`);
+            const history = await histRes.json();
+
+            // Calculate progress: (existingUpdates / totalUpdates) — e.g., 10 updates = trip complete
+            const totalSteps = 10;
+            const currentStep = Math.min(history.length, totalSteps);
+            const progress = currentStep / totalSteps;
+
+            // Interpolate between pickup and drop coordinates
+            const lat = pickup.latitude + (drop.latitude - pickup.latitude) * progress;
+            const lng = pickup.longitude + (drop.longitude - pickup.longitude) * progress;
+
+            // Send the update
+            const response = await fetch(`${API_BASE}/trips/${id}/location?lat=${lat.toFixed(6)}&lng=${lng.toFixed(6)}`, {
+                method: 'POST'
+            });
+
+            if (response.ok) {
+                // If we've reached the drop location, auto-complete the trip
+                if (progress >= 1) {
+                    await fetch(`${API_BASE}/trips/${id}/complete`, { method: 'PUT' });
+                    alert('🚌 Trip reached destination — marked as Completed!');
+                }
+                loadTrackingData();
+            }
+        } catch (error) {
+            console.error('Error updating location:', error);
+        }
+    }
+
+    async function completeTrip(id) {
+        if (!confirm('Mark this trip as completed?')) return;
+        try {
+            const response = await fetch(`${API_BASE}/trips/${id}/complete`, { method: 'PUT' });
+            if (response.ok) {
+                alert('✅ Trip marked as completed!');
+                loadTrackingData();
+            }
+        } catch (error) {
+            console.error('Error completing trip:', error);
+        }
+    }
+
+    // Start auto-refresh when the tracking tab is opened
+    function startTrackingAutoRefresh() {
+        if (trackingInterval) clearInterval(trackingInterval);
+        trackingInterval = setInterval(() => {
+            // Only refresh if tracking tab is visible
+            if (document.getElementById('tracking').classList.contains('active')) {
+                loadTrackingData();
+            }
+        }, 10000); // Every 10 seconds
+    }
+
+
+    // 5. PAYMENTS
+    async function loadPayments() {
+        try {
+            const response = await fetch(`${API_BASE}/payments`);
+            const payments = await response.json();
+            const tbody = document.getElementById('paymentsTableBody');
+            tbody.innerHTML = '';
+
+            if (payments.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#8E9A98;">No payment records found.</td></tr>';
+                return;
+            }
+
+            payments.forEach(payment => {
+                const badgeClass = payment.status === 'Cancelled' ? 'badge-cancelled' : 'badge-completed';
+                const actionBtn = payment.status === 'Completed'
+                    ? `<button class="btn btn-accent btn-sm" onclick="cancelPayment(${payment.paymentId})"><i class="fa-solid fa-xmark"></i> Cancel</button>`
+                    : `<button class="btn btn-outline btn-sm" disabled><i class="fa-solid fa-check"></i> Cancelled</button>`;
+
+                tbody.innerHTML += `
+                <tr>
+                    <td>${payment.paymentId}</td>
+                    <td>${payment.studentId}</td>
+                    <td>LKR ${Number(payment.amount).toFixed(2)}</td>
+                    <td><span class="badge ${badgeClass}">${payment.status}</span></td>
+                    <td>${actionBtn}</td>
+                </tr>`;
+            });
+        } catch (error) {
+            console.error('Error loading payments:', error);
+        }
+    }
+
+    // NEW: Load Payment Cancellation History
+    async function loadPaymentCancellations() {
+        try {
+            const response = await fetch(`${API_BASE}/payment-cancellations`);
+            const cancellations = await response.json();
+            const tbody = document.getElementById('cancellationsTableBody');
+            const badge = document.getElementById('cancelCountBadge');
+
+            tbody.innerHTML = '';
+            badge.innerText = `${cancellations.length} Cancellation${cancellations.length !== 1 ? 's' : ''}`;
+
+            if (cancellations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#8E9A98;">No payment cancellations yet.</td></tr>';
+                return;
+            }
+
+            cancellations.forEach(c => {
+                // Format date nicely
+                const dateStr = c.cancelledAt
+                    ? new Date(c.cancelledAt).toLocaleString()
+                    : '-';
+
+                tbody.innerHTML += `
+                <tr>
+                    <td>${c.cancellationId}</td>
+                    <td>${c.paymentId}</td>
+                    <td>${c.reason || 'No reason provided'}</td>
+                    <td>${dateStr}</td>
+                </tr>`;
+            });
+        } catch (error) {
+            console.error('Error loading payment cancellations:', error);
+        }
+    }
+
+    async function cancelPayment(id) {
+        const reason = prompt("Enter payment cancellation reason:");
+        if (reason === null) return;
+        if (reason.trim() === '') {
+            alert('Please provide a reason for cancellation.');
+            return;
+        }
+        try {
+            const response = await fetch(`${API_BASE}/payments/${id}/cancel?reason=${encodeURIComponent(reason)}`, {
+                method: 'PUT'
+            });
+            if (response.ok) {
+                alert('✅ Payment cancelled successfully!');
+                loadPayments();
+                loadPaymentCancellations();  // ← Refresh the cancellation history
+            } else {
+                alert('Failed to cancel payment.');
+            }
+        } catch (error) {
+            console.error('Error cancelling payment:', error);
+        }
+    }
+
+    // ==========================================
+    // DASHBOARD - MINI MAP + STATS
+    // ==========================================
+
+    let miniMap = null;
+    let miniMapMarkers = [];
+
+    function initMiniMap() {
+        if (miniMap) return;
+
+        miniMap = L.map('miniMap', {
+            zoomControl: true,
+            scrollWheelZoom: false,  // Prevent accidental zoom on scroll
+            attributionControl: true
+        }).setView([6.9271, 79.8612], 8);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap',
+            maxZoom: 19
+        }).addTo(miniMap);
+    }
+
+    async function loadDashboardData() {
+        try {
+            // Ensure mini map is initialized
+            initMiniMap();
+
+            // Fetch all data
+            const [tripsRes, locRes] = await Promise.all([
+                fetch(`${API_BASE}/trips`),
+                fetch(`${API_BASE}/locations`)
+            ]);
+            const trips = await tripsRes.json();
+            const locations = await locRes.json();
+
+            // Build location lookup map
+            const locMap = {};
+            locations.forEach(l => locMap[l.locationId] = l.locationName);
+
+            // Calculate stats
+            const total = trips.length;
+            const active = trips.filter(t => t.status === 'Scheduled').length;
+            const completed = trips.filter(t => t.status === 'Completed').length;
+            const cancelled = trips.filter(t => t.status === 'Cancelled').length;
+
+            // Update stat cards
+            document.getElementById('statTotalTrips').innerText = total;
+            document.getElementById('statActive').innerText = active;
+            document.getElementById('statCompleted').innerText = completed;
+            document.getElementById('statCancelled').innerText = cancelled;
+
+            // Clear old markers
+            miniMapMarkers.forEach(m => miniMap.removeLayer(m));
+            miniMapMarkers = [];
+
+            // Add markers for each trip with location data
+            const bounds = [];
+
+            for (const trip of trips) {
+                const locHistRes = await fetch(`${API_BASE}/trips/${trip.tripId}/locations`);
+                const locHistory = await locHistRes.json();
+
+                if (locHistory.length === 0) continue;
+
+                const latest = locHistory[locHistory.length - 1];
+
+                let markerClass = 'trip-marker-active';
+                if (trip.status === 'Completed') markerClass = 'trip-marker-complete';
+                if (trip.status === 'Cancelled') markerClass = 'trip-marker-cancelled';
+
+                const markerIcon = L.divIcon({
+                    className: markerClass,
+                    iconSize: [14, 14],
+                    iconAnchor: [7, 7]
+                });
+
+                const pickupName = locMap[trip.pickupLocationId] || `ID ${trip.pickupLocationId}`;
+                const dropName = locMap[trip.dropLocationId] || `ID ${trip.dropLocationId}`;
+
+                const marker = L.marker([latest.latitude, latest.longitude], { icon: markerIcon })
+                    .bindPopup(`<b>Trip #${trip.tripId}</b><br>${pickupName} → ${dropName}<br><b>Status:</b> ${trip.status}`)
+                    .addTo(miniMap);
+
+                miniMapMarkers.push(marker);
+                bounds.push([latest.latitude, latest.longitude]);
+            }
+
+            // Fit bounds to show all markers
+            if (bounds.length > 0) {
+                miniMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 11 });
+            }
+
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
+        }
+    }
+
+    // Navigation helpers for Quick Actions
+    function goToTrackingTab() {
+        // Find the "Driver Tracking" nav item and click it
+        const trackingNav = [...document.querySelectorAll('.nav-links li')]
+            .find(li => li.innerText.includes('Driver Tracking'));
+        if (trackingNav) trackingNav.click();
+    }
+
+    function goToTripsTab() {
+        const tripsNav = [...document.querySelectorAll('.nav-links li')]
+            .find(li => li.innerText.includes('Schedule Trips'));
+        if (tripsNav) tripsNav.click();
+    }
+
+    function goToRoutesTab() {
+        const routesNav = [...document.querySelectorAll('.nav-links li')]
+            .find(li => li.innerText.includes('Manage Routes'));
+        if (routesNav) routesNav.click();
+    }
+
+    function goToPaymentsTab() {
+        const paymentsNav = [...document.querySelectorAll('.nav-links li')]
+            .find(li => li.innerText.includes('Payments'));
+        if (paymentsNav) paymentsNav.click();
+    }
+
+    // Initialize Dashboard on load
+    loadDashboardData();
+
+    // Auto-refresh the dashboard every 15 seconds (only when dashboard tab is visible)
+    setInterval(() => {
+        if (document.getElementById('dashboard').classList.contains('active')) {
+            loadDashboardData();
+        }
+    }, 15000);
 </script>
 </body>
 </html>

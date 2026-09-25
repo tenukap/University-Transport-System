@@ -10,12 +10,18 @@ import java.time.LocalDateTime;
 public class LocationUpdate {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "LocationUpdateId")
     private int locationUpdateId;
 
-    @Column(name = "trip_id")
+    @Column(name = "TripId")
     private int tripId;
 
+    @Column(name = "Latitude")
     private double latitude;
+
+    @Column(name = "Longitude")
     private double longitude;
+
+    @Column(name = "RecordedAt")
     private LocalDateTime recordedAt;
 }

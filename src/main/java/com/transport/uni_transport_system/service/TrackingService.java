@@ -1,10 +1,13 @@
 package com.transport.uni_transport_system.service;
 
 import com.transport.uni_transport_system.entity.BusTrip;
+import com.transport.uni_transport_system.entity.LocationUpdate;
 import com.transport.uni_transport_system.repository.BusTripRepository;
 import com.transport.uni_transport_system.repository.LocationUpdateRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
 
 @Service
 public class TrackingService {

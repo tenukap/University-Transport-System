@@ -11,11 +11,15 @@ import java.time.LocalDateTime;
 public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "PaymentId")
     private int paymentId;
 
+    @Column(name = "StudentId")
     private int studentId;
+
+    @Column(name = "Amount")
     private BigDecimal amount;
-    private String status; // "Completed", "Cancelled"
+
+    @Column(name = "Status")
+    private String status;
 }
-
-
