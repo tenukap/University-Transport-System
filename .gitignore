@@ -10,3 +10,26 @@ Thumbs.db
 *.jar
 !backend/.mvn/wrapper/maven-wrapper.jar
 node_modules/
+
+### Additional IDE and local development exclusions ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+*.iws
+*.ipr
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+
+### Local credentials and temporary previews ###
+.env
+.env.local
+.env.*.local
+/target-preview/
