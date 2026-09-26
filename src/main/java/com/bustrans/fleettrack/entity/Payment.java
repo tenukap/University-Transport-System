@@ -1,6 +1,7 @@
 package com.bustrans.fleettrack.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.Nationalized;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -24,7 +25,8 @@ public class Payment {
     @Column(name = "payment_date", nullable = false)
     private LocalDate paymentDate;
 
-    @Column(name = "payment_status", nullable = false)
+    @Nationalized
+    @Column(name = "payment_status", nullable = false, length = 50)
     private String paymentStatus;
 
     public Payment() {
