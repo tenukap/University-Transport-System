@@ -225,6 +225,83 @@
             color: var(--primary);
         }
 
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-box {
+            background: var(--surface);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 520px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease;
+            overflow: hidden;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #E0E0E0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 18px;
+            color: var(--primary);
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #F0F0F0;
+            color: var(--accent-1);
+        }
+
+        .modal-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #E0E0E0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
     </style>
 </head>
 <body>
@@ -581,6 +658,30 @@
     </div>
 </main>
 
+<!-- ==========================================
+     EDIT MODAL (Generic — reused for all entities)
+     ========================================== -->
+<div id="editModal" class="modal-overlay" style="display: none;">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="editModalTitle">Edit Item</h3>
+            <button class="modal-close" onclick="closeEditModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body" id="editModalBody">
+            <!-- Form fields injected dynamically -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeEditModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="saveEdit()">
+                <i class="fa-solid fa-save"></i> Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+
 <script>
     // Base URL for your Spring Boot Backend
     const API_BASE = 'http://localhost:8080/api';
@@ -670,6 +771,9 @@
                         <td>${loc.latitude ?? '-'}</td>
                         <td>${loc.longitude ?? '-'}</td>
                         <td>
+                            <button class="btn btn-outline btn-sm" onclick='openEditModal("location", ${JSON.stringify(loc)})'>
+                                <i class="fa-solid fa-pen"></i> Edit
+                            </button>
                             <button class="btn btn-accent btn-sm" onclick="deleteLocation(${loc.locationId})">
                                 <i class="fa-solid fa-trash"></i> Delete
                             </button>
@@ -740,15 +844,20 @@
             tbody.innerHTML = '';
             routes.forEach(route => {
                 tbody.innerHTML += `
-                        <tr>
-                            <td>${route.routeId}</td>
-                            <td>${route.routeName}</td>
-                            <td>${route.startPoint}</td>
-                            <td>${route.endPoint}</td>
-                            <td>
-                                <button class="btn btn-accent btn-sm" onclick="deleteRoute(${route.routeId})"><i class="fa-solid fa-trash"></i> Delete</button>
-                            </td>
-                        </tr>`;
+        <tr>
+            <td>${route.routeId}</td>
+            <td>${route.routeName}</td>
+            <td>${route.startPoint}</td>
+            <td>${route.endPoint}</td>
+            <td>
+                <button class="btn btn-outline btn-sm" onclick='openEditModal("route", ${JSON.stringify(route)})'>
+                    <i class="fa-solid fa-pen"></i> Edit
+                </button>
+                <button class="btn btn-accent btn-sm" onclick="deleteRoute(${route.routeId})">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+            </td>
+        </tr>`;
             });
         } catch (error) { console.error('Error loading routes:', error); }
     }
@@ -812,10 +921,18 @@
                 if (trip.status === 'Cancelled') badgeClass = 'badge-cancelled';
                 if (trip.status === 'Completed') badgeClass = 'badge-completed';
 
-                // Action button (only allowed if Scheduled)
-                const actionBtn = trip.status === 'Scheduled'
-                    ? `<button class="btn btn-accent btn-sm" onclick="cancelTrip(${trip.tripId})"><i class="fa-solid fa-ban"></i> Cancel</button>`
-                    : `<button class="btn btn-outline btn-sm" disabled>No Action</button>`;
+                // Edit button (always available)
+                const editBtn = `<button class="btn btn-outline btn-sm" onclick='openEditModal("trip", ${JSON.stringify(trip)})'>
+                <i class="fa-solid fa-pen"></i> Edit
+            </button>`;
+
+                // Cancel button (only for scheduled trips)
+                let cancelBtn = '';
+                if (trip.status === 'Scheduled') {
+                    cancelBtn = `<button class="btn btn-accent btn-sm" onclick="cancelTrip(${trip.tripId})">
+                    <i class="fa-solid fa-ban"></i> Cancel
+                </button>`;
+                }
 
                 // Convert IDs to Location Names
                 const pickupName = locMap[trip.pickupLocationId] || `ID ${trip.pickupLocationId}`;
@@ -828,7 +945,7 @@
                     <td>${trip.startTime}</td>
                     <td>${pickupName} → ${dropName}</td>
                     <td><span class="badge ${badgeClass}">${trip.status}</span></td>
-                    <td>${actionBtn}</td>
+                    <td>${editBtn} ${cancelBtn}</td>
                 </tr>`;
             });
         } catch (error) {
@@ -1392,6 +1509,144 @@
             .find(li => li.innerText.includes('Payments'));
         if (paymentsNav) paymentsNav.click();
     }
+
+    // ==========================================
+    // GENERIC EDIT MODAL SYSTEM
+    // ==========================================
+
+    let currentEditType = null;
+    let currentEditId = null;
+
+    function openEditModal(type, data) {
+        currentEditType = type;
+        currentEditId = data.routeId || data.tripId || data.locationId;
+
+        const modal = document.getElementById('editModal');
+        const title = document.getElementById('editModalTitle');
+        const body = document.getElementById('editModalBody');
+
+        if (type === 'route') {
+            title.innerText = `Edit Route #${data.routeId}`;
+            body.innerHTML = `
+            <div class="form-group">
+                <label>Route Name</label>
+                <input type="text" id="editField1" value="${data.routeName || ''}">
+            </div>
+            <div class="form-group">
+                <label>Start Point</label>
+                <input type="text" id="editField2" value="${data.startPoint || ''}">
+            </div>
+            <div class="form-group">
+                <label>End Point</label>
+                <input type="text" id="editField3" value="${data.endPoint || ''}">
+            </div>
+        `;
+        } else if (type === 'trip') {
+            title.innerText = `Edit Trip #${data.tripId}`;
+            body.innerHTML = `
+            <div class="form-group">
+                <label>Trip Date</label>
+                <input type="date" id="editField1" value="${data.tripDate || ''}">
+            </div>
+            <div class="form-group">
+                <label>Start Time</label>
+                <input type="time" id="editField2" value="${(data.startTime || '').substring(0, 5)}">
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <select id="editField3">
+                    <option value="Scheduled" ${data.status === 'Scheduled' ? 'selected' : ''}>Scheduled</option>
+                    <option value="Completed" ${data.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                    <option value="Cancelled" ${data.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                </select>
+            </div>
+        `;
+        } else if (type === 'location') {
+            title.innerText = `Edit Location #${data.locationId}`;
+            body.innerHTML = `
+            <div class="form-group">
+                <label>Location Name</label>
+                <input type="text" id="editField1" value="${data.locationName || ''}">
+            </div>
+            <div class="form-group">
+                <label>Latitude</label>
+                <input type="number" step="0.00000001" id="editField2" value="${data.latitude || ''}">
+            </div>
+            <div class="form-group">
+                <label>Longitude</label>
+                <input type="number" step="0.00000001" id="editField3" value="${data.longitude || ''}">
+            </div>
+        `;
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+        currentEditType = null;
+        currentEditId = null;
+    }
+
+    async function saveEdit() {
+        if (!currentEditType || !currentEditId) return;
+
+        let endpoint = '';
+        let payload = {};
+
+        if (currentEditType === 'route') {
+            endpoint = `/routes/${currentEditId}`;
+            payload = {
+                routeId: currentEditId,
+                routeName: document.getElementById('editField1').value,
+                startPoint: document.getElementById('editField2').value,
+                endPoint: document.getElementById('editField3').value
+            };
+        } else if (currentEditType === 'trip') {
+            endpoint = `/trips/${currentEditId}`;
+            payload = {
+                tripId: currentEditId,
+                tripDate: document.getElementById('editField1').value,
+                startTime: document.getElementById('editField2').value + ':00',
+                status: document.getElementById('editField3').value
+            };
+        } else if (currentEditType === 'location') {
+            endpoint = `/locations/${currentEditId}`;
+            payload = {
+                locationId: currentEditId,
+                locationName: document.getElementById('editField1').value,
+                latitude: parseFloat(document.getElementById('editField2').value),
+                longitude: parseFloat(document.getElementById('editField3').value)
+            };
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}${endpoint}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                alert('✅ Updated successfully!');
+                const type = currentEditType;
+                closeEditModal();
+                if (type === 'route') loadRoutes();
+                if (type === 'trip') loadTrips();
+                if (type === 'location') loadLocations();
+            } else {
+                alert('Failed to update. Check console.');
+            }
+        } catch (error) {
+            console.error('Error saving edit:', error);
+        }
+    }
+
+    // Close modal on outside click
+    document.getElementById('editModal').addEventListener('click', (e) => {
+        if (e.target.id === 'editModal') closeEditModal();
+    });
+
 
     // Initialize Dashboard on load
     loadDashboardData();

@@ -49,6 +49,22 @@ public class TripService {
         return trip;
     }
 
+    // UPDATE a trip
+    public BusTrip updateTrip(int id, BusTrip updatedTrip) {
+        BusTrip existing = tripRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Trip not found: " + id));
+
+        existing.setTripDate(updatedTrip.getTripDate());
+        existing.setStartTime(updatedTrip.getStartTime());
+        existing.setEta(updatedTrip.getEta());
+        existing.setPickupLocationId(updatedTrip.getPickupLocationId());
+        existing.setDropLocationId(updatedTrip.getDropLocationId());
+        existing.setStatus(updatedTrip.getStatus());
+
+        return tripRepo.save(existing);
+    }
+
+
     // UPDATE Location & ETA (From Driver Progress Sequence Diagram)
     public void updateLocation(int tripId, double lat, double lng) {
         // 1. Save the location update

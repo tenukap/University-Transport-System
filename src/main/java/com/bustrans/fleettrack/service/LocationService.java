@@ -21,6 +21,17 @@ public class LocationService {
         return locationRepo.save(location);
     }
 
+    public Location updateLocation(int id, Location updated) {
+        Location existing = locationRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Location not found: " + id));
+
+        existing.setLocationName(updated.getLocationName());
+        existing.setLatitude(updated.getLatitude());
+        existing.setLongitude(updated.getLongitude());
+
+        return locationRepo.save(existing);
+    }
+
     public void deleteLocation(int id) {
         locationRepo.deleteById(id);
     }

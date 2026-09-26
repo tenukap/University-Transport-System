@@ -56,20 +56,6 @@ public class TransportController {
     }
 
     // --- TRIP MANAGEMENT ---
-    /* @GetMapping("/trips/{id}")
-    public BusTrip getTripById(@PathVariable int id) {
-        return tripService.getTripById(id);
-    }
-
-    @PostMapping("/trips")
-    public BusTrip createTrip(@RequestBody BusTrip trip) {
-        return routeService.scheduleTrip(trip);
-    }
-
-    @PutMapping("/trips/{id}/cancel")
-    public BusTrip cancelTrip(@PathVariable int id, @RequestParam String reason) {
-        return tripService.cancelTrip(id, reason);
-    } */
     @GetMapping("/trips")
     public List<BusTrip> getAllTrips() {
         return tripService.getAllTrips();
@@ -152,4 +138,19 @@ public class TransportController {
         locationService.deleteLocation(id);
     }
 
+
+    // ==========================================
+    // UPDATE ENDPOINTS (U in CRUD)
+
+    // UPDATE a Trip
+    @PutMapping("/trips/{id}")
+    public BusTrip updateTrip(@PathVariable int id, @RequestBody BusTrip trip) {
+        return tripService.updateTrip(id, trip);
+    }
+
+    // UPDATE a Location
+    @PutMapping("/locations/{id}")
+    public Location updateLocation(@PathVariable int id, @RequestBody Location location) {
+        return locationService.updateLocation(id, location);
+    }
 }

@@ -40,10 +40,13 @@ public class RouteService {
     }
 
     public BusRoute updateRoute(int id, BusRoute routeDetails) {
-        BusRoute route = routeRepo.findById(id).orElseThrow();
+        BusRoute route = routeRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Route not found: " + id));
+
         route.setRouteName(routeDetails.getRouteName());
         route.setStartPoint(routeDetails.getStartPoint());
         route.setEndPoint(routeDetails.getEndPoint());
+
         return routeRepo.save(route);
     }
 
