@@ -1,10 +1,15 @@
 // My Bookings page (ports MyBookings.jsx).
+// Shows real trip details, marks past trips "Completed", and lets students
+// leave a star rating + comment on a booking once its trip date has passed.
 
-const TABS = ['All', 'Pending', 'Confirmed', 'Cancelled'];
+const TABS = ['All', 'Pending', 'Confirmed', 'Completed', 'Cancelled'];
 
 let bookings = [];
+let feedbackMap = {}; // bookingId (string) -> feedback response
 let activeTab = 'All';
 let selected = null;
+let feedbackFor = null; // booking currently being reviewed
+let feedbackRating = 0;
 
 const tabsEl = document.getElementById('tabs');
 const listEl = document.getElementById('bookings-list');
@@ -27,8 +32,43 @@ function formatDate(dt) {
   return d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+// Trip date arrives as an ISO date string ("2026-09-22"); start time as "HH:mm:ss".
+function formatTripDate(b) {
+  if (!b.tripDate) return 'Date to be confirmed';
+  const d = new Date(`${b.tripDate}T00:00:00`);
+  if (isNaN(d)) return b.tripDate;
+  const datePart = d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  const timePart = b.startTime ? b.startTime.slice(0, 5) : null;
+  return timePart ? `${datePart}, ${timePart}` : datePart;
+}
+
+function routeLabel(b) {
+  return `${b.pickupName || 'Pickup'} → ${b.dropoffName || 'SLIIT'}`;
+}
+
+function tripTitle(b) {
+  return `Trip to ${b.dropoffName || 'SLIIT'}`;
+}
+
+// A booking is "completed" once its trip date is strictly before today
+// (and it wasn't cancelled) — mirrors the backend feedback rule.
+function isPast(b) {
+  if (!b.tripDate || (b.status || '').toUpperCase() === 'CANCELLED') return false;
+  const tripDay = new Date(`${b.tripDate}T00:00:00`);
+  if (isNaN(tripDay)) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return tripDay < today;
+}
+
 function canCancel(status) {
   return ['PENDING', 'CONFIRMED'].includes((status || '').toUpperCase());
+}
+
+function starsDisplay(rating) {
+  let s = '';
+  for (let i = 1; i <= 5; i++) s += `<span class="star${i <= rating ? ' is-filled' : ''}">★</span>`;
+  return `<span class="stars">${s}</span>`;
 }
 
 function renderTabs() {
@@ -41,9 +81,11 @@ function renderTabs() {
 }
 
 function renderList() {
-  const filtered = bookings.filter((b) =>
-    activeTab === 'All' ? true : (b.status || '').toUpperCase() === activeTab.toUpperCase()
-  );
+  const filtered = bookings.filter((b) => {
+    if (activeTab === 'All') return true;
+    if (activeTab === 'Completed') return isPast(b);
+    return (b.status || '').toUpperCase() === activeTab.toUpperCase();
+  });
 
   if (filtered.length === 0) {
     listEl.innerHTML = `
@@ -54,30 +96,49 @@ function renderList() {
     return;
   }
 
-  listEl.innerHTML = filtered.map((b) => `
+  listEl.innerHTML = filtered.map((b) => {
+    const past = isPast(b);
+    const fb = feedbackMap[String(b.id)];
+
+    let feedbackAction = '';
+    if (past && fb) {
+      feedbackAction = `<div class="booking-rating">Your rating: ${starsDisplay(fb.rating)}</div>`;
+    } else if (past) {
+      feedbackAction = `<button class="btn btn--primary" data-feedback="${b.id}">Leave Feedback</button>`;
+    }
+
+    return `
     <div class="booking-card">
       <div class="booking-card__inner">
         <div class="booking-icon">${busIconSvg()}</div>
         <div class="booking-body">
           <div class="booking-row">
-            <span class="booking-title">Trip #${b.tripId}</span>
-            ${badge(b.status)}
+            <span class="booking-title">${tripTitle(b)}</span>
+            <span class="booking-badges">
+              ${badge(b.status)}
+              ${past ? '<span class="badge badge--completed">Completed</span>' : ''}
+            </span>
           </div>
-          <div class="booking-meta">Pickup Location ID: ${b.pickupLocId} → SLIIT</div>
-          <div class="booking-meta--sm">Date booked: ${formatDate(b.createdAt)}</div>
+          <div class="booking-meta">${routeLabel(b)}</div>
+          <div class="booking-meta--sm">${formatTripDate(b)}</div>
           ${b.seatNumber != null ? `<div class="booking-seat">Seat #${b.seatNumber}</div>` : ''}
           <div class="booking-actions">
             <button class="btn btn--outline" data-view="${b.id}">View Details</button>
+            ${feedbackAction}
           </div>
         </div>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   listEl.querySelectorAll('[data-view]').forEach((btn) => {
     btn.addEventListener('click', () => {
       selected = bookings.find((b) => String(b.id) === btn.dataset.view);
       renderModal();
     });
+  });
+  listEl.querySelectorAll('[data-feedback]').forEach((btn) => {
+    btn.addEventListener('click', () => openFeedback(btn.dataset.feedback));
   });
 }
 
@@ -91,19 +152,36 @@ function renderModal() {
     return;
   }
 
+  const past = isPast(selected);
+  const fb = feedbackMap[String(selected.id)];
+
+  let feedbackSection = '';
+  if (past && fb) {
+    feedbackSection = `
+      <div class="feedback-summary">
+        <div class="detail-row"><span class="detail-row__label">Your rating</span>${starsDisplay(fb.rating)}</div>
+        ${fb.comment && fb.comment !== '(no comment)' ? `<p class="feedback-comment">“${fb.comment}”</p>` : ''}
+      </div>`;
+  } else if (past) {
+    feedbackSection = `<button class="btn btn--primary btn--block" id="modal-feedback-btn">Leave Feedback</button>`;
+  }
+
   modalRoot.innerHTML = `
     <div class="modal-overlay" id="modal-overlay">
       <div class="modal" id="modal-box">
         <button class="modal__close" id="modal-close" aria-label="Close">✕</button>
-        <h2 class="modal__title">Booking #${selected.id}</h2>
+        <h2 class="modal__title">${tripTitle(selected)}</h2>
         <div class="modal__rows">
-          ${detailRow('Trip ID', `#${selected.tripId}`)}
-          <div class="detail-row"><span class="detail-row__label">Status</span>${badge(selected.status)}</div>
-          ${detailRow('Pickup Location ID', selected.pickupLocId)}
-          ${detailRow('Dropoff Location ID', selected.dropoffLocId)}
+          ${detailRow('Booking', `#${selected.id}`)}
+          <div class="detail-row"><span class="detail-row__label">Status</span>
+            <span class="booking-badges">${badge(selected.status)}${past ? '<span class="badge badge--completed">Completed</span>' : ''}</span>
+          </div>
+          ${detailRow('Route', routeLabel(selected))}
+          ${detailRow('Trip Date', formatTripDate(selected))}
           ${detailRow('Date Booked', formatDate(selected.createdAt))}
           ${detailRow('Seat Number', selected.seatNumber != null ? `#${selected.seatNumber}` : 'Not assigned')}
         </div>
+        ${feedbackSection}
         ${canCancel(selected.status)
           ? `<button class="btn btn--danger btn--block" id="cancel-booking-btn">Cancel Booking</button>`
           : ''}
@@ -117,6 +195,84 @@ function renderModal() {
 
   const cancelBtn = document.getElementById('cancel-booking-btn');
   if (cancelBtn) cancelBtn.addEventListener('click', handleCancel);
+
+  const fbBtn = document.getElementById('modal-feedback-btn');
+  if (fbBtn) fbBtn.addEventListener('click', () => { const b = selected; selected = null; renderModal(); openFeedback(b.id); });
+}
+
+function openFeedback(bookingId) {
+  feedbackFor = bookings.find((b) => String(b.id) === String(bookingId));
+  feedbackRating = 0;
+  renderFeedbackModal();
+}
+
+function renderFeedbackModal() {
+  if (!feedbackFor) {
+    modalRoot.innerHTML = '';
+    return;
+  }
+  const b = feedbackFor;
+
+  modalRoot.innerHTML = `
+    <div class="modal-overlay" id="fb-overlay">
+      <div class="modal" id="fb-box">
+        <button class="modal__close" id="fb-close" aria-label="Close">✕</button>
+        <h2 class="modal__title">Rate your trip</h2>
+        <p class="booking-meta">${tripTitle(b)} — ${formatTripDate(b)}</p>
+        <div class="star-input" id="fb-stars">
+          ${[1, 2, 3, 4, 5].map((i) => `<button type="button" class="star-btn" data-rate="${i}">★</button>`).join('')}
+        </div>
+        <textarea id="fb-comment" class="feedback-textarea" rows="4" placeholder="Tell us about your trip (optional)"></textarea>
+        <p class="error-text" id="fb-error" style="display:none;"></p>
+        <button class="btn btn--primary btn--block" id="fb-submit">Submit Feedback</button>
+      </div>
+    </div>`;
+
+  const close = () => { feedbackFor = null; feedbackRating = 0; renderFeedbackModal(); };
+  document.getElementById('fb-overlay').addEventListener('click', close);
+  document.getElementById('fb-box').addEventListener('click', (e) => e.stopPropagation());
+  document.getElementById('fb-close').addEventListener('click', close);
+
+  document.querySelectorAll('#fb-stars .star-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      feedbackRating = Number(btn.dataset.rate);
+      document.querySelectorAll('#fb-stars .star-btn').forEach((b2) => {
+        b2.classList.toggle('is-filled', Number(b2.dataset.rate) <= feedbackRating);
+      });
+    });
+  });
+
+  document.getElementById('fb-submit').addEventListener('click', handleSubmitFeedback);
+}
+
+async function handleSubmitFeedback() {
+  if (!feedbackFor) return;
+  const err = document.getElementById('fb-error');
+  err.style.display = 'none';
+  if (!feedbackRating) {
+    err.textContent = 'Please select a star rating.';
+    err.style.display = 'block';
+    return;
+  }
+  const submit = document.getElementById('fb-submit');
+  submit.disabled = true;
+  submit.textContent = 'Submitting…';
+  try {
+    await submitFeedback({
+      bookingId: feedbackFor.id,
+      rating: feedbackRating,
+      comment: document.getElementById('fb-comment').value.trim(),
+    });
+    feedbackFor = null;
+    feedbackRating = 0;
+    renderFeedbackModal();
+    await loadBookings();
+  } catch (e) {
+    err.textContent = e.message || 'Failed to submit feedback';
+    err.style.display = 'block';
+    submit.disabled = false;
+    submit.textContent = 'Submit Feedback';
+  }
 }
 
 async function handleCancel() {
@@ -139,8 +295,16 @@ async function handleCancel() {
 async function loadBookings() {
   listEl.innerHTML = '<p class="muted-text">Loading...</p>';
   try {
-    const data = await getBookingsByUser(getUserId());
+    const userId = getUserId();
+    const [data, fb] = await Promise.all([
+      getBookingsByUser(userId),
+      getFeedbackByUser(userId).catch(() => []),
+    ]);
     bookings = Array.isArray(data) ? data : [];
+    feedbackMap = {};
+    (Array.isArray(fb) ? fb : []).forEach((f) => {
+      if (f.bookingId != null) feedbackMap[String(f.bookingId)] = f;
+    });
     renderList();
   } catch (err) {
     listEl.innerHTML = `<p class="error-text">${err.message || 'Failed to load bookings'}</p>`;

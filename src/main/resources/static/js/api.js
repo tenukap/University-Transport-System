@@ -50,6 +50,12 @@ const getBookingById = (id) => request(`/bookings/${id}`);
 // PUT /bookings/{id}/cancel
 const cancelBooking = (id) => request(`/bookings/${id}/cancel`, { method: 'PUT' });
 
+// POST /feedback  body: { bookingId, rating, comment }
+const submitFeedback = (data) => request('/feedback', { method: 'POST', body: data });
+
+// GET /feedback/user/{userId}
+const getFeedbackByUser = (userId) => request(`/feedback/user/${userId}`);
+
 // GET /students/{id}
 const getStudentById = (id) => request(`/students/${id}`);
 

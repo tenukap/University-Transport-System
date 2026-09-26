@@ -109,6 +109,10 @@ public class BookingService {
                 .fareAmount(booking.getFareAmount())
                 .status(booking.getStatus())
                 .createdAt(booking.getCreatedAt())
+                .tripDate(booking.getBusTrip() != null ? booking.getBusTrip().getTripDate() : null)
+                .startTime(booking.getBusTrip() != null ? booking.getBusTrip().getStartTime() : null)
+                .pickupName(booking.getPickupLocation() != null ? booking.getPickupLocation().getLocationName() : null)
+                .dropoffName(booking.getDropoffLocation() != null ? booking.getDropoffLocation().getLocationName() : null)
                 .build();
     }
 }

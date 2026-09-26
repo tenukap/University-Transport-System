@@ -35,8 +35,8 @@ public class AuthService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED,
                         "Invalid email or password"));
 
-        // TEMP: plaintext comparison for testing only — REVERT to passwordEncoder.matches() before production.
-        if (password == null || !password.equals(user.getPasswordHash())) {
+        // Secure BCrypt password verification
+        if (password == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
 

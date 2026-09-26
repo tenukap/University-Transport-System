@@ -155,12 +155,17 @@ BEGIN
     CREATE TABLE Feedback (
         FeedbackId  INT IDENTITY PRIMARY KEY,
         UserId      INT NOT NULL,
+        BookingId   BIGINT NULL,
         Subject     VARCHAR(150) NOT NULL,
         Message     NVARCHAR(MAX) NOT NULL,
+        Rating      INT NULL,
         Status      VARCHAR(20) DEFAULT 'Pending',
         SubmittedAt DATETIME2 DEFAULT GETDATE(),
         CONSTRAINT FK_feedback_user FOREIGN KEY (UserId)
-            REFERENCES Users(UserId) ON DELETE CASCADE
+            REFERENCES Users(UserId) ON DELETE CASCADE,
+        CONSTRAINT FK_feedback_booking FOREIGN KEY (BookingId)
+            REFERENCES booking(id),
+        CONSTRAINT CK_feedback_rating CHECK (Rating IS NULL OR (Rating BETWEEN 1 AND 5))
     );
 END;
 

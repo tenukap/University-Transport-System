@@ -36,8 +36,9 @@ public class SecurityConfig {
                         // Admin-only management endpoints.
                         .requestMatchers("/api/users/**", "/api/dashboard/**", "/api/reports/**").hasRole("ADMIN")
                         // Student-facing endpoints (admin has access too).
-                        .requestMatchers("/api/trips/**", "/api/locations/**", "/api/bookings/**", "/api/students/**")
+                        .requestMatchers("/api/trips/**", "/api/locations/**", "/api/bookings/**", "/api/students/**", "/api/feedback/**")
                                 .hasAnyRole("STUDENT", "ADMIN")
+                        .requestMatchers("/api/emergency-reports/**", "/api/crash-incidents/**", "/api/trip-statuses/**", "/api/location-updates/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

@@ -675,3 +675,57 @@ h1, h2, h3, h4, h5, h6 {
   padding: 10px 20px;
   width: auto;
 }
+
+/* ==========================================================================
+   Booking feedback (star rating + comment on completed trips)
+   ========================================================================== */
+
+.booking-badges { display: inline-flex; gap: 6px; align-items: center; }
+
+.badge--completed { background-color: #3F7D5C; color: #fff; }
+
+/* Multiple actions on a card sit in a row and wrap on small screens. */
+.booking-actions { gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.booking-rating { font-size: 13px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px; }
+
+/* Read-only star display. */
+.stars { display: inline-flex; gap: 2px; }
+.stars .star { color: #D3D8D7; font-size: 16px; line-height: 1; }
+.stars .star.is-filled { color: #F5A623; }
+
+/* Interactive star picker in the feedback modal. */
+.star-input { display: flex; gap: 6px; margin: 16px 0; }
+.star-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 32px;
+  line-height: 1;
+  color: #D3D8D7;
+  padding: 0;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+.star-btn:hover { transform: scale(1.1); }
+.star-btn.is-filled { color: #F5A623; }
+
+.feedback-textarea {
+  width: 100%;
+  border: 1px solid #E0E3E2;
+  border-radius: 10px;
+  padding: 12px;
+  font-family: 'Roboto Flex', sans-serif;
+  font-size: 14px;
+  color: var(--text-primary);
+  resize: vertical;
+  margin-bottom: 12px;
+}
+.feedback-textarea:focus { outline: none; border-color: var(--primary); }
+
+.feedback-summary {
+  margin: 16px 0;
+  padding: 14px;
+  background-color: var(--info-bg);
+  border-radius: 10px;
+}
+.feedback-comment { margin: 8px 0 0; color: var(--text-primary); font-size: 14px; font-style: italic; }

@@ -20,3 +20,17 @@ BEGIN
     INSERT INTO bus (registration_number, passenger_capacity, status)
     VALUES ('NA-1001', 50, 'Active');
 END;
+-- Admin user
+-- Password stored as plaintext: admin1234
+IF NOT EXISTS (SELECT * FROM Users WHERE Email = 'admin@campus.edu')
+BEGIN
+    INSERT INTO Users (FullName, Email, PasswordHash, RoleName, AccountStatus, CreatedAt)
+    VALUES (
+        'Admin User',
+        'admin@campus.edu',
+        'admin1234',
+        'ADMIN',
+        'Active',
+        GETDATE()
+    );
+END;
