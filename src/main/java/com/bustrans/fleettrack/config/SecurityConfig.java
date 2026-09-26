@@ -1,46 +1,31 @@
 package com.bustrans.fleettrack.config;
 
-import com.bustrans.fleettrack.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.http.HttpStatus;
 
 @Configuration
-@EnableMethodSecurity
+@EnableWebSecurity
 public class SecurityConfig {
-    @Bean
-    PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // 1. Disable CSRF (Cross-Site Request Forgery) for testing purposes
                 .csrf(csrf -> csrf.disable())
-                .cors(cors -> {})
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(exceptions -> exceptions
-                    .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+
+                // 2. Allow all requests without authentication
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/*.html", "/css/**", "/js/**", "/screen.png",
-                                "/error", "/favicon.ico", "/actuator/health").permitAll()
-                        .requestMatchers("/api/auth/login", "/api/portal/login").permitAll()
-                        // Admin-only management endpoints.
-                        .requestMatchers("/api/users/**", "/api/dashboard/**", "/api/reports/**").hasRole("ADMIN")
-                        // Student-facing endpoints (admin has access too).
-                        .requestMatchers("/api/trips/**", "/api/locations/**", "/api/bookings/**", "/api/students/**", "/api/feedback/**")
-                                .hasAnyRole("STUDENT", "ADMIN")
-                        .requestMatchers("/api/emergency-reports/**", "/api/crash-incidents/**", "/api/trip-statuses/**", "/api/location-updates/**").permitAll()
-                        .anyRequest().authenticated())
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                        .requestMatchers("/", "/dashboard.html", "/api/**", "/css/**", "/js/**").permitAll()
+                        .anyRequest().permitAll()
+                )
+
+                // 3. Disable the default login form and basic auth popup
+                .formLogin(form -> form.disable())
+                .httpBasic(basic -> basic.disable());
+
         return http.build();
     }
 }

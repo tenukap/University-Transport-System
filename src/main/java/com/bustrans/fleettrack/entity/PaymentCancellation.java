@@ -6,20 +6,20 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "payment")
+@Table(name = "paymentcancellation")
 @Data
-public class Payment {
+public class PaymentCancellation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "CancellationId")
+    private int cancellationId;
+
     @Column(name = "PaymentId")
     private int paymentId;
 
-    @Column(name = "StudentId")
-    private int studentId;
+    @Column(name = "Reason")
+    private String reason;
 
-    @Column(name = "Amount")
-    private BigDecimal amount;
-
-    @Column(name = "Status")
-    private String status;
+    @Column(name = "CancelledAt")
+    private LocalDateTime cancelledAt;
 }

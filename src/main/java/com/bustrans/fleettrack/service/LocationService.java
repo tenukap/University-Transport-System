@@ -1,43 +1,38 @@
 package com.bustrans.fleettrack.service;
 
-import com.bustrans.fleettrack.dto.LocationResponseDTO;
 import com.bustrans.fleettrack.entity.Location;
 import com.bustrans.fleettrack.repository.LocationRepository;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class LocationService {
 
-    private final LocationRepository locationRepository;
+    @Autowired
+    private LocationRepository locationRepo;
 
-    public List<LocationResponseDTO> getAllLocations() {
-        return locationRepository.findAll().stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
+    public List<Location> getAllLocations() {
+        return locationRepo.findAll();
     }
 
-    public LocationResponseDTO getLocationById(Integer id) {
-        Location location = locationRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Location not found with id: " + id));
-        return mapToDTO(location);
+    public Location addLocation(Location location) {
+        return locationRepo.save(location);
     }
 
-    private LocationResponseDTO mapToDTO(Location location) {
-        return LocationResponseDTO.builder()
-                .locationId(location.getLocationId())
-                .locationName(location.getLocationName())
-                .latitude(toDouble(location.getLatitude()))
-                .longitude(toDouble(location.getLongitude()))
-                .build();
+    public Location updateLocation(int id, Location updated) {
+        Location existing = locationRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Location not found: " + id));
+
+        existing.setLocationName(updated.getLocationName());
+        existing.setLatitude(updated.getLatitude());
+        existing.setLongitude(updated.getLongitude());
+
+        return locationRepo.save(existing);
     }
 
-    private Double toDouble(BigDecimal value) {
-        return value != null ? value.doubleValue() : null;
+    public void deleteLocation(int id) {
+        locationRepo.deleteById(id);
     }
 }
