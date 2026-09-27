@@ -203,10 +203,10 @@
       <div class="field" id="uf-email-field"><label for="uf-email">Email</label><input type="email" id="uf-email" /></div>
       <div class="field"><label for="uf-role">Role</label>
         <select id="uf-role">
-          <option value="Student">Student</option>
-          <option value="Driver">Driver</option>
-          <option value="FinanceOfficer">Finance Officer</option>
-          <option value="Admin">Administrator</option>
+          <option value="STUDENT">Student</option>
+          <option value="DRIVER">Driver</option>
+          <option value="FINANCE_OFFICER">Finance Officer</option>
+          <option value="ADMIN">Administrator</option>
         </select>
       </div>
       <div class="field" id="uf-password-field"><label for="uf-password">Temporary password</label><input type="password" id="uf-password" placeholder="Min 6 characters" /></div>
@@ -442,12 +442,12 @@
       userModal.classList.add('show');
     }
     function normalizeRoleForSelect(role) {
-      if (!role) return 'Student';
+      if (!role) return 'STUDENT';
       const r = role.replace(/[_\s-]/g, '').toLowerCase();
-      if (r === 'financeofficer') return 'FinanceOfficer';
-      if (r === 'admin') return 'Admin';
-      if (r === 'driver') return 'Driver';
-      return 'Student';
+      if (r === 'financeofficer') return 'FINANCE_OFFICER';
+      if (r === 'admin') return 'ADMIN';
+      if (r === 'driver') return 'DRIVER';
+      return 'STUDENT';
     }
 
     userForm.addEventListener('submit', async (e) => {

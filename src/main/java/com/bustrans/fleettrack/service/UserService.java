@@ -12,9 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class UserService {
+
+    private static final Set<String> ALLOWED_ACCOUNT_STATUSES = Set.of("Active", "Suspended", "Deactivated");
 
     private final UserRepository userRepository;
     // Needed to BCrypt-hash passwords on create/update (AuthService verifies with BCrypt).
@@ -111,6 +114,14 @@ public class UserService {
         }
         if (request.roleName() != null) {
             user.setRoleName(request.roleName().toUpperCase());
+        }
+        if (request.accountStatus() != null) {
+            if (!ALLOWED_ACCOUNT_STATUSES.contains(request.accountStatus())) {
+                throw new IllegalArgumentException(
+                        "Invalid account status '" + request.accountStatus()
+                        + "'. Allowed values: Active, Suspended, Deactivated");
+            }
+            user.setAccountStatus(request.accountStatus());
         }
         user.setUpdatedAt(LocalDateTime.now());
         return UserResponse.fromEntity(userRepository.save(user));

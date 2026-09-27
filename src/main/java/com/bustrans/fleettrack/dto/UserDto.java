@@ -29,6 +29,7 @@ public final class UserDto {
             String email,
             String password,
             String phone,
-            String roleName
+            String roleName,
+            String accountStatus
     ) {}
 }

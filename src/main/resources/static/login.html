@@ -94,8 +94,10 @@
         case 'ADMIN': window.location.replace('admin-dashboard.html'); break;
         case 'STUDENT': window.location.replace('index.html'); break;
         case 'DRIVER': window.location.replace('driver.html'); break;
+        case 'FINANCE_OFFICER':
+          showError('The Finance Officer portal is not yet available. Please contact the system administrator.');
+          break;
         default:
-          // FINANCE_OFFICER or any unmapped role: no dedicated portal yet.
           showError(`Signed in as ${role || 'unknown role'}, but no portal is configured for this role.`);
       }
     }
