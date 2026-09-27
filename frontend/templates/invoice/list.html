@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Invoices | TransitPass</title>
+    <link rel="stylesheet" th:href="@{/css/transitpass.css}">
+</head>
+
+<body>
+
+<div class="layout">
+
+    <aside class="sidebar" aria-label="Module navigation">
+        <div class="logo">Transit<span>Pass</span></div>
+
+        <span class="nav-link nav-unavailable" aria-disabled="true">Dashboard <small>Unavailable</small></span>
+        <span class="nav-link nav-unavailable" aria-disabled="true">Book a Trip <small>Unavailable</small></span>
+        <span class="nav-link nav-unavailable" aria-disabled="true">My Bookings <small>Unavailable</small></span>
+
+        <a class="nav-link active" aria-current="page" th:href="@{/invoices}">
+            Invoices
+        </a>
+
+        <a class="nav-link" th:href="@{/payments}">
+            Payments
+        </a>
+
+        <a class="nav-link" th:href="@{/feedback}">
+            Feedback
+        </a>
+
+        <span class="nav-link nav-unavailable" aria-disabled="true">My Profile <small>Unavailable</small></span>
+    </aside>
+
+    <main class="main">
+
+        <header class="topbar">
+            <div class="topbar-title">University Transport System</div>
+            <div class="user">Student Portal</div>
+        </header>
+
+        <section class="content">
+
+            <div class="page-header">
+                <div>
+                    <h1>Invoice Management</h1>
+                    <div class="subtitle">
+                        View and manage transport invoices
+                    </div>
+                </div>
+
+                <a class="btn btn-primary" th:href="@{/invoices/new}">
+                    + Create Invoice
+                </a>
+            </div>
+
+            <p class="message message-error" role="alert" th:if="${deleteError != null}" th:text="${deleteError}"></p>
+            <p class="message message-success" role="status" th:if="${successMessage != null}" th:text="${successMessage}"></p>
+            <div class="card">
+
+                <div class="table-scroll" tabindex="0" role="region" aria-label="invoice records">
+                <table>
+                    <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Billing Period</th>
+                        <th scope="col">Issue Date</th>
+                        <th scope="col">Due Date</th>
+                        <th scope="col">Amount</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+
+                    <tr th:each="invoice : ${invoices}">
+                        <td th:text="${invoice.invoiceId}"></td>
+
+                        <td>
+                            <span th:text="${invoice.billingMonth}"></span>
+                            /
+                            <span th:text="${invoice.billingYear}"></span>
+                        </td>
+
+                        <td th:text="${invoice.issueDate}"></td>
+                        <td th:text="${invoice.dueDate}"></td>
+
+                        <td>
+                            LKR
+                            <span th:text="${invoice.totalAmount}"></span>
+                        </td>
+
+                        <td>
+                            <span th:text="${invoice.invoiceStatus}"
+                                  th:class="${invoice.invoiceStatus == 'OVERDUE'}
+                                  ? 'status status-overdue'
+                                  : 'status status-pending'">
+                            </span>
+                        </td>
+
+                        <td>
+                            <a class="action-link"
+                               th:href="@{/invoices/edit/{id}(id=${invoice.invoiceId})}">
+                                Edit
+                            </a>
+
+                            <a class="action-link action-delete"
+                               th:href="@{/invoices/delete/{id}(id=${invoice.invoiceId})}"
+                               onclick="return confirm('Delete this invoice?')">
+                                Delete
+                            </a>
+                        </td>
+                    </tr>
+
+                    </tbody>
+                </table>
+                </div>
+
+                <div class="empty-message"
+                     th:if="${#lists.isEmpty(invoices)}">
+                    No invoices available yet.
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>
+

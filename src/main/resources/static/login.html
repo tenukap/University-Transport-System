@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — UniTransport</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root { --primary: #35627A; --primary-dark: #2B4F63; --danger: #B4463C; --bg: #EEF2F4; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; font-family: 'Roboto', sans-serif; color: #1E2C33;
+      background: linear-gradient(135deg, #35627A 0%, #2B4F63 100%);
+      display: flex; align-items: center; justify-content: center; padding: 16px;
+    }
+    .login-card {
+      background: #fff; width: 100%; max-width: 400px; border-radius: 12px; padding: 40px 32px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    .brand { display: flex; flex-direction: column; align-items: center; margin-bottom: 28px; }
+    .brand__badge {
+      width: 56px; height: 56px; border-radius: 14px; background: var(--primary); color: #fff;
+      display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
+    }
+    .brand__title { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 22px; margin: 0; color: var(--primary); }
+    .brand__subtitle { font-size: 13px; color: #8E9A98; margin-top: 4px; }
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block; font-size: 12px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.05em; color: #8E9A98; margin-bottom: 6px;
+    }
+    .field input {
+      width: 100%; padding: 12px 14px; font-size: 14px; font-family: inherit;
+      border: 1px solid #C9D2D6; border-radius: 8px; outline: none; transition: border-color .15s ease, box-shadow .15s ease;
+    }
+    .field input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(53,98,122,0.15); }
+    .btn-primary {
+      width: 100%; padding: 13px; font-family: 'Montserrat', sans-serif; font-weight: 600; font-size: 15px;
+      color: #fff; background: var(--primary); border: none; border-radius: 8px; cursor: pointer; transition: background .15s ease;
+    }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-primary:disabled { opacity: .7; cursor: not-allowed; }
+    .error {
+      display: none; background: #FBEAE8; color: var(--danger); border: 1px solid #F0C9C4;
+      border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-bottom: 18px;
+    }
+    .error.show { display: block; }
+    .foot { text-align: center; font-size: 12px; color: #A6A9D0; margin-top: 22px; }
+    @media (max-width: 420px) { .login-card { padding: 32px 20px; } }
+  </style>
+</head>
+<body>
+  <form class="login-card" id="login-form" novalidate>
+    <div class="brand">
+      <div class="brand__badge">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6M16 6v6M2 12h19.6M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v8c0 .4.1.8.2 1.2C2.5 16.3 3 18 3 18h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>
+      </div>
+      <h1 class="brand__title">UniTransport</h1>
+      <p class="brand__subtitle">University Transport Management System</p>
+    </div>
+
+    <div class="error" id="error"></div>
+
+    <div class="field">
+      <label for="email">Email</label>
+      <input type="email" id="email" name="email" autocomplete="username" placeholder="you@campus.edu" required />
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" autocomplete="current-password" placeholder="••••••••" required />
+    </div>
+
+    <button type="submit" class="btn-primary" id="submit-btn">Sign In</button>
+
+    <p class="foot">Accounts are created by the transport office administrator.</p>
+  </form>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // Declared first so early calls (e.g. redirectIfLoggedIn → showError) can use it.
+    const errorEl = document.getElementById('error');
+
+    // If already signed in, send the user straight to their home page.
+    (function redirectIfLoggedIn() {
+      if (!isAuthenticated()) return;
+      routeByRole(getRole());
+    })();
+
+    function routeByRole(role) {
+      switch (role) {
+        case 'ADMIN': window.location.replace('admin-dashboard.html'); break;
+        case 'STUDENT': window.location.replace('index.html'); break;
+        case 'DRIVER': window.location.replace('driver.html'); break;
+        default:
+          // FINANCE_OFFICER or any unmapped role: no dedicated portal yet.
+          showError(`Signed in as ${role || 'unknown role'}, but no portal is configured for this role.`);
+      }
+    }
+
+    const form = document.getElementById('login-form');
+    const submitBtn = document.getElementById('submit-btn');
+
+    function showError(msg) {
+      errorEl.textContent = msg;
+      errorEl.classList.add('show');
+    }
+    function clearError() {
+      errorEl.textContent = '';
+      errorEl.classList.remove('show');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearError();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      if (!email || !password) {
+        showError('Please enter both email and password.');
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Signing in…';
+      try {
+        await login(email, password);
+        routeByRole(getRole());
+      } catch (err) {
+        showError(err.message || 'Login failed. Please try again.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign In';
+      }
+    });
+  </script>
+</body>
+</html>
