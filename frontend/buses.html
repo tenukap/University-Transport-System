@@ -63,12 +63,12 @@
     <!-- Profile UI -->
     <div class="p-4 border-t border-gray-800" style="font-family: 'Roboto Slab', serif;">
         <a href="profile.html" class="flex items-center space-x-3 hover:bg-gray-800 p-2 rounded transition no-underline">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold text-white shrink-0" style="background-color: #35627A;">
-                DK
+            <div id="sidebar-avatar" class="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold text-white shrink-0" style="background-color: #35627A;">
+                ?
             </div>
             <div class="overflow-hidden">
-                <p class="text-sm font-medium text-white m-0 truncate">Dinuja Akash Kandanearachchi</p>
-                <p class="text-xs text-gray-400 m-0 truncate">placeholder@email.com</p>
+                <p id="sidebar-name" class="text-sm font-medium text-white m-0 truncate">Administrator</p>
+                <p id="sidebar-role" class="text-xs text-gray-400 m-0 truncate">ADMIN</p>
             </div>
         </a>
     </div>
@@ -110,14 +110,25 @@
     </div>
 </main>
 
+<script src="js/config.js"></script>
+<script src="js/auth.js"></script>
 <script>
-    const API_BASE_URL = "http://localhost:8080/api/buses";
+    const claims = checkAuth('ADMIN');
+
+    const adminUser = JSON.parse(localStorage.getItem('user') || 'null');
+    const adminName = (adminUser && (adminUser.fullName || adminUser.name)) || 'Administrator';
+    const adminInitials = adminName.trim().split(/\s+/).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+    document.getElementById('sidebar-avatar').textContent = adminInitials;
+    document.getElementById('sidebar-name').textContent = adminName;
+    document.getElementById('sidebar-role').textContent = getRole() || 'ADMIN';
 
     async function loadBuses() {
+        const tableBody = document.getElementById('busTableBody');
         try {
-            const response = await fetch(`${API_BASE_URL}/all`);
+            const response = await fetch(`${API_BASE}/buses/all`, {
+                headers: getAuthHeaders()
+            });
             const buses = await response.json();
-            const tableBody = document.getElementById('busTableBody');
             tableBody.innerHTML = '';
 
             buses.forEach(bus => {
@@ -132,7 +143,10 @@
                 </tr>`;
                 tableBody.innerHTML += row;
             });
-        } catch (error) { console.error("Error loading buses:", error); }
+        } catch (error) {
+            console.error("Error loading buses:", error);
+            tableBody.innerHTML = '<tr><td colspan="4" style="color:#B46258;text-align:center;padding:20px;">Failed to load shuttle roster. Please refresh or contact the administrator.</td></tr>';
+        }
     }
 
     document.getElementById('busForm').addEventListener('submit', async function(event) {
@@ -144,9 +158,9 @@
         };
 
         try {
-            const response = await fetch(`${API_BASE_URL}/add`, {
+            const response = await fetch(`${API_BASE}/buses/add`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: getAuthHeaders(),
                 body: JSON.stringify(busData)
             });
 
@@ -172,7 +186,10 @@
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
-                    const response = await fetch(`${API_BASE_URL}/delete/${id}`, { method: 'DELETE' });
+                    const response = await fetch(`${API_BASE}/buses/delete/${id}`, {
+                        method: 'DELETE',
+                        headers: getAuthHeaders()
+                    });
                     if (response.ok) {
                         loadBuses();
                         Swal.fire({ title: 'Decommissioned!', text: 'The shuttle has been removed.', icon: 'success', confirmButtonColor: '#35627A' });

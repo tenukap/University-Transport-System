@@ -3,12 +3,14 @@ package com.bustrans.fleettrack.controller;
 import com.bustrans.fleettrack.entity.Bus;
 import com.bustrans.fleettrack.service.BusService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/buses")
 @CrossOrigin(origins = "*")
+@PreAuthorize("hasRole('ADMIN')")
 public class BusController {
 
     @Autowired
