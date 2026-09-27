@@ -56,6 +56,8 @@ BEGIN
     );
 END;
 
+
+
 -- 5. bustrip
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'bustrip')
 BEGIN

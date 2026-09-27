@@ -1,7 +1,7 @@
-package com.transport.uni_transport_system.controller;
+package com.bustrans.fleettrack.controller;
 
-import com.transport.uni_transport_system.entity.Driver;
-import com.transport.uni_transport_system.service.DriverService;
+import com.bustrans.fleettrack.entity.Driver;
+import com.bustrans.fleettrack.service.DriverService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
