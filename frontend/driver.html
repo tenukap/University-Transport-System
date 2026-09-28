@@ -4,51 +4,475 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Driver Portal — UniTransport</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
   <style>
-    :root { --primary: #35627A; --primary-dark: #2B4F63; --bg: #F5F5F5; --muted: #8E9A98; }
+    :root {
+      --primary: #35627A; --primary-dark: #2B4F63; --accent: #E5AEA9;
+      --bg: #F5F5F5; --surface: #fff; --muted: #8E9A98; --line: #E2E6E9;
+      --text: #1E2C33; --ok: #10b981; --warn: #f59e0b; --danger: #B4463C;
+    }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: 'Roboto', sans-serif; background: var(--bg); color: #1E2C33; }
-    .topbar { height: 64px; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
-    .topbar__brand { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 10px; }
-    .logout-btn { background: rgba(255,255,255,.15); color: #fff; border: none; border-radius: 6px; padding: 8px 14px; font-family: 'Montserrat',sans-serif; font-weight: 600; font-size: 13px; cursor: pointer; }
-    .logout-btn:hover { background: rgba(255,255,255,.28); }
-    .wrap { max-width: 720px; margin: 48px auto; padding: 0 16px; }
-    .card { background: #fff; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
-    h1 { font-family: 'Montserrat', sans-serif; margin: 0 0 8px; color: var(--primary); }
-    .muted { color: var(--muted); font-size: 15px; line-height: 1.6; }
-    .note { margin-top: 20px; background: #F4F2FF; border-radius: 8px; padding: 14px 16px; font-size: 13px; color: #4A4C6A; }
+    body { margin: 0; font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text); }
+    h1,h2,h3,h4 { font-family: 'Montserrat', sans-serif; margin: 0; }
+
+    .sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: 240px; background: var(--primary); color: #fff; display: flex; flex-direction: column; z-index: 30; }
+    .sidebar__logo { display: flex; align-items: center; gap: 10px; height: 64px; padding: 0 20px; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 18px; }
+    .sidebar__nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+    .nav-link { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: none; border: none; border-left: 3px solid transparent; color: rgba(255,255,255,.72); padding: 12px 20px; font-size: 14px; font-family: inherit; cursor: pointer; }
+    .nav-link:hover { background: rgba(255,255,255,.1); }
+    .nav-link.is-active { background: rgba(255,255,255,.15); border-left-color: var(--accent); color: #fff; font-weight: 600; }
+    .sidebar__foot { border-top: 1px solid rgba(255,255,255,.15); padding: 14px 20px; }
+    .sidebar__user-name { font-size: 14px; font-weight: 600; }
+    .sidebar__user-role { font-size: 12px; color: rgba(255,255,255,.7); }
+    .logout-btn { margin-top: 12px; width: 100%; background: rgba(255,255,255,.12); color: #fff; border: none; border-radius: 6px; padding: 9px; font-family: 'Montserrat',sans-serif; font-weight: 600; font-size: 13px; cursor: pointer; }
+    .logout-btn:hover { background: rgba(255,255,255,.22); }
+
+    .topbar { position: fixed; top: 0; left: 240px; right: 0; height: 64px; background: #fff; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding: 0 28px; z-index: 20; }
+    .topbar__title { color: var(--primary); font-size: 18px; font-weight: 700; font-family: 'Montserrat', sans-serif; }
+    .topbar__user { font-size: 13px; color: var(--muted); }
+    .main { margin-left: 240px; margin-top: 64px; padding: 28px; }
+    .tab-panel { display: none; }
+    .tab-panel.is-active { display: block; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+    .panel-head p { color: var(--muted); font-size: 14px; margin: 4px 0 0; }
+
+    .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+    .metric { background: var(--surface); border-radius: 10px; padding: 22px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .metric__label { color: var(--muted); font-size: 13px; }
+    .metric__value { font-family: 'Montserrat',sans-serif; font-weight: 700; font-size: 30px; margin-top: 6px; }
+
+    .btn { font-family: 'Montserrat',sans-serif; font-weight: 600; font-size: 13px; border-radius: 8px; border: none; padding: 9px 16px; cursor: pointer; }
+    .btn--primary { background: var(--primary); color: #fff; } .btn--primary:hover { background: var(--primary-dark); }
+    .btn--ghost { background: none; border: 1px solid var(--line); color: var(--muted); }
+    .btn--danger { background: var(--danger); color: #fff; }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+    .btn--sm { padding: 6px 10px; font-size: 12px; }
+
+    .table-wrap { background: var(--surface); border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.08); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    tbody tr:hover { background: #FAFBFC; }
+    .badge { border-radius: 9999px; padding: 3px 10px; font-size: 11px; font-weight: 700; }
+    .badge--ok  { background: rgba(16,185,129,.12); color: var(--ok); }
+    .badge--warn { background: rgba(245,158,11,.12); color: var(--warn); }
+    .badge--other { background: rgba(180,70,60,.12); color: var(--danger); }
+    .state-msg { padding: 24px; color: var(--muted); text-align: center; }
+
+    .form-card { background: var(--surface); border-radius: 10px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 24px; }
+    .form-card h3 { font-size: 15px; margin-bottom: 16px; color: var(--primary); }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; }
+    input, select, textarea { font-family: inherit; font-size: 14px; padding: 9px 11px; border: 1px solid #C9D2D6; border-radius: 8px; outline: none; width: 100%; }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+    textarea { resize: vertical; min-height: 80px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-error { display: none; background: #FBEAE8; color: var(--danger); border: 1px solid #F0C9C4; border-radius: 8px; padding: 9px 11px; font-size: 13px; margin-bottom: 12px; }
+    .form-error.show { display: block; }
+    .form-ok { display: none; background: #ECFDF5; color: var(--ok); border: 1px solid #A7F3D0; border-radius: 8px; padding: 9px 11px; font-size: 13px; margin-bottom: 12px; }
+    .form-ok.show { display: block; }
+
+    @media (max-width: 820px) {
+      .sidebar { width: 64px; }
+      .sidebar__logo span, .nav-link span, .sidebar__foot .sidebar__user-name, .sidebar__foot .sidebar__user-role { display: none; }
+      .nav-link { justify-content: center; padding: 14px 0; }
+      .logout-btn { font-size: 0; padding: 9px 0; }
+      .topbar { left: 64px; } .main { margin-left: 64px; }
+      .form-row { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar__brand">
+  <aside class="sidebar">
+    <div class="sidebar__logo">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6M16 6v6M2 12h19.6M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v8c0 .4.1.8.2 1.2C2.5 16.3 3 18 3 18h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>
-      UniTransport · Driver
+      <span>UniTransport</span>
     </div>
-    <button class="logout-btn" id="logout-btn">Logout</button>
+    <nav class="sidebar__nav" id="nav">
+      <button class="nav-link is-active" data-tab="overview">🚌 <span>Overview</span></button>
+      <button class="nav-link" data-tab="emergency">🚨 <span>Emergency Reports</span></button>
+      <button class="nav-link" data-tab="crash">⚠️ <span>Crash Incidents</span></button>
+      <button class="nav-link" data-tab="tripstatus">📋 <span>Trip Status</span></button>
+      <button class="nav-link" data-tab="location">📍 <span>Location Updates</span></button>
+    </nav>
+    <div class="sidebar__foot">
+      <div class="sidebar__user-name" id="side-name">—</div>
+      <div class="sidebar__user-role">Driver</div>
+      <button class="logout-btn" id="logout-btn">Logout</button>
+    </div>
+  </aside>
+
+  <header class="topbar">
+    <div class="topbar__title" id="page-title">Overview</div>
+    <div class="topbar__user" id="top-user"></div>
   </header>
 
-  <div class="wrap">
-    <div class="card">
-      <h1>Welcome, <span id="driver-name">Driver</span></h1>
-      <p class="muted">This is your driver portal. Trip assignment and passenger manifest features
-        are not yet available from the backend, so this page is a placeholder for now.</p>
-      <div class="note">No driver-specific API endpoints exist yet. When they are added
-        (e.g. assigned trips, passenger lists), they can be wired in here using the shared
-        <code>getAuthHeaders()</code> helper.</div>
+  <main class="main">
+    <!-- Overview -->
+    <div class="tab-panel is-active" id="panel-overview">
+      <div class="panel-head"><div><h2>Overview</h2><p>Your activity summary</p></div></div>
+      <div class="metric-grid" id="overview-grid">
+        <div class="metric"><div class="metric__label">Emergency Reports</div><div class="metric__value" id="cnt-emergency">—</div></div>
+        <div class="metric"><div class="metric__label">Crash Incidents</div><div class="metric__value" id="cnt-crash">—</div></div>
+        <div class="metric"><div class="metric__label">Trip Status Logs</div><div class="metric__value" id="cnt-tripstatus">—</div></div>
+        <div class="metric"><div class="metric__label">Location Updates</div><div class="metric__value" id="cnt-location">—</div></div>
+      </div>
     </div>
-  </div>
+
+    <!-- Emergency Reports -->
+    <div class="tab-panel" id="panel-emergency">
+      <div class="panel-head">
+        <div><h2>Emergency Reports</h2><p>Submit and review emergency reports</p></div>
+      </div>
+      <div class="form-card">
+        <h3>Submit New Emergency Report</h3>
+        <div class="form-error" id="er-err"></div>
+        <div class="form-ok"  id="er-ok">Report submitted successfully.</div>
+        <div class="form-row">
+          <div class="field"><label for="er-title">Report Title *</label><input type="text" id="er-title" placeholder="e.g. Medical Emergency at Stop 3" /></div>
+          <div class="field"><label for="er-type">Emergency Type *</label>
+            <select id="er-type">
+              <option value="">— Select type —</option>
+              <option>Medical</option><option>Fire</option><option>Accident</option>
+              <option>Breakdown</option><option>Security</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label for="er-desc">Description *</label><textarea id="er-desc" placeholder="Describe the emergency situation in detail…"></textarea></div>
+        <button class="btn btn--primary" id="er-submit">Submit Report</button>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Status</th><th>Time</th></tr></thead>
+        <tbody id="er-body"><tr><td colspan="5" class="state-msg">Loading…</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- Crash Incidents -->
+    <div class="tab-panel" id="panel-crash">
+      <div class="panel-head">
+        <div><h2>Crash Incidents</h2><p>Report and review crash incidents</p></div>
+      </div>
+      <div class="form-card">
+        <h3>Report New Crash Incident</h3>
+        <div class="form-error" id="ci-err"></div>
+        <div class="form-ok"  id="ci-ok">Incident reported successfully.</div>
+        <div class="form-row">
+          <div class="field"><label for="ci-coords">Location / Coordinates *</label><input type="text" id="ci-coords" placeholder="e.g. 6.9271, 79.8612 or near Main Gate" /></div>
+          <div class="field"><label for="ci-severity">Severity Level *</label>
+            <select id="ci-severity">
+              <option value="">— Select severity —</option>
+              <option>Minor</option><option>Moderate</option><option>Severe</option><option>Critical</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label for="ci-desc">Description</label><textarea id="ci-desc" placeholder="Describe what happened…"></textarea></div>
+        <button class="btn btn--primary" id="ci-submit">Report Incident</button>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>ID</th><th>Location</th><th>Severity</th><th>Status</th><th>Time</th></tr></thead>
+        <tbody id="ci-body"><tr><td colspan="5" class="state-msg">Loading…</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- Trip Status -->
+    <div class="tab-panel" id="panel-tripstatus">
+      <div class="panel-head">
+        <div><h2>Trip Status</h2><p>Log status updates for your assigned trip</p></div>
+      </div>
+      <div class="form-card">
+        <h3>Log Trip Status Update</h3>
+        <div class="form-error" id="ts-err"></div>
+        <div class="form-ok"  id="ts-ok">Status logged successfully.</div>
+        <div class="form-row">
+          <div class="field"><label for="ts-tripid">Trip ID *</label><input type="number" id="ts-tripid" placeholder="Enter your trip ID" min="1" /></div>
+          <div class="field"><label for="ts-type">Status Type *</label>
+            <select id="ts-type">
+              <option value="">— Select status —</option>
+              <option>Scheduled</option><option>Departed</option><option>In Progress</option>
+              <option>Delayed</option><option>At Stop</option><option>Completed</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn--primary" id="ts-submit">Log Status</button>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>ID</th><th>Trip ID</th><th>Status</th><th>Updated At</th></tr></thead>
+        <tbody id="ts-body"><tr><td colspan="4" class="state-msg">Loading…</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- Location Updates -->
+    <div class="tab-panel" id="panel-location">
+      <div class="panel-head">
+        <div><h2>Location Updates</h2><p>Send your current GPS position for your trip</p></div>
+      </div>
+      <div class="form-card">
+        <h3>Send Location Ping</h3>
+        <div class="form-error" id="lu-err"></div>
+        <div class="form-ok"  id="lu-ok">Location recorded successfully.</div>
+        <div class="form-row">
+          <div class="field"><label for="lu-tripid">Trip ID *</label><input type="number" id="lu-tripid" placeholder="Enter your trip ID" min="1" /></div>
+          <div class="field"><label for="lu-lat">Latitude *</label><input type="number" id="lu-lat" placeholder="e.g. 6.9271" step="any" /></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label for="lu-lng">Longitude *</label><input type="number" id="lu-lng" placeholder="e.g. 79.8612" step="any" /></div>
+          <div class="field" style="display:flex;align-items:flex-end;">
+            <button class="btn btn--ghost btn--sm" type="button" id="lu-gps" style="margin-bottom:0">📍 Use My GPS</button>
+          </div>
+        </div>
+        <button class="btn btn--primary" id="lu-submit">Send Location</button>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>ID</th><th>Trip ID</th><th>Latitude</th><th>Longitude</th><th>Recorded At</th></tr></thead>
+        <tbody id="lu-body"><tr><td colspan="5" class="state-msg">Loading…</td></tr></tbody></table>
+      </div>
+    </div>
+  </main>
 
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script>
     const claims = checkAuth('DRIVER');
-    if (claims) {
+    if (claims) initPortal();
+
+    function initPortal() {
       const u = JSON.parse(localStorage.getItem('user') || 'null');
-      document.getElementById('driver-name').textContent = (u && (u.fullName || u.name)) || 'Driver';
+      const name = (u && (u.fullName || u.name)) || 'Driver';
+      document.getElementById('side-name').textContent = name;
+      document.getElementById('top-user').textContent = `${name} (DRIVER)`;
       document.getElementById('logout-btn').addEventListener('click', logout);
+      setupTabs();
+      loadOverview();
     }
+
+    function esc(s) {
+      return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    const TITLES = {
+      overview: 'Overview', emergency: 'Emergency Reports',
+      crash: 'Crash Incidents', tripstatus: 'Trip Status', location: 'Location Updates'
+    };
+    function setupTabs() {
+      document.querySelectorAll('.nav-link').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      });
+    }
+    function switchTab(tab) {
+      document.querySelectorAll('.nav-link').forEach(b => b.classList.toggle('is-active', b.dataset.tab === tab));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('is-active', p.id === `panel-${tab}`));
+      document.getElementById('page-title').textContent = TITLES[tab];
+      if (tab === 'emergency') loadEmergencyReports();
+      else if (tab === 'crash') loadCrashIncidents();
+      else if (tab === 'tripstatus') loadTripStatuses();
+      else if (tab === 'location') loadLocationUpdates();
+    }
+
+    async function apiFetch(path, options = {}) {
+      const res = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers: { ...getAuthHeaders(), ...(options.headers || {}) },
+      });
+      if (res.status === 401 || res.status === 403) { logout(); throw new Error('Session expired'); }
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch (e) { data = text; }
+      if (!res.ok) throw new Error((data && (data.message || data.error)) || `Request failed (${res.status})`);
+      return res.status === 204 ? null : data;
+    }
+
+    function statusBadge(s) {
+      const ok = ['Completed','Resolved','In Progress'];
+      const warn = ['Delayed','Pending','Reported','Scheduled'];
+      const cls = ok.includes(s) ? 'badge--ok' : warn.includes(s) ? 'badge--warn' : 'badge--other';
+      return `<span class="badge ${cls}">${esc(s || '—')}</span>`;
+    }
+
+    function fmtDt(v) { return v ? String(v).replace('T', ' ').substring(0, 16) : '—'; }
+
+    // ---- Overview ----
+    async function loadOverview() {
+      try {
+        const [er, ci, ts, lu] = await Promise.all([
+          apiFetch('/emergency-reports'),
+          apiFetch('/crash-incidents'),
+          apiFetch('/trip-statuses'),
+          apiFetch('/location-updates'),
+        ]);
+        document.getElementById('cnt-emergency').textContent = Array.isArray(er) ? er.length : '—';
+        document.getElementById('cnt-crash').textContent = Array.isArray(ci) ? ci.length : '—';
+        document.getElementById('cnt-tripstatus').textContent = Array.isArray(ts) ? ts.length : '—';
+        document.getElementById('cnt-location').textContent = Array.isArray(lu) ? lu.length : '—';
+      } catch (err) {
+        document.getElementById('overview-grid').innerHTML = `<p style="color:var(--danger)">${esc(err.message)}</p>`;
+      }
+    }
+
+    // ---- Emergency Reports ----
+    async function loadEmergencyReports() {
+      const body = document.getElementById('er-body');
+      body.innerHTML = '<tr><td colspan="5" class="state-msg">Loading…</td></tr>';
+      try {
+        const list = await apiFetch('/emergency-reports');
+        if (!list.length) { body.innerHTML = '<tr><td colspan="5" class="state-msg">No reports yet.</td></tr>'; return; }
+        body.innerHTML = list.map(r => `<tr>
+          <td>${esc(r.reportId)}</td>
+          <td>${esc(r.reportTitle)}</td>
+          <td>${esc(r.emergencyType)}</td>
+          <td>${statusBadge(r.resolutionStatus)}</td>
+          <td>${fmtDt(r.timestamp)}</td>
+        </tr>`).join('');
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="5" class="state-msg">${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    document.getElementById('er-submit').addEventListener('click', async () => {
+      const errEl = document.getElementById('er-err');
+      const okEl  = document.getElementById('er-ok');
+      errEl.classList.remove('show'); okEl.classList.remove('show');
+      const title = document.getElementById('er-title').value.trim();
+      const type  = document.getElementById('er-type').value;
+      const desc  = document.getElementById('er-desc').value.trim();
+      if (!title || !type || !desc) { errEl.textContent = 'Title, type, and description are required.'; errEl.classList.add('show'); return; }
+      try {
+        await apiFetch('/emergency-reports', {
+          method: 'POST',
+          body: JSON.stringify({ reportTitle: title, emergencyType: type, description: desc, resolutionStatus: 'Pending' }),
+        });
+        okEl.classList.add('show');
+        document.getElementById('er-title').value = '';
+        document.getElementById('er-type').value = '';
+        document.getElementById('er-desc').value = '';
+        loadEmergencyReports();
+      } catch (err) { errEl.textContent = err.message; errEl.classList.add('show'); }
+    });
+
+    // ---- Crash Incidents ----
+    async function loadCrashIncidents() {
+      const body = document.getElementById('ci-body');
+      body.innerHTML = '<tr><td colspan="5" class="state-msg">Loading…</td></tr>';
+      try {
+        const list = await apiFetch('/crash-incidents');
+        if (!list.length) { body.innerHTML = '<tr><td colspan="5" class="state-msg">No incidents yet.</td></tr>'; return; }
+        body.innerHTML = list.map(r => `<tr>
+          <td>${esc(r.incidentId)}</td>
+          <td>${esc(r.locationCoordinates)}</td>
+          <td>${esc(r.severityLevel)}</td>
+          <td>${statusBadge(r.status)}</td>
+          <td>${fmtDt(r.timestamp)}</td>
+        </tr>`).join('');
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="5" class="state-msg">${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    document.getElementById('ci-submit').addEventListener('click', async () => {
+      const errEl = document.getElementById('ci-err');
+      const okEl  = document.getElementById('ci-ok');
+      errEl.classList.remove('show'); okEl.classList.remove('show');
+      const coords   = document.getElementById('ci-coords').value.trim();
+      const severity = document.getElementById('ci-severity').value;
+      const desc     = document.getElementById('ci-desc').value.trim();
+      if (!coords || !severity) { errEl.textContent = 'Location and severity are required.'; errEl.classList.add('show'); return; }
+      try {
+        await apiFetch('/crash-incidents', {
+          method: 'POST',
+          body: JSON.stringify({ locationCoordinates: coords, severityLevel: severity, description: desc, status: 'Reported' }),
+        });
+        okEl.classList.add('show');
+        document.getElementById('ci-coords').value = '';
+        document.getElementById('ci-severity').value = '';
+        document.getElementById('ci-desc').value = '';
+        loadCrashIncidents();
+      } catch (err) { errEl.textContent = err.message; errEl.classList.add('show'); }
+    });
+
+    // ---- Trip Status ----
+    async function loadTripStatuses() {
+      const body = document.getElementById('ts-body');
+      body.innerHTML = '<tr><td colspan="4" class="state-msg">Loading…</td></tr>';
+      try {
+        const list = await apiFetch('/trip-statuses');
+        if (!list.length) { body.innerHTML = '<tr><td colspan="4" class="state-msg">No status logs yet.</td></tr>'; return; }
+        body.innerHTML = list.map(r => `<tr>
+          <td>${esc(r.statusId)}</td>
+          <td>${esc(r.tripId)}</td>
+          <td>${statusBadge(r.statusType)}</td>
+          <td>${fmtDt(r.updatedAt)}</td>
+        </tr>`).join('');
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="4" class="state-msg">${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    document.getElementById('ts-submit').addEventListener('click', async () => {
+      const errEl = document.getElementById('ts-err');
+      const okEl  = document.getElementById('ts-ok');
+      errEl.classList.remove('show'); okEl.classList.remove('show');
+      const tripId = parseInt(document.getElementById('ts-tripid').value, 10);
+      const type   = document.getElementById('ts-type').value;
+      if (!tripId || !type) { errEl.textContent = 'Trip ID and status type are required.'; errEl.classList.add('show'); return; }
+      try {
+        await apiFetch('/trip-statuses', {
+          method: 'POST',
+          body: JSON.stringify({ tripId, statusType: type }),
+        });
+        okEl.classList.add('show');
+        document.getElementById('ts-tripid').value = '';
+        document.getElementById('ts-type').value = '';
+        loadTripStatuses();
+      } catch (err) { errEl.textContent = err.message; errEl.classList.add('show'); }
+    });
+
+    // ---- Location Updates ----
+    async function loadLocationUpdates() {
+      const body = document.getElementById('lu-body');
+      body.innerHTML = '<tr><td colspan="5" class="state-msg">Loading…</td></tr>';
+      try {
+        const list = await apiFetch('/location-updates');
+        const recent = Array.isArray(list) ? list.slice(-20).reverse() : [];
+        if (!recent.length) { body.innerHTML = '<tr><td colspan="5" class="state-msg">No updates yet.</td></tr>'; return; }
+        body.innerHTML = recent.map(r => `<tr>
+          <td>${esc(r.locationUpdateId)}</td>
+          <td>${esc(r.tripId)}</td>
+          <td>${esc(r.latitude)}</td>
+          <td>${esc(r.longitude)}</td>
+          <td>${fmtDt(r.recordedAt)}</td>
+        </tr>`).join('');
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="5" class="state-msg">${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    document.getElementById('lu-gps').addEventListener('click', () => {
+      if (!navigator.geolocation) return;
+      navigator.geolocation.getCurrentPosition(pos => {
+        document.getElementById('lu-lat').value = pos.coords.latitude.toFixed(6);
+        document.getElementById('lu-lng').value = pos.coords.longitude.toFixed(6);
+      });
+    });
+
+    document.getElementById('lu-submit').addEventListener('click', async () => {
+      const errEl = document.getElementById('lu-err');
+      const okEl  = document.getElementById('lu-ok');
+      errEl.classList.remove('show'); okEl.classList.remove('show');
+      const tripId = parseInt(document.getElementById('lu-tripid').value, 10);
+      const lat    = parseFloat(document.getElementById('lu-lat').value);
+      const lng    = parseFloat(document.getElementById('lu-lng').value);
+      if (!tripId || isNaN(lat) || isNaN(lng)) { errEl.textContent = 'Trip ID, latitude, and longitude are required.'; errEl.classList.add('show'); return; }
+      try {
+        await apiFetch('/location-updates', {
+          method: 'POST',
+          body: JSON.stringify({ tripId, latitude: lat, longitude: lng }),
+        });
+        okEl.classList.add('show');
+        document.getElementById('lu-tripid').value = '';
+        document.getElementById('lu-lat').value = '';
+        document.getElementById('lu-lng').value = '';
+        loadLocationUpdates();
+      } catch (err) { errEl.textContent = err.message; errEl.classList.add('show'); }
+    });
   </script>
 </body>
 </html>
