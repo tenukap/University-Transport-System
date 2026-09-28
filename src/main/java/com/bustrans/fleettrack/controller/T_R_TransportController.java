@@ -1,19 +1,19 @@
 package com.bustrans.fleettrack.controller;
 
-import com.bustrans.fleettrack.entity.BusRoute;
-import com.bustrans.fleettrack.entity.BusTrip;
-import com.bustrans.fleettrack.entity.Payment;
-import com.bustrans.fleettrack.repository.PaymentRepository;
-import com.bustrans.fleettrack.service.PaymentService;
-import com.bustrans.fleettrack.service.RouteService;
-import com.bustrans.fleettrack.service.TripService;
-import com.bustrans.fleettrack.entity.Location;
-import com.bustrans.fleettrack.service.LocationService;
-import com.bustrans.fleettrack.entity.PaymentCancellation;
-import com.bustrans.fleettrack.repository.PaymentCancellationRepository;
-import com.bustrans.fleettrack.entity.LocationUpdate;
-import com.bustrans.fleettrack.repository.LocationUpdateRepository;
-import com.bustrans.fleettrack.repository.BusTripRepository;
+import com.bustrans.fleettrack.entity.T_R_BusRoute;
+import com.bustrans.fleettrack.entity.T_R_BusTrip;
+import com.bustrans.fleettrack.entity.T_R_Payment;
+import com.bustrans.fleettrack.repository.T_R_PaymentRepository;
+import com.bustrans.fleettrack.service.T_R_PaymentService;
+import com.bustrans.fleettrack.service.T_R_RouteService;
+import com.bustrans.fleettrack.service.T_R_TripService;
+import com.bustrans.fleettrack.entity.T_R_Location;
+import com.bustrans.fleettrack.service.T_R_LocationService;
+import com.bustrans.fleettrack.entity.T_R_PaymentCancellation;
+import com.bustrans.fleettrack.repository.T_R_PaymentCancellationRepository;
+import com.bustrans.fleettrack.entity.T_R_LocationUpdate;
+import com.bustrans.fleettrack.repository.T_R_LocationUpdateRepository;
+import com.bustrans.fleettrack.repository.T_R_BusTripRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -22,31 +22,31 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 @CrossOrigin(origins = "*") // Allows your frontend to connect
-public class TransportController {
+public class T_R_TransportController {
 
-    @Autowired private RouteService routeService;
-    @Autowired private TripService tripService;
-    @Autowired private PaymentService paymentService;
-    @Autowired private PaymentRepository paymentRepo;
-    @Autowired private LocationService locationService;
-    @Autowired private PaymentCancellationRepository paymentCancelRepo;
-    @Autowired private LocationUpdateRepository locationUpdateRepo;
-    @Autowired private BusTripRepository busTripRepo;
+    @Autowired private T_R_RouteService routeService;
+    @Autowired private T_R_TripService tripService;
+    @Autowired private T_R_PaymentService paymentService;
+    @Autowired private T_R_PaymentRepository paymentRepo;
+    @Autowired private T_R_LocationService locationService;
+    @Autowired private T_R_PaymentCancellationRepository paymentCancelRepo;
+    @Autowired private T_R_LocationUpdateRepository locationUpdateRepo;
+    @Autowired private T_R_BusTripRepository busTripRepo;
 
 
     // --- ROUTE CRUD ---
     @PostMapping("/routes")
-    public BusRoute createRoute(@RequestBody BusRoute route) {
+    public T_R_BusRoute createRoute(@RequestBody T_R_BusRoute route) {
         return routeService.addRoute(route);
     }
 
     @GetMapping("/routes")
-    public List<BusRoute> getRoutes() {
+    public List<T_R_BusRoute> getRoutes() {
         return routeService.getAllRoutes();
     }
 
     @PutMapping("/routes/{id}")
-    public BusRoute updateRoute(@PathVariable int id, @RequestBody BusRoute route) {
+    public T_R_BusRoute updateRoute(@PathVariable int id, @RequestBody T_R_BusRoute route) {
         return routeService.updateRoute(id, route);
     }
 
@@ -57,25 +57,25 @@ public class TransportController {
 
     // --- TRIP MANAGEMENT ---
     @GetMapping("/trips")
-    public List<BusTrip> getAllTrips() {
+    public List<T_R_BusTrip> getAllTrips() {
         return tripService.getAllTrips();
     }
 
     // GET a single trip by ID
     @GetMapping("/trips/{id}")
-    public BusTrip getTripById(@PathVariable int id) {
+    public T_R_BusTrip getTripById(@PathVariable int id) {
         return tripService.getTripById(id);
     }
 
     // CREATE a new trip
     @PostMapping("/trips")
-    public BusTrip createTrip(@RequestBody BusTrip trip) {
+    public T_R_BusTrip createTrip(@RequestBody T_R_BusTrip trip) {
         return routeService.scheduleTrip(trip);
     }
 
     // CANCEL a trip
     @PutMapping("/trips/{id}/cancel")
-    public BusTrip cancelTrip(@PathVariable int id, @RequestParam String reason) {
+    public T_R_BusTrip cancelTrip(@PathVariable int id, @RequestParam String reason) {
         return tripService.cancelTrip(id, reason);
     }
 
@@ -93,14 +93,14 @@ public class TransportController {
 
     // Get all location updates for a specific trip
     @GetMapping("/trips/{id}/locations")
-    public List<LocationUpdate> getTripLocations(@PathVariable int id) {
+    public List<T_R_LocationUpdate> getTripLocations(@PathVariable int id) {
         return locationUpdateRepo.findByTripIdOrderByRecordedAtAsc(id);
     }
 
     // Get the latest location for a specific trip
     @GetMapping("/trips/{id}/latest-location")
-    public LocationUpdate getLatestLocation(@PathVariable int id) {
-        List<LocationUpdate> updates = locationUpdateRepo.findByTripIdOrderByRecordedAtAsc(id);
+    public T_R_LocationUpdate getLatestLocation(@PathVariable int id) {
+        List<T_R_LocationUpdate> updates = locationUpdateRepo.findByTripIdOrderByRecordedAtAsc(id);
         if (updates.isEmpty()) return null;
         return updates.get(updates.size() - 1);
     }
@@ -112,24 +112,24 @@ public class TransportController {
     }
 
     @GetMapping("/payments")
-    public List<Payment> getAllPayments() {
+    public List<T_R_Payment> getAllPayments() {
         return paymentService.getAllPayments();  // ← changed from paymentRepo.findAll()
     }
 
     @GetMapping("/payment-cancellations")
-    public List<PaymentCancellation> getAllPaymentCancellations() {
+    public List<T_R_PaymentCancellation> getAllPaymentCancellations() {
         return paymentCancelRepo.findAll();
     }
 
 
     // LOCATIONS - CRUD
     @GetMapping("/locations")
-    public List<Location> getAllLocations() {
+    public List<T_R_Location> getAllLocations() {
         return locationService.getAllLocations();
     }
 
     @PostMapping("/locations")
-    public Location addLocation(@RequestBody Location location) {
+    public T_R_Location addLocation(@RequestBody T_R_Location location) {
         return locationService.addLocation(location);
     }
 
@@ -144,13 +144,13 @@ public class TransportController {
 
     // UPDATE a Trip
     @PutMapping("/trips/{id}")
-    public BusTrip updateTrip(@PathVariable int id, @RequestBody BusTrip trip) {
+    public T_R_BusTrip updateTrip(@PathVariable int id, @RequestBody T_R_BusTrip trip) {
         return tripService.updateTrip(id, trip);
     }
 
     // UPDATE a Location
     @PutMapping("/locations/{id}")
-    public Location updateLocation(@PathVariable int id, @RequestBody Location location) {
+    public T_R_Location updateLocation(@PathVariable int id, @RequestBody T_R_Location location) {
         return locationService.updateLocation(id, location);
     }
 }

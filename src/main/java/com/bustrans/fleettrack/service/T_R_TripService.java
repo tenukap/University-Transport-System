@@ -1,14 +1,14 @@
 package com.bustrans.fleettrack.service;
 
-import com.bustrans.fleettrack.entity.BusTrip;
-import com.bustrans.fleettrack.entity.Location;
-import com.bustrans.fleettrack.entity.LocationUpdate;
-import com.bustrans.fleettrack.entity.TripCancellation;
-import com.bustrans.fleettrack.repository.BusTripRepository;
-import com.bustrans.fleettrack.repository.LocationRepository;
-import com.bustrans.fleettrack.repository.LocationUpdateRepository;
-import com.bustrans.fleettrack.repository.TripCancellationRepository;
-import com.bustrans.fleettrack.util.EtaCalculator;
+import com.bustrans.fleettrack.entity.T_R_BusTrip;
+import com.bustrans.fleettrack.entity.T_R_Location;
+import com.bustrans.fleettrack.entity.T_R_LocationUpdate;
+import com.bustrans.fleettrack.entity.T_R_TripCancellation;
+import com.bustrans.fleettrack.repository.T_R_BusTripRepository;
+import com.bustrans.fleettrack.repository.T_R_LocationRepository;
+import com.bustrans.fleettrack.repository.T_R_LocationUpdateRepository;
+import com.bustrans.fleettrack.repository.T_R_TripCancellationRepository;
+import com.bustrans.fleettrack.util.T_R_EtaCalculator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
@@ -16,31 +16,31 @@ import java.time.LocalTime;
 import java.util.List;
 
 @Service
-public class TripService {
-    @Autowired private BusTripRepository tripRepo;
-    @Autowired private TripCancellationRepository cancelRepo;
-    @Autowired private LocationUpdateRepository locationRepo;
-    @Autowired private LocationRepository locationLookupRepo;
+public class T_R_TripService {
+    @Autowired private T_R_BusTripRepository tripRepo;
+    @Autowired private T_R_TripCancellationRepository cancelRepo;
+    @Autowired private T_R_LocationUpdateRepository locationRepo;
+    @Autowired private T_R_LocationRepository locationLookupRepo;
 
     // GET all trips (NEW - needed by frontend)
-    public List<BusTrip> getAllTrips() {
+    public List<T_R_BusTrip> getAllTrips() {
         return tripRepo.findAll();
     }
 
     // GET one trip by ID (NEW)
-    public BusTrip getTripById(int id) {
+    public T_R_BusTrip getTripById(int id) {
         return tripRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Trip not found with id: " + id));
     }
 
     // CANCEL Trip (From your Cancel Bus Trip Sequence Diagram)
-    public BusTrip cancelTrip(int tripId, String reason) {
-        BusTrip trip = tripRepo.findById(tripId).orElseThrow();
+    public T_R_BusTrip cancelTrip(int tripId, String reason) {
+        T_R_BusTrip trip = tripRepo.findById(tripId).orElseThrow();
         trip.setStatus("Cancelled");
         tripRepo.save(trip);
 
         // Save cancellation record
-        TripCancellation cancellation = new TripCancellation();
+        T_R_TripCancellation cancellation = new T_R_TripCancellation();
         cancellation.setTripId(tripId);
         cancellation.setReason(reason);
         cancellation.setCancelledAt(LocalDateTime.now());
@@ -50,8 +50,8 @@ public class TripService {
     }
 
     // UPDATE a trip
-    public BusTrip updateTrip(int id, BusTrip updatedTrip) {
-        BusTrip existing = tripRepo.findById(id)
+    public T_R_BusTrip updateTrip(int id, T_R_BusTrip updatedTrip) {
+        T_R_BusTrip existing = tripRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Trip not found: " + id));
 
         existing.setTripDate(updatedTrip.getTripDate());
@@ -68,7 +68,7 @@ public class TripService {
     // UPDATE Location & ETA (From Driver Progress Sequence Diagram)
     public void updateLocation(int tripId, double lat, double lng) {
         // 1. Save the location update
-        LocationUpdate update = new LocationUpdate();
+        T_R_LocationUpdate update = new T_R_LocationUpdate();
         update.setTripId(tripId);
         update.setLatitude(lat);
         update.setLongitude(lng);
@@ -76,15 +76,15 @@ public class TripService {
         locationRepo.save(update);
 
         // 2. Get the trip + its drop location
-        BusTrip trip = tripRepo.findById(tripId)
+        T_R_BusTrip trip = tripRepo.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
 
-        Location dropLocation = locationLookupRepo.findById(trip.getDropLocationId())
+        T_R_Location dropLocation = locationLookupRepo.findById(trip.getDropLocationId())
                 .orElseThrow(() -> new RuntimeException("Drop location not found"));
 
         // 3. Calculate ETA based on distance to destination
         if (dropLocation.getLatitude() != null && dropLocation.getLongitude() != null) {
-            LocalTime newEta = EtaCalculator.calculateEta(
+            LocalTime newEta = T_R_EtaCalculator.calculateEta(
                     lat, lng,
                     dropLocation.getLatitude(),
                     dropLocation.getLongitude()
@@ -92,7 +92,7 @@ public class TripService {
             trip.setEta(newEta);
 
             // 4. Auto-complete if within 200 meters of destination
-            double distKm = EtaCalculator.calculateDistance(
+            double distKm = T_R_EtaCalculator.calculateDistance(
                     lat, lng,
                     dropLocation.getLatitude(),
                     dropLocation.getLongitude()
@@ -107,7 +107,7 @@ public class TripService {
 
     // COMPLETE Trip (From Driver Progress Sequence Diagram)
     public void completeTrip(int tripId) {
-        BusTrip trip = tripRepo.findById(tripId)
+        T_R_BusTrip trip = tripRepo.findById(tripId)
                 .orElseThrow(() -> new RuntimeException("Trip not found"));
         trip.setStatus("Completed");
         tripRepo.save(trip);

@@ -1,14 +1,14 @@
 package com.bustrans.fleettrack.service;
 
-import com.bustrans.fleettrack.entity.BusRoute;
-import com.bustrans.fleettrack.entity.BusTrip;
-import com.bustrans.fleettrack.entity.Location;
-import com.bustrans.fleettrack.entity.LocationUpdate;
-import com.bustrans.fleettrack.repository.BusRouteRepository;
-import com.bustrans.fleettrack.repository.BusTripRepository;
-import com.bustrans.fleettrack.repository.LocationRepository;
-import com.bustrans.fleettrack.repository.LocationUpdateRepository;
-import com.bustrans.fleettrack.util.EtaCalculator;
+import com.bustrans.fleettrack.entity.T_R_BusRoute;
+import com.bustrans.fleettrack.entity.T_R_BusTrip;
+import com.bustrans.fleettrack.entity.T_R_Location;
+import com.bustrans.fleettrack.entity.T_R_LocationUpdate;
+import com.bustrans.fleettrack.repository.T_R_BusRouteRepository;
+import com.bustrans.fleettrack.repository.T_R_BusTripRepository;
+import com.bustrans.fleettrack.repository.T_R_LocationRepository;
+import com.bustrans.fleettrack.repository.T_R_LocationUpdateRepository;
+import com.bustrans.fleettrack.util.T_R_EtaCalculator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,30 +17,30 @@ import java.time.LocalTime;
 import java.util.List;
 
 @Service
-public class RouteService {
+public class T_R_RouteService {
 
-    @Autowired private BusRouteRepository routeRepo;
-    @Autowired private BusTripRepository tripRepo;
-    @Autowired private LocationRepository locationRepo;
-    @Autowired private LocationUpdateRepository locationUpdateRepo;
+    @Autowired private T_R_BusRouteRepository routeRepo;
+    @Autowired private T_R_BusTripRepository tripRepo;
+    @Autowired private T_R_LocationRepository locationRepo;
+    @Autowired private T_R_LocationUpdateRepository locationUpdateRepo;
 
     // ==========================================
     // ROUTE CRUD
     // ==========================================
 
-    public BusRoute addRoute(BusRoute route) {
+    public T_R_BusRoute addRoute(T_R_BusRoute route) {
         if (routeRepo.findByRouteName(route.getRouteName()).isPresent()) {
             throw new RuntimeException("Duplicate Route Found!");
         }
         return routeRepo.save(route);
     }
 
-    public List<BusRoute> getAllRoutes() {
+    public List<T_R_BusRoute> getAllRoutes() {
         return routeRepo.findAll();
     }
 
-    public BusRoute updateRoute(int id, BusRoute routeDetails) {
-        BusRoute route = routeRepo.findById(id)
+    public T_R_BusRoute updateRoute(int id, T_R_BusRoute routeDetails) {
+        T_R_BusRoute route = routeRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Route not found: " + id));
 
         route.setRouteName(routeDetails.getRouteName());
@@ -58,18 +58,18 @@ public class RouteService {
     // SCHEDULE TRIP + AUTO-CREATE INITIAL GPS PING
     // ==========================================
 
-    public BusTrip scheduleTrip(BusTrip trip) {
+    public T_R_BusTrip scheduleTrip(T_R_BusTrip trip) {
         trip.setStatus("Scheduled");
 
         // Set an initial ETA = start time + estimated travel time
         if (trip.getStartTime() != null) {
-            Location pickup = locationRepo.findById(trip.getPickupLocationId()).orElse(null);
-            Location drop = locationRepo.findById(trip.getDropLocationId()).orElse(null);
+            T_R_Location pickup = locationRepo.findById(trip.getPickupLocationId()).orElse(null);
+            T_R_Location drop = locationRepo.findById(trip.getDropLocationId()).orElse(null);
 
             if (pickup != null && drop != null &&
                     pickup.getLatitude() != null && drop.getLatitude() != null) {
 
-                LocalTime initialEta = EtaCalculator.calculateEta(
+                LocalTime initialEta = T_R_EtaCalculator.calculateEta(
                         pickup.getLatitude(), pickup.getLongitude(),
                         drop.getLatitude(), drop.getLongitude()
                 );
@@ -77,13 +77,13 @@ public class RouteService {
             }
         }
 
-        BusTrip savedTrip = tripRepo.save(trip);
+        T_R_BusTrip savedTrip = tripRepo.save(trip);
 
         // Auto-create initial GPS ping (from previous fix)
-        Location pickupLocation = locationRepo.findById(trip.getPickupLocationId())
+        T_R_Location pickupLocation = locationRepo.findById(trip.getPickupLocationId())
                 .orElseThrow(() -> new RuntimeException("Pickup location not found"));
 
-        LocationUpdate initialUpdate = new LocationUpdate();
+        T_R_LocationUpdate initialUpdate = new T_R_LocationUpdate();
         initialUpdate.setTripId(savedTrip.getTripId());
         initialUpdate.setLatitude(pickupLocation.getLatitude() != null ? pickupLocation.getLatitude() : 6.9271);
         initialUpdate.setLongitude(pickupLocation.getLongitude() != null ? pickupLocation.getLongitude() : 79.8612);

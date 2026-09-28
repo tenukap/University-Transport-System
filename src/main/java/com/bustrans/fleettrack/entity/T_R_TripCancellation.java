@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "tripcancellation")
 @Data
-public class TripCancellation {
+public class T_R_TripCancellation {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "CancellationId")

@@ -8,7 +8,7 @@ import java.time.LocalTime;
 @Entity
 @Table(name = "bustrip")
 @Data
-public class BusTrip {
+public class T_R_BusTrip {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "TripId")

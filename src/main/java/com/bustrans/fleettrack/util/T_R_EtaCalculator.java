@@ -2,7 +2,7 @@ package com.bustrans.fleettrack.util;
 
 import java.time.LocalTime;
 
-public class EtaCalculator {
+public class T_R_EtaCalculator {
 
     // Average city bus speed in km/h (adjust for realism)
     private static final double AVG_SPEED_KMH = 35.0;

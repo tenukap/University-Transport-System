@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "locationupdate")
 @Data
-public class LocationUpdate {
+public class T_R_LocationUpdate {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "LocationUpdateId")

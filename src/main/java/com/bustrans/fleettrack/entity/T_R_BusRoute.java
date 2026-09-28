@@ -2,13 +2,11 @@ package com.bustrans.fleettrack.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
 @Entity
 @Table(name = "busroute")
 @Data
-public class BusRoute {
+public class T_R_BusRoute {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "RouteId") // Tell Hibernate the exact column name

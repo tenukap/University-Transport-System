@@ -3,12 +3,11 @@ package com.bustrans.fleettrack.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "payment")
 @Data
-public class Payment {
+public class T_R_Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "PaymentId")
