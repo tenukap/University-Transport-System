@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Driver Portal — UniTransport</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root { --primary: #35627A; --primary-dark: #2B4F63; --bg: #F5F5F5; --muted: #8E9A98; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Roboto', sans-serif; background: var(--bg); color: #1E2C33; }
+    .topbar { height: 64px; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+    .topbar__brand { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+    .logout-btn { background: rgba(255,255,255,.15); color: #fff; border: none; border-radius: 6px; padding: 8px 14px; font-family: 'Montserrat',sans-serif; font-weight: 600; font-size: 13px; cursor: pointer; }
+    .logout-btn:hover { background: rgba(255,255,255,.28); }
+    .wrap { max-width: 720px; margin: 48px auto; padding: 0 16px; }
+    .card { background: #fff; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    h1 { font-family: 'Montserrat', sans-serif; margin: 0 0 8px; color: var(--primary); }
+    .muted { color: var(--muted); font-size: 15px; line-height: 1.6; }
+    .note { margin-top: 20px; background: #F4F2FF; border-radius: 8px; padding: 14px 16px; font-size: 13px; color: #4A4C6A; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar__brand">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6M16 6v6M2 12h19.6M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v8c0 .4.1.8.2 1.2C2.5 16.3 3 18 3 18h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>
+      UniTransport · Driver
+    </div>
+    <button class="logout-btn" id="logout-btn">Logout</button>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <h1>Welcome, <span id="driver-name">Driver</span></h1>
+      <p class="muted">This is your driver portal. Trip assignment and passenger manifest features
+        are not yet available from the backend, so this page is a placeholder for now.</p>
+      <div class="note">No driver-specific API endpoints exist yet. When they are added
+        (e.g. assigned trips, passenger lists), they can be wired in here using the shared
+        <code>getAuthHeaders()</code> helper.</div>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    const claims = checkAuth('DRIVER');
+    if (claims) {
+      const u = JSON.parse(localStorage.getItem('user') || 'null');
+      document.getElementById('driver-name').textContent = (u && (u.fullName || u.name)) || 'Driver';
+      document.getElementById('logout-btn').addEventListener('click', logout);
+    }
+  </script>
+</body>
+</html>
