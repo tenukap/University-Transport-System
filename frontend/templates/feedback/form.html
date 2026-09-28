@@ -69,6 +69,7 @@
                         <p>Please correct the feedback details:</p>
                         <ul>
                             <li th:each="error : ${#fields.globalErrors()}" th:text="${error}"></li>
+                            <li th:if="${#fields.hasErrors('subject')}">Enter a valid feedback subject.</li>
                             <li th:if="${#fields.hasErrors('comments')}">Enter valid feedback comments.</li>
                         </ul>
                     </div>
@@ -77,6 +78,17 @@
 
                     <div class="form-group">
 
+                        <label for="subject">Subject</label>
+                        <input type="text" th:field="*{subject}" maxlength="150" required
+                               th:attr="aria-invalid=${#fields.hasErrors('subject')},aria-describedby=${#fields.hasErrors('subject')} ? 'form-errors' : null">
+                    </div>
+
+                    <p class="message message-error" role="alert" th:if="${oversizedComments}">
+                        This message exceeds the 1,000-character edit limit. Its full text is preserved below.
+                        No changes are saved unless you explicitly submit valid edited text.
+                    </p>
+
+                    <div class="form-group">
                         <label for="comments">Comments</label>
 
                         <textarea

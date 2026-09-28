@@ -47,7 +47,7 @@
                 <div>
                     <h1>Feedback</h1>
                     <div class="subtitle">
-                        Share and manage transport feedback
+                        Share and manage your transport feedback
                     </div>
                 </div>
 
@@ -66,7 +66,9 @@
                     <thead>
                     <tr>
                         <th scope="col">ID</th>
-                        <th scope="col">Date</th>
+                        <th scope="col">Submitted</th>
+                        <th scope="col">Subject</th>
+                        <th scope="col">Status</th>
                         <th scope="col">Comments</th>
                         <th scope="col">Actions</th>
                     </tr>
@@ -77,7 +79,9 @@
                     <tr th:each="feedback : ${feedbackList}">
 
                         <td th:text="${feedback.feedbackId}"></td>
-                        <td th:text="${feedback.feedbackDate}"></td>
+                        <td th:text="${feedback.submittedAt == null ? 'Not recorded' : #temporals.format(feedback.submittedAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                        <td th:text="${feedback.subject}"></td>
+                        <td th:text="${feedback.status == null ? 'Not recorded' : feedback.status}"></td>
                         <td class="feedback-comments" th:text="${feedback.comments}"></td>
 
                         <td>
