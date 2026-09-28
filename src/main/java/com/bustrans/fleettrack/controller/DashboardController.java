@@ -15,9 +15,10 @@ import java.util.List;
 import java.util.Map;
 
 // Admin-only. Paths are declared per-method so the reports endpoint can live
-// outside the /api/dashboard prefix.
+// outside the /api/dashboard prefix. getFinancialReport also allows FINANCE_OFFICER.
+// Class-level @PreAuthorize is intentionally absent: Spring Security 6.3 evaluates
+// both class-level and method-level annotations, so per-method annotations are used here.
 @RestController
-@PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 public class DashboardController {
 
@@ -25,21 +26,25 @@ public class DashboardController {
     private final UserService userService;
     private final BookingService bookingService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/dashboard")
     public Map<String, Object> getDashboardSummary() {
         return fleetTrackService.getDashboardSummary();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/dashboard/users")
     public List<UserResponse> getUsers() {
         return userService.getAllUsers();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/api/dashboard/bookings")
     public List<BookingResponseDTO> getBookings() {
         return bookingService.getAllBookings();
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'FINANCE_OFFICER')")
     @GetMapping("/api/reports/financial")
     public Map<String, Object> getFinancialReport(
             @RequestParam(required = false) String startDate,

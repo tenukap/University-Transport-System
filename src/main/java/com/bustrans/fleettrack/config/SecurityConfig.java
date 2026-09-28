@@ -34,7 +34,10 @@ public class SecurityConfig {
                                 "/error", "/favicon.ico", "/actuator/health").permitAll()
                         .requestMatchers("/api/auth/login", "/api/portal/login").permitAll()
                         // Admin-only management endpoints.
-                        .requestMatchers("/api/users/**", "/api/dashboard/**", "/api/reports/**").hasRole("ADMIN")
+                        .requestMatchers("/api/users/**", "/api/dashboard/**").hasRole("ADMIN")
+                        // Financial report is also accessible to Finance Officers.
+                        .requestMatchers("/api/reports/financial").hasAnyRole("ADMIN", "FINANCE_OFFICER")
+                        .requestMatchers("/api/reports/**").hasRole("ADMIN")
                         // Student-facing endpoints (admin has access too).
                         .requestMatchers("/api/trips/**", "/api/locations/**", "/api/bookings/**", "/api/students/**", "/api/feedback/**")
                                 .hasAnyRole("STUDENT", "ADMIN")
