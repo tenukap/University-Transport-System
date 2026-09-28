@@ -1,4 +1,5 @@
-
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Emergency_Report')
+BEGIN
 CREATE TABLE Emergency_Report (
     Report_ID INT IDENTITY(1,1) PRIMARY KEY,
     Report_Title VARCHAR(255) NOT NULL,
@@ -12,3 +13,4 @@ CREATE TABLE Emergency_Report (
     CONSTRAINT FK_Emergency_User FOREIGN KEY (user_id)
         REFERENCES Users(UserId) ON DELETE CASCADE
 );
+END;

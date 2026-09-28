@@ -184,3 +184,60 @@ BEGIN
             REFERENCES Users(UserId) ON DELETE CASCADE
     );
 END;
+
+
+-- 12. Busroute
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'BusRoute')
+BEGIN
+   CREATE TABLE BusRoute (
+    RouteId INT IDENTITY(1,1) NOT NULL,
+    RouteName NVARCHAR(100) NOT NULL,
+    StartPoint NVARCHAR(100) NOT NULL,
+    EndPoint NVARCHAR(100) NOT NULL,
+    PRIMARY KEY (RouteId)
+);
+END;
+
+--13. destination
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Destination')
+BEGIN
+CREATE TABLE Destination (
+    DestinationId INT IDENTITY(1,1) NOT NULL,
+    DestinationName NVARCHAR(100) NOT NULL,
+    Location NVARCHAR(255) NOT NULL,
+    RouteId INT NOT NULL,
+    PRIMARY KEY (DestinationId),
+    CONSTRAINT FK_Destination_BusRoute FOREIGN KEY (RouteId) REFERENCES busroute(RouteId)
+);
+END;
+
+--13. Locationupdate
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'LocationUpdate')
+BEGIN
+CREATE TABLE locationupdate (
+    LocationUpdateId INT IDENTITY(1,1) NOT NULL,
+    TripId INT NOT NULL,
+    Latitude DECIMAL(10,8) NOT NULL,
+    Longitude DECIMAL(11,8) NOT NULL,
+    RecordedAt DATETIME NOT NULL,
+    PRIMARY KEY (LocationUpdateId),
+    CONSTRAINT FK_LocationUpdate_BusTrip FOREIGN KEY (TripId) REFERENCES bustrip(TripId)
+);
+END;
+
+--14. tripcancelation
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TripCancelation')
+BEGIN
+CREATE TABLE TripCancelation (
+    CancellationId INT IDENTITY(1,1) NOT NULL,
+    TripId INT NOT NULL,
+    Reason NVARCHAR(255) DEFAULT NULL,
+    CancelledAt DATETIME DEFAULT GETDATE(),
+    PRIMARY KEY (CancellationId),
+    CONSTRAINT FK_TripCancellation_BusTrip FOREIGN KEY (TripId) REFERENCES bustrip(TripId)
+);
+
+END;
+
+
+

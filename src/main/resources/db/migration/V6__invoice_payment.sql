@@ -1,5 +1,7 @@
 -- Extends the team V1/V2 lineage. Feedback and Users remain team-owned.
-CREATE TABLE dbo.invoice (
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'invoice')
+BEGIN
+CREATE TABLE invoice (
     invoice_id BIGINT IDENTITY(1,1) PRIMARY KEY,
     billing_month INT NOT NULL,
     billing_year INT NOT NULL,
@@ -11,8 +13,11 @@ CREATE TABLE dbo.invoice (
     CONSTRAINT chk_invoice_amount CHECK (total_amount >= 0),
     CONSTRAINT chk_invoice_dates CHECK (due_date >= issue_date)
 );
+END;
 
-CREATE TABLE dbo.payment (
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'payment')
+BEGIN
+CREATE TABLE payment (
     payment_id BIGINT IDENTITY(1,1) PRIMARY KEY,
     invoice_id BIGINT NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
@@ -23,5 +28,6 @@ CREATE TABLE dbo.payment (
     CONSTRAINT fk_payment_invoice FOREIGN KEY (invoice_id)
         REFERENCES dbo.invoice(invoice_id) ON DELETE NO ACTION ON UPDATE NO ACTION
 );
+END;
 
 CREATE INDEX ix_payment_invoice_id ON dbo.payment(invoice_id);

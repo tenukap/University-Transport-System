@@ -39,6 +39,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/trips/**", "/api/locations/**", "/api/bookings/**", "/api/students/**", "/api/feedback/**")
                                 .hasAnyRole("STUDENT", "ADMIN")
                         .requestMatchers("/api/emergency-reports/**", "/api/crash-incidents/**", "/api/trip-statuses/**", "/api/location-updates/**").permitAll()
+                        .requestMatchers("/api/transport/**").hasAnyRole("TRANSPORT_OFFICER", "ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

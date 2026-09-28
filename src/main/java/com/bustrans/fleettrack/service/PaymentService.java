@@ -2,14 +2,18 @@ package com.bustrans.fleettrack.service;
 
 import com.bustrans.fleettrack.entity.Invoice;
 import com.bustrans.fleettrack.entity.Payment;
+import com.bustrans.fleettrack.entity.PaymentCancelation;
 import com.bustrans.fleettrack.form.PaymentForm;
 import com.bustrans.fleettrack.repository.InvoiceRepository;
+import com.bustrans.fleettrack.repository.PaymentCancellationRepository;
 import com.bustrans.fleettrack.repository.PaymentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.NoSuchElementException;
@@ -19,6 +23,8 @@ public class PaymentService {
     private static final BigDecimal MAX_AMOUNT = new BigDecimal("99999999.99");
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository;
+    @Autowired
+    private PaymentCancellationRepository cancellationRepository;
 
     public PaymentService(PaymentRepository paymentRepository, InvoiceRepository invoiceRepository) {
         this.paymentRepository = paymentRepository;
@@ -97,6 +103,19 @@ public class PaymentService {
     @Transactional
     public void deletePayment(Long id) {
         paymentRepository.delete(getPaymentById(id));
+    }
+
+    public void cancelPayment(int paymentId, String reason) {
+        Payment payment = paymentRepository.findById((long) paymentId)
+                .orElseThrow(() -> new NoSuchElementException("Payment not found with ID: " + paymentId));
+        payment.setPaymentStatus("CANCELLED");
+        paymentRepository.save(payment);
+
+        PaymentCancelation record = new PaymentCancelation();
+        record.setPaymentId(paymentId);
+        record.setReason(reason);
+        record.setCancelledAt(LocalDateTime.now());
+        cancellationRepository.save(record);
     }
 }
 

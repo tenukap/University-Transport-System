@@ -1,4 +1,5 @@
-
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Trip_Status')
+BEGIN
 CREATE TABLE Trip_Status (
     Status_Id INT IDENTITY(1,1) PRIMARY KEY,
     TripId INT NOT NULL,  -- Changed from Trip_Id
@@ -8,7 +9,10 @@ CREATE TABLE Trip_Status (
     CONSTRAINT FK_TripStatus_Trip FOREIGN KEY (TripId)
         REFERENCES bustrip(TripId)
 );
+END;
 
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Location_Update')
+BEGIN
 CREATE TABLE Location_Update (
     Location_Update_Id INT IDENTITY(1,1) PRIMARY KEY,
     TripId INT NOT NULL,  -- Changed from Trip_Id
@@ -19,3 +23,4 @@ CREATE TABLE Location_Update (
     CONSTRAINT FK_LocationUpdate_Trip FOREIGN KEY (TripId)
         REFERENCES bustrip(TripId)
 );
+END;

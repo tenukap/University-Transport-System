@@ -97,6 +97,9 @@
         case 'FINANCE_OFFICER':
           showError('The Finance Officer portal is not yet available. Please contact the system administrator.');
           break;
+        case 'TRANSPORT_OFFICER':
+          showError('The Transport Officer portal is not yet available. Please contact the system administrator.');
+          break;
         default:
           showError(`Signed in as ${role || 'unknown role'}, but no portal is configured for this role.`);
       }

@@ -1,4 +1,5 @@
-
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Crash_Incident')
+BEGIN
 CREATE TABLE Crash_Incident (
     Incident_ID INT IDENTITY(1,1) PRIMARY KEY,
     bus_id BIGINT,  -- Changed from Bus_No
@@ -14,3 +15,4 @@ CREATE TABLE Crash_Incident (
     CONSTRAINT FK_Crash_User FOREIGN KEY (user_id)
         REFERENCES Users(UserId) ON DELETE CASCADE
 );
+END;

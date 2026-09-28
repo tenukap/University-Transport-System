@@ -206,6 +206,7 @@
           <option value="STUDENT">Student</option>
           <option value="DRIVER">Driver</option>
           <option value="FINANCE_OFFICER">Finance Officer</option>
+          <option value="TRANSPORT_OFFICER">Transport Officer</option>
           <option value="ADMIN">Administrator</option>
         </select>
       </div>
@@ -445,6 +446,7 @@
       if (!role) return 'STUDENT';
       const r = role.replace(/[_\s-]/g, '').toLowerCase();
       if (r === 'financeofficer') return 'FINANCE_OFFICER';
+      if (r === 'transportofficer') return 'TRANSPORT_OFFICER';
       if (r === 'admin') return 'ADMIN';
       if (r === 'driver') return 'DRIVER';
       return 'STUDENT';
