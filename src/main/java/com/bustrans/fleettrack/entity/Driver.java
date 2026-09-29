@@ -6,17 +6,17 @@ import java.time.LocalDate;
 @Table(name = "driver")
 public class Driver {
     @Id
-    private Long userId; // Linked to  Users table
+    @Column(name = "user_id")
+    private Long userId;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "license_number", nullable = false, unique = true)
     private String licenseNumber;
 
+    @Column(name = "dob")
     private LocalDate dob;
 
+    @Column(name = "status")
     private String status = "Available";
-
-    //  Getters and Setters
-
 
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }

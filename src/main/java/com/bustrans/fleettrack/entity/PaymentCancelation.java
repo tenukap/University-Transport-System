@@ -15,7 +15,7 @@ public class PaymentCancelation {
     private int cancellationId;
 
     @Column(name = "PaymentId")
-    private int paymentId;
+    private Long paymentId;
 
     @Column(name = "Reason")
     private String reason;

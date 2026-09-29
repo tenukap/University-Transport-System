@@ -29,8 +29,11 @@ async function request(path, { method = 'GET', body } = {}) {
   return text ? JSON.parse(text) : null;
 }
 
-// GET /trips
+// GET /trips  (admin use — returns all trips regardless of status/date)
 const getTrips = () => request('/trips');
+
+// GET /trips/available  (student booking page — Scheduled trips with future departure only)
+const getAvailableTrips = () => request('/trips/available');
 
 // GET /locations
 const getLocations = () => request('/locations');

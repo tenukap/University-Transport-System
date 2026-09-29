@@ -12,7 +12,7 @@ public class TripStatus {
     @Column(name = "Status_Id")
     private Integer statusId;
 
-    @Column(name = "Trip_Id", nullable = false)
+    @Column(name = "TripId", nullable = false)
     private Integer tripId;
 
     @Column(name = "Status_Type", length = 100)

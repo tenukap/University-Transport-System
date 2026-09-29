@@ -18,7 +18,7 @@ END;
 IF NOT EXISTS (SELECT * FROM bus WHERE registration_number = 'NA-1001')
 BEGIN
     INSERT INTO bus (registration_number, passenger_capacity, status)
-    VALUES ('NA-1001', 50, 'Active');
+    VALUES ('NA-1001', 50, 'Available');
 END;
 -- Admin user
 -- Password stored as plaintext: admin1234

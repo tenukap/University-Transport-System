@@ -13,7 +13,7 @@ public class LocationUpdate {
     @Column(name = "Location_Update_Id")
     private Integer locationUpdateId;
 
-    @Column(name = "Trip_Id", nullable = false)
+    @Column(name = "TripId", nullable = false)
     private Integer tripId;
 
     @Column(name = "Latitude", precision = 10, scale = 8)

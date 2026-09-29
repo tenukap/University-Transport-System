@@ -7,6 +7,8 @@ import com.bustrans.fleettrack.repository.BusTripRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +20,14 @@ public class TripService {
 
     public List<TripResponseDTO> getAllTrips() {
         return busTripRepository.findAll().stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<TripResponseDTO> getAvailableTrips() {
+        return busTripRepository
+                .findAvailableTrips(LocalDate.now(), LocalTime.now())
+                .stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }

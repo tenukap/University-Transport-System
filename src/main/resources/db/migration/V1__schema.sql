@@ -1,4 +1,4 @@
--- V2__schema.sql
+-- V1__schema.sql
 -- Clean consolidated schema (SQL Server / T-SQL).
 -- Tables are created in foreign-key dependency order.
 -- Role is stored as a string in Users.RoleName (no separate Roles table).
@@ -52,7 +52,7 @@ BEGIN
         bus_id              BIGINT IDENTITY PRIMARY KEY,
         registration_number VARCHAR(50) NOT NULL UNIQUE,
         passenger_capacity  INT NOT NULL,
-        status              VARCHAR(20) DEFAULT 'Active'
+        status              VARCHAR(20) DEFAULT 'Available'
     );
 END;
 
@@ -210,34 +210,5 @@ CREATE TABLE Destination (
     CONSTRAINT FK_Destination_BusRoute FOREIGN KEY (RouteId) REFERENCES busroute(RouteId)
 );
 END;
-
---13. Locationupdate
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'LocationUpdate')
-BEGIN
-CREATE TABLE locationupdate (
-    LocationUpdateId INT IDENTITY(1,1) NOT NULL,
-    TripId INT NOT NULL,
-    Latitude DECIMAL(10,8) NOT NULL,
-    Longitude DECIMAL(11,8) NOT NULL,
-    RecordedAt DATETIME NOT NULL,
-    PRIMARY KEY (LocationUpdateId),
-    CONSTRAINT FK_LocationUpdate_BusTrip FOREIGN KEY (TripId) REFERENCES bustrip(TripId)
-);
-END;
-
---14. tripcancelation
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'TripCancelation')
-BEGIN
-CREATE TABLE TripCancelation (
-    CancellationId INT IDENTITY(1,1) NOT NULL,
-    TripId INT NOT NULL,
-    Reason NVARCHAR(255) DEFAULT NULL,
-    CancelledAt DATETIME DEFAULT GETDATE(),
-    PRIMARY KEY (CancellationId),
-    CONSTRAINT FK_TripCancellation_BusTrip FOREIGN KEY (TripId) REFERENCES bustrip(TripId)
-);
-
-END;
-
 
 

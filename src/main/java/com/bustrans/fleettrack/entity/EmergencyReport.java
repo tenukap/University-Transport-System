@@ -27,11 +27,8 @@ public class EmergencyReport {
     @Column(name = "Resolution_Status", length = 50)
     private String resolutionStatus = "Pending";
 
-    @Column(name = "Student_No")
+    @Column(name = "user_id")
     private Integer studentNo;
-
-    @Column(name = "Officer_No")
-    private Integer officerNo;
 
     public Integer getReportId() {
         return reportId;
@@ -87,13 +84,5 @@ public class EmergencyReport {
 
     public void setStudentNo(Integer studentNo) {
         this.studentNo = studentNo;
-    }
-
-    public Integer getOfficerNo() {
-        return officerNo;
-    }
-
-    public void setOfficerNo(Integer officerNo) {
-        this.officerNo = officerNo;
     }
 }

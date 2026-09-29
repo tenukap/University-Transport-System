@@ -12,10 +12,10 @@ public class CrashIncident {
     @Column(name = "Incident_ID")
     private Integer incidentId;
 
-    @Column(name = "Bus_No")
-    private Integer busNo;
+    @Column(name = "bus_id")
+    private Long busNo;
 
-    @Column(name = "Driver_No")
+    @Column(name = "user_id")
     private Integer driverNo;
 
     @Column(name = "Location_Coordinates", nullable = false, length = 255)
@@ -47,11 +47,11 @@ public class CrashIncident {
         this.incidentId = incidentId;
     }
 
-    public Integer getBusNo() {
+    public Long getBusNo() {
         return busNo;
     }
 
-    public void setBusNo(Integer busNo) {
+    public void setBusNo(Long busNo) {
         this.busNo = busNo;
     }
 

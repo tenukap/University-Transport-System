@@ -23,7 +23,7 @@ dateInput.value = today();
 
 async function loadTrips() {
   try {
-    trips = await getTrips();
+    trips = await getAvailableTrips();
     if (!trips.length) {
       tripSelect.innerHTML = '<option>No trips available</option>';
       return;

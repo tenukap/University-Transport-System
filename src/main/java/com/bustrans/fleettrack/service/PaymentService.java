@@ -105,8 +105,8 @@ public class PaymentService {
         paymentRepository.delete(getPaymentById(id));
     }
 
-    public void cancelPayment(int paymentId, String reason) {
-        Payment payment = paymentRepository.findById((long) paymentId)
+    public void cancelPayment(long paymentId, String reason) {
+        Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new NoSuchElementException("Payment not found with ID: " + paymentId));
         payment.setPaymentStatus("CANCELLED");
         paymentRepository.save(payment);

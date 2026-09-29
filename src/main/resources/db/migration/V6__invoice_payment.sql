@@ -30,4 +30,5 @@ CREATE TABLE payment (
 );
 END;
 
-CREATE INDEX ix_payment_invoice_id ON dbo.payment(invoice_id);
+IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'ix_payment_invoice_id' AND object_id = OBJECT_ID('dbo.payment'))
+    CREATE INDEX ix_payment_invoice_id ON dbo.payment(invoice_id);

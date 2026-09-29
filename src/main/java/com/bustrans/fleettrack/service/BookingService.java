@@ -13,7 +13,9 @@ import com.bustrans.fleettrack.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -35,7 +37,19 @@ public class BookingService {
                 .orElseThrow(() -> new RuntimeException("Trip not found with id: " + tripId));
 
         if (!"Scheduled".equalsIgnoreCase(busTrip.getTripStatus())) {
-            throw new RuntimeException("Trip is not available for booking");
+            throw new RuntimeException(
+                "Trip is not available for booking (status: " + busTrip.getTripStatus() + ")");
+        }
+
+        LocalDate tripDate = busTrip.getTripDate();
+        LocalTime startTime = busTrip.getStartTime();
+        if (tripDate != null && startTime != null) {
+            boolean departed = tripDate.isBefore(LocalDate.now())
+                    || (tripDate.isEqual(LocalDate.now()) && !startTime.isAfter(LocalTime.now()));
+            if (departed) {
+                throw new RuntimeException(
+                    "This trip has already departed (" + tripDate + " at " + startTime + ")");
+            }
         }
 
         boolean alreadyBooked = bookingRepository.findByUser_UserId(userId).stream()
