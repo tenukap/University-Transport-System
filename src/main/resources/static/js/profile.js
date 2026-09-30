@@ -28,7 +28,7 @@ function render() {
 
       <div class="fields">
         ${field('Full Name', fullName, editing, 'fullName')}
-        ${field('Student Index', student.studentIndex, false)}
+        ${field('Student Index', student.studentIndex || 'Not set', false)}
         ${field('Email Address', student.email, false)}
         ${field('Phone Number', phone, editing, 'phone')}
       </div>
@@ -74,7 +74,10 @@ async function handleSave() {
   saveBtn.disabled = true;
   saveBtn.textContent = 'Saving...';
   try {
-    student = await updateStudent(student.id, { fullName, phone });
+    // fullName and phone live on the Users table; send to PUT /api/users/{id}.
+    await updateUser(student.id, { fullName, phone });
+    // Reload the student DTO so the rendered name/phone reflect the saved values.
+    student = await getStudentByUserId(getUserId());
     editing = false;
     render();
     const success = document.getElementById('profile-success');

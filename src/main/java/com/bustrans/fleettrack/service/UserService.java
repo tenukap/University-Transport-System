@@ -2,6 +2,7 @@ package com.bustrans.fleettrack.service;
 
 import com.bustrans.fleettrack.dto.UserDto.UserRequest;
 import com.bustrans.fleettrack.dto.UserDto.UserResponse;
+import com.bustrans.fleettrack.dto.UserDto.UserSelfUpdateRequest;
 import com.bustrans.fleettrack.entity.Student;
 import com.bustrans.fleettrack.entity.User;
 import com.bustrans.fleettrack.repository.StudentRepository;
@@ -67,24 +68,14 @@ public class UserService {
                 .build();
         User savedUser = userRepository.save(user);
 
-        // Option B: a STUDENT-role user needs a matching Student row, otherwise
-        // StudentService.getStudentByUserId() throws "Student not found" on login.
+        // A STUDENT-role user needs a matching student row; user_id is both PK and FK.
         if ("STUDENT".equals(savedUser.getRoleName())) {
             try {
                 Student student = new Student();
-                student.setUser(savedUser); // FK link to Users.UserId
-                // student_index is NOT NULL + UNIQUE in the schema. No index is sent on
-                // creation yet, so seed a unique placeholder derived from the user id.
-                // TODO: capture the real student index from the registration request.
-                student.setStudentIndex("PENDING-" + savedUser.getUserId());
-                // full_name is NOT NULL in the schema; fall back to the email if missing.
-                student.setFullName(savedUser.getFullName() != null
-                        ? savedUser.getFullName()
-                        : savedUser.getEmail());
-                student.setPhone(savedUser.getPhone());
+                student.setUserId(savedUser.getUserId());
+                // student_index is nullable; the student sets it via PUT /api/students/{id}.
                 studentRepository.save(student);
             } catch (RuntimeException ex) {
-                // Rolls back the transaction (including the User) to keep the tables in sync.
                 throw new RuntimeException("Failed to create student profile", ex);
             }
         }
@@ -132,5 +123,15 @@ public class UserService {
             throw new RuntimeException("User not found with id: " + id);
         }
         userRepository.deleteById(id);
+    }
+
+    /** Student self-service update — only fullName and phone are applied; all other fields ignored. */
+    public UserResponse updateUserSelf(Long id, UserSelfUpdateRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+        if (request.fullName() != null) user.setFullName(request.fullName());
+        if (request.phone() != null)    user.setPhone(request.phone());
+        user.setUpdatedAt(LocalDateTime.now());
+        return UserResponse.fromEntity(userRepository.save(user));
     }
 }

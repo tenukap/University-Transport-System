@@ -1,16 +1,14 @@
 package com.bustrans.fleettrack.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class StudentUpdateDTO {
-
-    private Short semester;
-    private String studentIndex;
+public class TripSeatsDTO {
+    private int capacity;
+    private int booked;
+    private int available;
 }

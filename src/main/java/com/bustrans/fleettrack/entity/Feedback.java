@@ -12,7 +12,6 @@ public class Feedback {
     @Column(name = "FeedbackId")
     private Integer feedbackId;
 
-    // Reuse the team's User entity; never cascade feedback operations to users.
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "UserId", nullable = false, columnDefinition = "int")
     private User user;
@@ -23,6 +22,12 @@ public class Feedback {
     @Nationalized
     @Column(name = "Message", nullable = false, columnDefinition = "nvarchar(max)")
     private String comments;
+
+    @Column(name = "Rating")
+    private Integer rating;
+
+    @Column(name = "BookingId")
+    private Long bookingId;
 
     @Column(name = "Status", length = 20)
     private String status;
@@ -38,6 +43,10 @@ public class Feedback {
     public void setSubject(String subject) { this.subject = subject; }
     public String getComments() { return comments; }
     public void setComments(String comments) { this.comments = comments; }
+    public Integer getRating() { return rating; }
+    public void setRating(Integer rating) { this.rating = rating; }
+    public Long getBookingId() { return bookingId; }
+    public void setBookingId(Long bookingId) { this.bookingId = bookingId; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
     public LocalDateTime getSubmittedAt() { return submittedAt; }

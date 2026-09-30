@@ -19,4 +19,15 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     long countByStatus(String status);
     List<Booking> findByUser_UserIdOrderByCreatedAtDesc(Long userId);
     List<Booking> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    /** Non-CANCELLED bookings for a trip — used to find used seats and detect duplicates. */
+    List<Booking> findByBusTrip_TripIdAndStatusNot(Integer tripId, String status);
+
+    /** Non-CANCELLED bookings for a student whose trip date falls in [firstDay, nextMonth). */
+    @Query("SELECT b FROM Booking b WHERE b.user.userId = :userId " +
+           "AND b.busTrip.tripDate >= :firstDay AND b.busTrip.tripDate < :nextMonth " +
+           "AND b.status <> 'CANCELLED'")
+    List<Booking> findChargeableByUserAndMonth(@Param("userId") Long userId,
+                                               @Param("firstDay") LocalDate firstDay,
+                                               @Param("nextMonth") LocalDate nextMonth);
 }

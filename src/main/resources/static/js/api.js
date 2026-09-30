@@ -29,8 +29,11 @@ async function request(path, { method = 'GET', body } = {}) {
   return text ? JSON.parse(text) : null;
 }
 
-// GET /trips
+// GET /trips  (admin use — returns all trips regardless of status/date)
 const getTrips = () => request('/trips');
+
+// GET /trips/available  (student booking page — Scheduled trips with future departure only)
+const getAvailableTrips = () => request('/trips/available');
 
 // GET /locations
 const getLocations = () => request('/locations');
@@ -62,5 +65,8 @@ const getStudentById = (id) => request(`/students/${id}`);
 // GET /students/user/{userId}
 const getStudentByUserId = (userId) => request(`/students/user/${userId}`);
 
-// PUT /students/{id}  body: { fullName, phone }
+// PUT /students/{id}  body: { semester?, studentIndex? }
 const updateStudent = (id, data) => request(`/students/${id}`, { method: 'PUT', body: data });
+
+// PUT /users/{id}  body: { fullName, phone }  (student self-service; ADMIN accepts full UserRequest)
+const updateUser = (id, data) => request(`/users/${id}`, { method: 'PUT', body: data });

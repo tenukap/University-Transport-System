@@ -66,20 +66,21 @@ IF NOT EXISTS (SELECT 1 FROM Users WHERE Email = 'transport@campus.lk')
 
 -- =============================================================================
 -- 2.  STUDENT rows  (one per STUDENT user, guarded by student_index UNIQUE)
+--     full_name and phone are on Users; student only holds student_index + semester.
 -- =============================================================================
 IF NOT EXISTS (SELECT 1 FROM student WHERE student_index = 'CSE/2021/001')
-    INSERT INTO student (user_id, student_index, full_name, phone)
-    SELECT UserId, 'CSE/2021/001', 'John Silva', '0771234567'
+    INSERT INTO student (user_id, student_index)
+    SELECT UserId, 'CSE/2021/001'
     FROM Users WHERE Email = 'john@gmail.com';
 
 IF NOT EXISTS (SELECT 1 FROM student WHERE student_index = 'CSE/2021/002')
-    INSERT INTO student (user_id, student_index, full_name, phone)
-    SELECT UserId, 'CSE/2021/002', 'Sara Wickramasinghe', '0712345678'
+    INSERT INTO student (user_id, student_index)
+    SELECT UserId, 'CSE/2021/002'
     FROM Users WHERE Email = 'sara@student.campus.lk';
 
 IF NOT EXISTS (SELECT 1 FROM student WHERE student_index = 'CSE/2021/003')
-    INSERT INTO student (user_id, student_index, full_name, phone)
-    SELECT UserId, 'CSE/2021/003', 'Kamal Bandara', '0723456789'
+    INSERT INTO student (user_id, student_index)
+    SELECT UserId, 'CSE/2021/003'
     FROM Users WHERE Email = 'kamal@student.campus.lk';
 
 -- =============================================================================
@@ -523,12 +524,12 @@ IF NOT EXISTS (SELECT 1 FROM Emergency_Report WHERE Report_Title = 'Medical Emer
 
 -- =============================================================================
 -- 16. CRASH_INCIDENT  (guarded by (Location_Coordinates, Status))
---     Columns (V3): Incident_ID, bus_id BIGINT FK, user_id INT FK,
+--     Columns (V5): Incident_ID, bus_id BIGINT FK→bus, driver_user_id INT FK→driver,
 --                   Location_Coordinates, Severity_Level, Description,
 --                   Timestamp (DEFAULT GETDATE()), Status
 -- =============================================================================
 IF NOT EXISTS (SELECT 1 FROM Crash_Incident WHERE Location_Coordinates = '6.9047,79.9737' AND Status = 'Resolved')
-    INSERT INTO Crash_Incident (bus_id, user_id, Location_Coordinates, Severity_Level, Description, Status)
+    INSERT INTO Crash_Incident (bus_id, driver_user_id, Location_Coordinates, Severity_Level, Description, Status)
     VALUES (@busId3, @uPep,
             '6.9047,79.9737',
             'Minor',
@@ -536,7 +537,7 @@ IF NOT EXISTS (SELECT 1 FROM Crash_Incident WHERE Location_Coordinates = '6.9047
             'Resolved');
 
 IF NOT EXISTS (SELECT 1 FROM Crash_Incident WHERE Location_Coordinates = '6.8780,79.8900' AND Status = 'Under Investigation')
-    INSERT INTO Crash_Incident (bus_id, user_id, Location_Coordinates, Severity_Level, Description, Status)
+    INSERT INTO Crash_Incident (bus_id, driver_user_id, Location_Coordinates, Severity_Level, Description, Status)
     VALUES (@busId2, @uNimal,
             '6.8780,79.8900',
             'Moderate',

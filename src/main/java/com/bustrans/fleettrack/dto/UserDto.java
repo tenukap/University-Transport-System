@@ -32,4 +32,7 @@ public final class UserDto {
             String roleName,
             String accountStatus
     ) {}
+
+    /** Student self-service: only fullName and phone may be changed. */
+    public record UserSelfUpdateRequest(String fullName, String phone) {}
 }

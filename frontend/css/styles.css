@@ -675,3 +675,80 @@ h1, h2, h3, h4, h5, h6 {
   padding: 10px 20px;
   width: auto;
 }
+
+/* ==========================================================================
+   Monthly Charges card (profile page)
+   ========================================================================== */
+
+.charges-selectors {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.charges-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.charges-table th {
+  text-align: left;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 4px 6px;
+  border-bottom: 1px solid var(--muted);
+}
+
+.charges-table td {
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(166, 169, 208, 0.3);
+  vertical-align: top;
+}
+
+.charges-total {
+  font-weight: 700;
+  font-size: 15px;
+  margin-top: 12px;
+  text-align: right;
+  color: var(--text-primary);
+}
+
+.charges-history {
+  margin-top: 16px;
+  border-top: 1px solid rgba(166, 169, 208, 0.3);
+  padding-top: 12px;
+}
+
+.charges-history__title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.charges-history__item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(166, 169, 208, 0.2);
+  color: var(--text-primary);
+}
+
+.charges-history__item.is-current {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* Modal error line and action stack */
+.modal__error {
+  color: var(--secondary);
+  font-size: 13px;
+  margin: 12px 0 0;
+}

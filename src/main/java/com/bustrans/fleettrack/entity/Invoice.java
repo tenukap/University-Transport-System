@@ -28,65 +28,38 @@ public class Invoice {
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
+    @Column(name = "student_user_id")
+    private Integer studentUserId;
+
     public Invoice() {
     }
 
-    public Long getInvoiceId() {
-        return invoiceId;
-    }
+    public Long getInvoiceId() { return invoiceId; }
+    public void setInvoiceId(Long invoiceId) { this.invoiceId = invoiceId; }
 
-    public void setInvoiceId(Long invoiceId) {
-        this.invoiceId = invoiceId;
-    }
+    public Integer getBillingMonth() { return billingMonth; }
+    public void setBillingMonth(Integer billingMonth) { this.billingMonth = billingMonth; }
 
-    public Integer getBillingMonth() {
-        return billingMonth;
-    }
+    public Integer getBillingYear() { return billingYear; }
+    public void setBillingYear(Integer billingYear) { this.billingYear = billingYear; }
 
-    public void setBillingMonth(Integer billingMonth) {
-        this.billingMonth = billingMonth;
-    }
+    public LocalDate getIssueDate() { return issueDate; }
+    public void setIssueDate(LocalDate issueDate) { this.issueDate = issueDate; }
 
-    public Integer getBillingYear() {
-        return billingYear;
-    }
+    public LocalDate getDueDate() { return dueDate; }
+    public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
 
-    public void setBillingYear(Integer billingYear) {
-        this.billingYear = billingYear;
-    }
+    public BigDecimal getTotalAmount() { return totalAmount; }
+    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
 
-    public LocalDate getIssueDate() {
-        return issueDate;
-    }
-
-    public void setIssueDate(LocalDate issueDate) {
-        this.issueDate = issueDate;
-    }
-
-    public LocalDate getDueDate() {
-        return dueDate;
-    }
-
-    public void setDueDate(LocalDate dueDate) {
-        this.dueDate = dueDate;
-    }
-
-    public BigDecimal getTotalAmount() {
-        return totalAmount;
-    }
-
-    public void setTotalAmount(BigDecimal totalAmount) {
-        this.totalAmount = totalAmount;
-    }
+    public Integer getStudentUserId() { return studentUserId; }
+    public void setStudentUserId(Integer studentUserId) { this.studentUserId = studentUserId; }
 
     @Transient
     public String getInvoiceStatus() {
         if (dueDate == null) {
             return "UNKNOWN";
         }
-
-        return LocalDate.now().isAfter(dueDate)
-                ? "OVERDUE"
-                : "PENDING";
+        return LocalDate.now().isAfter(dueDate) ? "OVERDUE" : "PENDING";
     }
 }

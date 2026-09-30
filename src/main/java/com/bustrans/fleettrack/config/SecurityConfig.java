@@ -3,6 +3,7 @@ package com.bustrans.fleettrack.config;
 import com.bustrans.fleettrack.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -33,7 +34,10 @@ public class SecurityConfig {
                         .requestMatchers("/", "/*.html", "/css/**", "/js/**", "/screen.png",
                                 "/error", "/favicon.ico", "/actuator/health").permitAll()
                         .requestMatchers("/api/auth/login", "/api/portal/login").permitAll()
-                        // Admin-only management endpoints.
+                        // Students may update their own user record (fullName + phone only).
+                        // Must appear before the admin-only rule; first match wins.
+                        .requestMatchers(HttpMethod.PUT, "/api/users/**").hasAnyRole("ADMIN", "STUDENT")
+                        // All other user-management and dashboard endpoints are admin-only.
                         .requestMatchers("/api/users/**", "/api/dashboard/**").hasRole("ADMIN")
                         // Financial report is also accessible to Finance Officers.
                         .requestMatchers("/api/reports/financial").hasAnyRole("ADMIN", "FINANCE_OFFICER")

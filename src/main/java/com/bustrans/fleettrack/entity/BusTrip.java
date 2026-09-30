@@ -49,4 +49,7 @@ public class BusTrip {
 
     @Column(name = "OperatingCost")
     private BigDecimal operatingCost;
+
+    @Column(name = "driver_user_id")
+    private Integer driverUserId;
 }

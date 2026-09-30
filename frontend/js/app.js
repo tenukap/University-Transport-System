@@ -126,7 +126,7 @@ async function fetchIncidents() {
             list.innerHTML += `
                 <div class="data-item">
                     <div class="data-header">
-                        <span class="data-title">Bus ${inc.busNo} — Driver ${inc.driverNo}</span>
+                        <span class="data-title">Bus ${inc.busNo} — Driver ${inc.driverUserId}</span>
                         <div>
                             <span class="badge danger">${inc.severityLevel} Severity</span>
                             <button class="btn btn-danger btn-sm" onclick='deleteIncident(${inc.incidentId})'>🗑️</button>
@@ -143,16 +143,16 @@ async function fetchIncidents() {
 document.getElementById('form-incident').addEventListener('submit', async (e) => {
     e.preventDefault();
     const busNo = document.getElementById('busNo').value;
-    const driverNo = document.getElementById('driverNo').value;
-    
-    if(isNaN(busNo) || isNaN(driverNo)) {
+    const driverUserId = document.getElementById('driverNo').value;
+
+    if(isNaN(busNo) || isNaN(driverUserId)) {
         alert('Validation Failed: Please enter valid numbers only!');
         return;
     }
 
     const payload = {
         busNo: busNo,
-        driverNo: driverNo,
+        driverUserId: driverUserId,
         locationCoordinates: document.getElementById('incidentLocation').value,
         severityLevel: document.getElementById('severityLevel').value,
         description: document.getElementById('incidentDesc').value

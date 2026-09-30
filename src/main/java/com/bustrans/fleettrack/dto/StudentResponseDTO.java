@@ -16,4 +16,5 @@ public class StudentResponseDTO {
     private String fullName;
     private String phone;
     private String email;
+    private Short semester;
 }

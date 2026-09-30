@@ -1,6 +1,7 @@
 package com.bustrans.fleettrack.controller;
 
 import com.bustrans.fleettrack.dto.TripResponseDTO;
+import com.bustrans.fleettrack.dto.TripSeatsDTO;
 import com.bustrans.fleettrack.service.TripService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -24,8 +25,13 @@ public class TripController {
         return tripService.getAvailableTrips();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     public TripResponseDTO getTripById(@PathVariable Integer id) {
         return tripService.getTripById(id);
+    }
+
+    @GetMapping("/{id:\\d+}/seats")
+    public TripSeatsDTO getTripSeats(@PathVariable Integer id) {
+        return tripService.getTripSeats(id);
     }
 }

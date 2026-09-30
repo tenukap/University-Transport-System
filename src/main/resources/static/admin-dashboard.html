@@ -323,7 +323,7 @@
         if (!usersCache.length) { body.innerHTML = '<tr><td colspan="5" class="state-msg">No users found.</td></tr>'; return; }
         body.innerHTML = usersCache.map((u) => {
           const nm = u.fullName || u.name || '';
-          const rl = u.roleName || u.role || '';
+          const rl = labelRole(u.roleName || u.role || '');
           const st = u.accountStatus || u.status || 'Active';
           const badge = st === 'Active' ? 'badge--active' : 'badge--other';
           return `<tr>
@@ -450,6 +450,11 @@
       if (r === 'admin') return 'ADMIN';
       if (r === 'driver') return 'DRIVER';
       return 'STUDENT';
+    }
+    function labelRole(raw) {
+      const map = { STUDENT: 'Student', DRIVER: 'Driver', ADMIN: 'Administrator',
+                    FINANCE_OFFICER: 'Finance Officer', TRANSPORT_OFFICER: 'Transport Officer' };
+      return map[raw] || raw;
     }
 
     userForm.addEventListener('submit', async (e) => {

@@ -23,7 +23,7 @@ dateInput.value = today();
 
 async function loadTrips() {
   try {
-    trips = await getTrips();
+    trips = await getAvailableTrips();
     if (!trips.length) {
       tripSelect.innerHTML = '<option>No trips available</option>';
       return;
@@ -31,8 +31,8 @@ async function loadTrips() {
     tripSelect.innerHTML = trips
       .map((t) => `<option value="${t.tripId}">${t.pickupLocationName} → ${t.dropLocationName} • ${formatTime(t.startTime)}</option>`)
       .join('');
-  } catch {
-    errorEl.textContent = 'Failed to load trips';
+  } catch (err) {
+    errorEl.textContent = err.message || 'Failed to load trips';
     tripSelect.innerHTML = '<option>Failed to load</option>';
   }
 }

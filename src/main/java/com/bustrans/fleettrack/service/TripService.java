@@ -1,8 +1,11 @@
 package com.bustrans.fleettrack.service;
 
 import com.bustrans.fleettrack.dto.TripResponseDTO;
+import com.bustrans.fleettrack.dto.TripSeatsDTO;
+import com.bustrans.fleettrack.entity.Bus;
 import com.bustrans.fleettrack.entity.BusTrip;
 import com.bustrans.fleettrack.entity.Location;
+import com.bustrans.fleettrack.repository.BookingRepository;
 import com.bustrans.fleettrack.repository.BusTripRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,6 +20,7 @@ import java.util.stream.Collectors;
 public class TripService {
 
     private final BusTripRepository busTripRepository;
+    private final BookingRepository bookingRepository;
 
     public List<TripResponseDTO> getAllTrips() {
         return busTripRepository.findAll().stream()
@@ -25,9 +29,20 @@ public class TripService {
     }
 
     public List<TripResponseDTO> getAvailableTrips() {
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
         return busTripRepository
-                .findAvailableTrips(LocalDate.now(), LocalTime.now())
+                .findAvailableTrips(today)
                 .stream()
+                // DB returns all Scheduled trips from today onwards; filter out same-day
+                // trips that have already departed. LocalTime comparison is safe in Java.
+                .filter(bt -> {
+                    if (bt.getTripDate() == null) return false;
+                    if (bt.getTripDate().isAfter(today)) return true;
+                    return bt.getTripDate().isEqual(today)
+                            && bt.getStartTime() != null
+                            && bt.getStartTime().isAfter(now);
+                })
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
@@ -36,6 +51,17 @@ public class TripService {
         BusTrip trip = busTripRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Trip not found with id: " + id));
         return mapToDTO(trip);
+    }
+
+    public TripSeatsDTO getTripSeats(Integer tripId) {
+        BusTrip trip = busTripRepository.findById(tripId)
+                .orElseThrow(() -> new RuntimeException("Trip not found with id: " + tripId));
+        Bus bus = trip.getBus();
+        int capacity = (bus != null && bus.getPassengerCapacity() != null)
+            ? bus.getPassengerCapacity() : 0;
+        int booked = bookingRepository.findByBusTrip_TripIdAndStatusNot(tripId, "CANCELLED").size();
+        int available = Math.max(0, capacity - booked);
+        return new TripSeatsDTO(capacity, booked, available);
     }
 
     private TripResponseDTO mapToDTO(BusTrip trip) {

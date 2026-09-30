@@ -7,26 +7,27 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "student")
+@Table(name = "admin")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Student {
+public class Admin {
 
     @Id
     @Column(name = "user_id")
     private Long userId;
 
-    // insertable=false/updatable=false: user_id is owned by the @Id field above;
-    // this association is read-only navigation only.
     @ManyToOne
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User user;
 
-    @Column(name = "student_index")
-    private String studentIndex;
+    @Column(name = "employee_id", nullable = false)
+    private String employeeId;
 
-    @Column(name = "semester")
-    private Short semester;
+    @Column(name = "department")
+    private String department;
+
+    @Column(name = "access_level", nullable = false)
+    private String accessLevel;
 }

@@ -3,9 +3,13 @@ package com.bustrans.fleettrack.service;
 import com.bustrans.fleettrack.dto.StudentResponseDTO;
 import com.bustrans.fleettrack.dto.StudentUpdateDTO;
 import com.bustrans.fleettrack.entity.Student;
+import com.bustrans.fleettrack.entity.User;
 import com.bustrans.fleettrack.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -29,23 +33,34 @@ public class StudentService {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
 
-        if (updateDTO.getFullName() != null) {
-            student.setFullName(updateDTO.getFullName());
-        }
-        if (updateDTO.getPhone() != null) {
-            student.setPhone(updateDTO.getPhone());
+        if (updateDTO.getSemester() != null) {
+            student.setSemester(updateDTO.getSemester());
         }
 
-        return mapToDTO(studentRepository.save(student));
+        if (updateDTO.getStudentIndex() != null) {
+            String trimmed = updateDTO.getStudentIndex().trim();
+            if (trimmed.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Student index cannot be blank");
+            }
+            student.setStudentIndex(trimmed);
+        }
+
+        try {
+            return mapToDTO(studentRepository.save(student));
+        } catch (DataIntegrityViolationException ex) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Student index is already in use");
+        }
     }
 
     private StudentResponseDTO mapToDTO(Student student) {
+        User u = student.getUser();
         return StudentResponseDTO.builder()
-                .id(student.getId())
+                .id(student.getUserId())
                 .studentIndex(student.getStudentIndex())
-                .fullName(student.getFullName())
-                .phone(student.getPhone())
-                .email(student.getUser() != null ? student.getUser().getEmail() : null)
+                .fullName(u != null ? u.getFullName() : null)
+                .phone(u != null ? u.getPhone() : null)
+                .email(u != null ? u.getEmail() : null)
+                .semester(student.getSemester())
                 .build();
     }
 }
