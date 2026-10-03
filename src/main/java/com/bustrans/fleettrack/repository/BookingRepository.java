@@ -23,6 +23,9 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     /** Non-CANCELLED bookings for a trip — used to find used seats and detect duplicates. */
     List<Booking> findByBusTrip_TripIdAndStatusNot(Integer tripId, String status);
 
+    // Used by UserService.deleteUser: if a student has any bookings, hard-delete is blocked.
+    boolean existsByUser_UserId(Long userId);
+
     /** Non-CANCELLED bookings for a student whose trip date falls in [firstDay, nextMonth). */
     @Query("SELECT b FROM Booking b WHERE b.user.userId = :userId " +
            "AND b.busTrip.tripDate >= :firstDay AND b.busTrip.tripDate < :nextMonth " +

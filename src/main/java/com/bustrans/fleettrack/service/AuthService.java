@@ -40,6 +40,12 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
 
+        // Reject deactivated accounts before issuing a token.
+        if (!"Active".equalsIgnoreCase(user.getAccountStatus())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "This account has been deactivated. Contact an administrator.");
+        }
+
         String role = user.getRoleName();
         // Token subject is the userId (see JwtAuthenticationFilter); role travels as a claim.
         String token = jwtService.createToken(user.getUserId(), role);

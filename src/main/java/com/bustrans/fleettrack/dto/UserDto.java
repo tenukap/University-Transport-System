@@ -30,7 +30,12 @@ public final class UserDto {
             String password,
             String phone,
             String roleName,
-            String accountStatus
+            String accountStatus,
+            // Driver-only fields; null for all other roles.
+            String licenseNumber,
+            String dob,
+            // Staff-role fields (ADMIN / FINANCE_OFFICER / TRANSPORT_OFFICER); null for other roles.
+            String employeeId
     ) {}
 
     /** Student self-service: only fullName and phone may be changed. */

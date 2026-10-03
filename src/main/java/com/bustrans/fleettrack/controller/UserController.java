@@ -53,9 +53,11 @@ public class UserController {
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
         if (isAdmin) {
+            // Edit path: licenseNumber, dob, and employeeId are create-only; pass null so they are ignored.
             UserRequest request = new UserRequest(
                     body.get("fullName"), body.get("email"), body.get("password"),
-                    body.get("phone"), body.get("roleName"), body.get("accountStatus"));
+                    body.get("phone"), body.get("roleName"), body.get("accountStatus"),
+                    null, null, null);
             return userService.updateUser(id, request);
         }
 
@@ -70,6 +72,23 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid authentication token");
         }
         return userService.updateUserSelf(id, new UserSelfUpdateRequest(body.get("fullName"), body.get("phone")));
+    }
+
+    /**
+     * Activates or deactivates a user account without touching any history rows.
+     * Body: {"active": true|false}
+     */
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/{id}/status")
+    public UserResponse setUserStatus(@PathVariable Long id,
+                                      @RequestBody Map<String, Boolean> body,
+                                      Authentication authentication) {
+        Boolean active = body.get("active");
+        if (active == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "'active' field is required");
+        }
+        Long callerId = Long.parseLong(authentication.getName());
+        return userService.setUserStatus(id, active, callerId);
     }
 
     @PreAuthorize("hasRole('ADMIN')")

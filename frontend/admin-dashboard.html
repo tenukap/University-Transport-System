@@ -136,9 +136,15 @@
     <!-- Users -->
     <section class="tab-panel" id="panel-users">
       <div class="panel-head">
-        <div><h2>User Management</h2><p>Create, edit, and remove system accounts.</p></div>
+        <div><h2>User Management</h2><p>Create, edit, or deactivate system accounts.</p></div>
         <button class="btn btn--primary" id="create-user-btn">+ Create Account</button>
       </div>
+      <!-- Error banner for status-toggle failures (409 messages shown here) -->
+      <div class="modal__error" id="users-err" style="margin-bottom:14px;"></div>
+      <!-- Filter: deactivated users are hidden by default to keep the list clean -->
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:14px;cursor:pointer;">
+        <input type="checkbox" id="show-deactivated" /> Show deactivated users
+      </label>
       <div class="table-wrap">
         <table>
           <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
@@ -210,6 +216,9 @@
           <option value="ADMIN">Administrator</option>
         </select>
       </div>
+      <div class="field" id="uf-license-field" style="display:none;"><label for="uf-license">Licence Number *</label><input type="text" id="uf-license" placeholder="e.g. B1234567" /></div>
+      <div class="field" id="uf-dob-field" style="display:none;"><label for="uf-dob">Date of Birth</label><input type="date" id="uf-dob" /></div>
+      <div class="field" id="uf-empid-field" style="display:none;"><label for="uf-empid">Employee ID * (max 20 chars)</label><input type="text" id="uf-empid" placeholder="e.g. EMP001" maxlength="20" /></div>
       <div class="field" id="uf-password-field"><label for="uf-password">Temporary password</label><input type="password" id="uf-password" placeholder="Min 6 characters" /></div>
       <div class="field" id="uf-status-field" style="display:none;"><label for="uf-status">Account status</label>
         <select id="uf-status"><option>Active</option><option>Suspended</option><option>Deactivated</option></select>
@@ -314,30 +323,74 @@
 
     // ---- Users ----
     let usersCache = [];
+    let showDeactivated = false; // default: hide deactivated users so the list stays clean
+
     async function loadUsers() {
-      const body = document.getElementById('users-body');
-      body.innerHTML = '<tr><td colspan="5" class="state-msg">Loading users…</td></tr>';
+      const bodyEl = document.getElementById('users-body');
+      bodyEl.innerHTML = '<tr><td colspan="5" class="state-msg">Loading users…</td></tr>';
+      hide(document.getElementById('users-err'));
       try {
         const users = await apiFetch('/users');
         usersCache = Array.isArray(users) ? users : [];
-        if (!usersCache.length) { body.innerHTML = '<tr><td colspan="5" class="state-msg">No users found.</td></tr>'; return; }
-        body.innerHTML = usersCache.map((u) => {
-          const nm = u.fullName || u.name || '';
-          const rl = labelRole(u.roleName || u.role || '');
-          const st = u.accountStatus || u.status || 'Active';
-          const badge = st === 'Active' ? 'badge--active' : 'badge--other';
-          return `<tr>
-            <td>${esc(nm)}</td><td>${esc(u.email || '')}</td><td>${esc(rl)}</td>
-            <td><span class="badge ${badge}">${esc(st)}</span></td>
-            <td><div class="row-actions">
-              <button class="link-btn" data-edit="${u.userId}">Edit</button>
-              <button class="link-btn link-btn--danger" data-del="${u.userId}">Delete</button>
-            </div></td></tr>`;
-        }).join('');
-        body.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => openEditUser(b.dataset.edit)));
-        body.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', () => openDeleteUser(b.dataset.del)));
+        renderUsers();
       } catch (err) {
-        body.innerHTML = `<tr><td colspan="5" class="state-msg">${err.message}</td></tr>`;
+        bodyEl.innerHTML = `<tr><td colspan="5" class="state-msg">${err.message}</td></tr>`;
+      }
+    }
+
+    /** Re-renders the users table from the cached list, applying the deactivated filter. */
+    function renderUsers() {
+      const bodyEl = document.getElementById('users-body');
+      const visible = showDeactivated
+          ? usersCache
+          : usersCache.filter(u => (u.accountStatus || 'Active') !== 'Deactivated');
+      if (!visible.length) {
+        const hint = usersCache.length && !showDeactivated ? ' Check "Show deactivated users".' : '';
+        bodyEl.innerHTML = `<tr><td colspan="5" class="state-msg">No users found.${hint}</td></tr>`;
+        return;
+      }
+      bodyEl.innerHTML = visible.map((u) => {
+        const nm = u.fullName || u.name || '';
+        const rl = labelRole(u.roleName || u.role || '');
+        const st = u.accountStatus || 'Active';
+        const badge = st === 'Active' ? 'badge--active' : 'badge--other';
+        const isActive = st === 'Active';
+        return `<tr>
+          <td>${esc(nm)}</td><td>${esc(u.email || '')}</td><td>${esc(rl)}</td>
+          <td><span class="badge ${badge}">${esc(st)}</span></td>
+          <td><div class="row-actions">
+            <button class="link-btn" data-edit="${u.userId}">Edit</button>
+            <button class="link-btn ${isActive ? 'link-btn--danger' : ''}"
+                    data-toggle-status="${u.userId}" data-is-active="${isActive}">
+              ${isActive ? 'Deactivate' : 'Reactivate'}
+            </button>
+          </div></td></tr>`;
+      }).join('');
+      bodyEl.querySelectorAll('[data-edit]').forEach((b) => b.addEventListener('click', () => openEditUser(b.dataset.edit)));
+      bodyEl.querySelectorAll('[data-toggle-status]').forEach((b) => {
+        b.addEventListener('click', () => toggleUserStatus(b.dataset.toggleStatus, b.dataset.isActive === 'true'));
+      });
+    }
+
+    /** Calls PATCH /api/users/{id}/status. Shows server 409/error messages in the banner. */
+    async function toggleUserStatus(id, currentlyActive) {
+      const u = usersCache.find(x => String(x.userId) === String(id));
+      const name = u ? esc(u.fullName || u.name || 'this user') : 'this user';
+      const msg = currentlyActive
+          ? `Deactivate ${name}?\n\nThey will not be able to log in. All their bookings, trips and feedback are kept intact.`
+          : `Reactivate ${name}?\n\nThey will be able to log in again.`;
+      if (!confirm(msg)) return;
+      const errEl = document.getElementById('users-err');
+      hide(errEl);
+      try {
+        await apiFetch(`/users/${id}/status`, {
+          method: 'PATCH',
+          body: JSON.stringify({ active: !currentlyActive }),
+        });
+        await loadUsers();
+      } catch (err) {
+        // Surface 409 business-rule messages (last admin, driver with trips, etc.) prominently.
+        show(errEl, err.message);
       }
     }
 
@@ -422,6 +475,8 @@
       document.getElementById('uf-email-field').style.display = '';
       document.getElementById('uf-password-field').style.display = '';
       document.getElementById('uf-status-field').style.display = 'none';
+      showDriverFields(false);    // driver fields shown only when role=DRIVER is selected
+      showEmployeeIdField(false); // employee ID field shown only for staff roles
       hide(ufError);
       userModal.classList.add('show');
     }
@@ -436,6 +491,9 @@
       // Email + password are create-only in the backend; status is edit-only.
       document.getElementById('uf-email-field').style.display = 'none';
       document.getElementById('uf-password-field').style.display = 'none';
+      // Role-specific fields are create-only; always hide in edit mode.
+      showDriverFields(false);
+      showEmployeeIdField(false);
       const statusField = document.getElementById('uf-status-field');
       statusField.style.display = '';
       document.getElementById('uf-status').value = u.accountStatus || u.status || 'Active';
@@ -472,12 +530,26 @@
           };
           await apiFetch(`/users/${id}`, { method: 'PUT', body: JSON.stringify(body) });
         } else {
+          const role = document.getElementById('uf-role').value;
           const body = {
             fullName: document.getElementById('uf-name').value.trim(),
             email: document.getElementById('uf-email').value.trim(),
             password: document.getElementById('uf-password').value,
-            roleName: document.getElementById('uf-role').value,
+            roleName: role,
           };
+          // Attach role-specific fields and validate them before the network call.
+          if (role === 'DRIVER') {
+            const lic = document.getElementById('uf-license').value.trim();
+            if (!lic) { show(ufError, 'Licence Number is required for Driver accounts.'); return; }
+            body.licenseNumber = lic;
+            const dob = document.getElementById('uf-dob').value;
+            if (dob) body.dob = dob; // dob is optional; omit rather than send empty string
+          } else if (role === 'ADMIN' || role === 'FINANCE_OFFICER' || role === 'TRANSPORT_OFFICER') {
+            const empId = document.getElementById('uf-empid').value.trim();
+            if (!empId) { show(ufError, 'Employee ID is required for this role.'); return; }
+            if (empId.length > 20) { show(ufError, 'Employee ID must be 20 characters or fewer.'); return; }
+            body.employeeId = empId;
+          }
           await apiFetch('/users', { method: 'POST', body: JSON.stringify(body) });
         }
         userModal.classList.remove('show');
@@ -515,6 +587,29 @@
       } finally {
         btn.disabled = false; btn.textContent = 'Delete';
       }
+    });
+
+    // Show or hide the driver-only fields in the create-user modal.
+    function showDriverFields(visible) {
+      document.getElementById('uf-license-field').style.display = visible ? '' : 'none';
+      document.getElementById('uf-dob-field').style.display = visible ? '' : 'none';
+    }
+    // Show or hide the employee ID field used by ADMIN / FINANCE_OFFICER / TRANSPORT_OFFICER.
+    function showEmployeeIdField(visible) {
+      document.getElementById('uf-empid-field').style.display = visible ? '' : 'none';
+      if (!visible) document.getElementById('uf-empid').value = '';
+    }
+    const STAFF_ROLES = new Set(['ADMIN', 'FINANCE_OFFICER', 'TRANSPORT_OFFICER']);
+    // Reveal the correct extra fields when the role selector changes.
+    document.getElementById('uf-role').addEventListener('change', function () {
+      showDriverFields(this.value === 'DRIVER');
+      showEmployeeIdField(STAFF_ROLES.has(this.value));
+    });
+
+    // Refresh the users table when the "Show deactivated" checkbox is toggled.
+    document.getElementById('show-deactivated').addEventListener('change', function () {
+      showDeactivated = this.checked;
+      renderUsers();
     });
 
     // Close modals on backdrop click.

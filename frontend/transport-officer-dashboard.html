@@ -144,8 +144,8 @@
         <button class="btn btn--primary" id="new-trip-btn">+ Schedule Trip</button>
       </div>
       <div class="table-wrap">
-        <table><thead><tr><th>ID</th><th>Date</th><th>Start</th><th>ETA</th><th>Pickup</th><th>Drop</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody id="trips-body"><tr><td colspan="8" class="state-msg">Loading…</td></tr></tbody></table>
+        <table><thead><tr><th>ID</th><th>Date</th><th>Start</th><th>ETA</th><th>Bus</th><th>Driver</th><th>Pickup</th><th>Drop</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="trips-body"><tr><td colspan="10" class="state-msg">Loading…</td></tr></tbody></table>
       </div>
     </div>
 
@@ -195,12 +195,21 @@
     </div>
   </div>
 
-  <!-- Trip Modal -->
+  <!-- Trip Modal (used for both create and edit) -->
   <div class="modal-overlay" id="trip-modal">
     <div class="modal">
-      <h3>Schedule New Trip</h3>
+      <h3 id="tm-title">Schedule New Trip</h3>
       <div class="modal__error" id="tm-err"></div>
-      <div class="field"><label for="tm-busid">Bus ID *</label><input type="number" id="tm-busid" placeholder="Enter bus ID" min="1" /></div>
+      <!-- Shown when no Available buses exist in the database -->
+      <div id="tm-no-buses-msg" style="display:none;background:#FBEAE8;color:#B4463C;border-radius:8px;padding:9px 11px;font-size:13px;margin-bottom:10px;">
+        No available buses — ask an admin to add one or mark a bus as Available.
+      </div>
+      <div class="field"><label for="tm-bus">Bus *</label>
+        <select id="tm-bus"><option value="">— Loading buses… —</option></select>
+      </div>
+      <div class="field"><label for="tm-driver">Driver * (required for new trips)</label>
+        <select id="tm-driver"><option value="">— Select driver —</option></select>
+      </div>
       <div class="field"><label for="tm-date">Trip Date *</label><input type="date" id="tm-date" /></div>
       <div class="field"><label for="tm-start">Start Time *</label><input type="time" id="tm-start" /></div>
       <div class="field"><label for="tm-eta">ETA *</label><input type="time" id="tm-eta" /></div>
@@ -388,27 +397,37 @@
     }
 
     // ---- Trips ----
+    let tripsList = [];   // kept in memory so openEditTrip can pre-fill the modal without a second fetch
+    let tripEditId = null; // null = create mode; a trip ID = edit mode
+
     async function loadTrips() {
       const body = document.getElementById('trips-body');
-      body.innerHTML = '<tr><td colspan="8" class="state-msg">Loading…</td></tr>';
+      body.innerHTML = '<tr><td colspan="10" class="state-msg">Loading…</td></tr>';
       try {
         const list = await apiFetch('/transport/trips');
-        if (!list.length) { body.innerHTML = '<tr><td colspan="8" class="state-msg">No trips scheduled.</td></tr>'; return; }
-        body.innerHTML = list.map(t => `<tr>
+        tripsList = Array.isArray(list) ? list : [];
+        if (!tripsList.length) { body.innerHTML = '<tr><td colspan="10" class="state-msg">No trips scheduled.</td></tr>'; return; }
+        body.innerHTML = tripsList.map(t => `<tr>
           <td>${esc(t.tripId)}</td>
           <td>${esc(t.tripDate)}</td>
           <td>${esc(t.startTime ? String(t.startTime).substring(0,5) : '—')}</td>
           <td>${esc(t.eta ? String(t.eta).substring(0,5) : '—')}</td>
-          <td>${esc(t.pickupLocation ? t.pickupLocation.locationName : '—')}</td>
-          <td>${esc(t.dropLocation ? t.dropLocation.locationName : '—')}</td>
+          <td>${esc(t.busLabel || '—')}</td>
+          <td>${esc(t.driverName || '—')}</td>
+          <td>${esc(t.pickupLocationName || '—')}</td>
+          <td>${esc(t.dropLocationName || '—')}</td>
           <td>${statusBadge(t.tripStatus)}</td>
           <td><div class="row-actions">
             ${t.tripStatus !== 'Cancelled' && t.tripStatus !== 'Completed'
-              ? `<button class="link-btn link-btn--danger" data-cancel-trip="${esc(t.tripId)}">Cancel</button>
+              ? `<button class="link-btn" data-edit-trip="${esc(t.tripId)}">Edit</button>
+                 <button class="link-btn link-btn--danger" data-cancel-trip="${esc(t.tripId)}">Cancel</button>
                  <button class="link-btn" data-complete-trip="${esc(t.tripId)}">Complete</button>`
               : `<span style="color:var(--muted);font-size:13px">${esc(t.tripStatus)}</span>`}
           </div></td>
         </tr>`).join('');
+        body.querySelectorAll('[data-edit-trip]').forEach(b => {
+          b.addEventListener('click', () => openEditTrip(b.dataset.editTrip));
+        });
         body.querySelectorAll('[data-cancel-trip]').forEach(b => {
           b.addEventListener('click', () => openCancelTrip(b.dataset.cancelTrip));
         });
@@ -416,7 +435,7 @@
           b.addEventListener('click', () => completeTrip(b.dataset.completeTrip));
         });
       } catch (err) {
-        body.innerHTML = `<tr><td colspan="8" class="state-msg">${esc(err.message)}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="10" class="state-msg">${esc(err.message)}</td></tr>`;
       }
     }
 
@@ -424,6 +443,36 @@
       if (!confirm('Mark trip #' + id + ' as Completed?')) return;
       try { await apiFetch(`/transport/trips/${id}/complete`, { method: 'PUT' }); loadTrips(); }
       catch (err) { alert(err.message); }
+    }
+
+    /** Opens the trip modal in CREATE mode with blank fields. */
+    async function openNewTrip() {
+      tripEditId = null;
+      document.getElementById('tm-title').textContent = 'Schedule New Trip';
+      document.getElementById('tm-save').textContent  = 'Schedule Trip';
+      document.getElementById('tm-date').value  = '';
+      document.getElementById('tm-start').value = '';
+      document.getElementById('tm-eta').value   = '';
+      document.getElementById('tm-err').classList.remove('show');
+      await populateTripDropdowns(null, null, null, null);
+      document.getElementById('trip-modal').classList.add('show');
+    }
+
+    /** Opens the trip modal in EDIT mode pre-filled from the already-loaded tripsList. */
+    async function openEditTrip(id) {
+      const trip = tripsList.find(t => String(t.tripId) === String(id));
+      if (!trip) return;
+      tripEditId = id;
+      document.getElementById('tm-title').textContent = 'Edit Trip #' + id;
+      document.getElementById('tm-save').textContent  = 'Save Changes';
+      // Pre-fill text fields directly from the DTO.
+      document.getElementById('tm-date').value  = trip.tripDate  || '';
+      document.getElementById('tm-start').value = trip.startTime ? trip.startTime.substring(0, 5) : '';
+      document.getElementById('tm-eta').value   = trip.eta       ? trip.eta.substring(0, 5)       : '';
+      document.getElementById('tm-err').classList.remove('show');
+      // Pass the saved IDs so the dropdowns can preselect the right entries.
+      await populateTripDropdowns(trip.busId, trip.driverUserId, trip.pickupLocationId, trip.dropLocationId);
+      document.getElementById('trip-modal').classList.add('show');
     }
 
     // ---- Locations ----
@@ -531,11 +580,7 @@
       document.getElementById('rm-save').addEventListener('click', saveRoute);
 
       // Trip modal
-      document.getElementById('new-trip-btn').addEventListener('click', async () => {
-        document.getElementById('tm-err').classList.remove('show');
-        await populateLocDropdowns();
-        document.getElementById('trip-modal').classList.add('show');
-      });
+      document.getElementById('new-trip-btn').addEventListener('click', openNewTrip);
       document.getElementById('tm-cancel').addEventListener('click', () => document.getElementById('trip-modal').classList.remove('show'));
       document.getElementById('tm-save').addEventListener('click', saveTrip);
 
@@ -561,13 +606,52 @@
       document.getElementById('cp-confirm').addEventListener('click', confirmCancelPay);
     }
 
-    async function populateLocDropdowns() {
+    /**
+     * Loads buses, drivers and locations into the trip modal dropdowns.
+     * Pass the saved IDs when editing so the correct options are preselected.
+     */
+    async function populateTripDropdowns(selBusId, selDriverId, selPickupId, selDropId) {
+      const saveBtn   = document.getElementById('tm-save');
+      const noBusMsg  = document.getElementById('tm-no-buses-msg');
       try {
-        const locs = await apiFetch('/transport/locations');
+        const [buses, drivers, locs] = await Promise.all([
+          apiFetch('/transport/buses/available'),
+          apiFetch('/transport/drivers'),
+          apiFetch('/transport/locations'),
+        ]);
+
+        // Bus dropdown — disable Save and show warning if no Available bus exists.
+        if (!buses.length) {
+          document.getElementById('tm-bus').innerHTML = '<option value="">— No available buses —</option>';
+          noBusMsg.style.display = '';
+          saveBtn.disabled = true;
+        } else {
+          noBusMsg.style.display = 'none';
+          saveBtn.disabled = false;
+          document.getElementById('tm-bus').innerHTML =
+            '<option value="">— Select bus —</option>' +
+            buses.map(b => `<option value="${esc(b.busId)}">${esc(b.registrationNumber)} (${b.passengerCapacity} seats)</option>`).join('');
+          if (selBusId) document.getElementById('tm-bus').value = String(selBusId);
+        }
+
+        // Driver dropdown — required on create; blank option kept so edit mode can clear/leave unset.
+        document.getElementById('tm-driver').innerHTML =
+          '<option value="">— Select driver —</option>' +
+          drivers.map(d => `<option value="${esc(d.userId)}">${esc(d.fullName)} (${esc(d.licenseNumber)})</option>`).join('');
+        if (selDriverId) document.getElementById('tm-driver').value = String(selDriverId);
+
+        // Location dropdowns.
         const opts = locs.map(l => `<option value="${esc(l.locationId)}">${esc(l.locationName)}</option>`).join('');
         document.getElementById('tm-pickup').innerHTML = '<option value="">— Select pickup —</option>' + opts;
         document.getElementById('tm-drop').innerHTML   = '<option value="">— Select drop —</option>'   + opts;
-      } catch (_) { /* dropdowns stay empty; user can still enter IDs manually if needed */ }
+        if (selPickupId) document.getElementById('tm-pickup').value = String(selPickupId);
+        if (selDropId)   document.getElementById('tm-drop').value   = String(selDropId);
+
+      } catch (err) {
+        document.getElementById('tm-err').textContent = 'Failed to load form data: ' + err.message;
+        document.getElementById('tm-err').classList.add('show');
+        saveBtn.disabled = true;
+      }
     }
 
     async function saveRoute() {
@@ -590,29 +674,42 @@
     }
 
     async function saveTrip() {
-      const errEl  = document.getElementById('tm-err');
+      const errEl = document.getElementById('tm-err');
       errEl.classList.remove('show');
-      const busId  = parseInt(document.getElementById('tm-busid').value, 10);
+      const busId      = parseInt(document.getElementById('tm-bus').value, 10);
+      const driverRaw  = document.getElementById('tm-driver').value;
+      const driverUserId = driverRaw ? parseInt(driverRaw, 10) : null; // null = no driver assigned
       const date   = document.getElementById('tm-date').value;
       const start  = document.getElementById('tm-start').value;
       const eta    = document.getElementById('tm-eta').value;
       const pickId = parseInt(document.getElementById('tm-pickup').value, 10);
       const dropId = parseInt(document.getElementById('tm-drop').value, 10);
       if (!busId || !date || !start || !eta || !pickId || !dropId) {
-        errEl.textContent = 'All fields are required.'; errEl.classList.add('show'); return;
+        errEl.textContent = 'Bus, date, times and both locations are required.';
+        errEl.classList.add('show'); return;
       }
+      // Driver is mandatory when scheduling a new trip; on edit it can remain unchanged.
+      if (!tripEditId && !driverUserId) {
+        errEl.textContent = 'A driver must be selected.'; errEl.classList.add('show'); return;
+      }
+      const body = {
+        bus:            { busId },
+        driverUserId,
+        tripDate:       date,
+        startTime:      start + ':00',
+        eta:            eta   + ':00',
+        pickupLocation: { locationId: pickId },
+        dropLocation:   { locationId: dropId },
+      };
       try {
-        await apiFetch('/transport/trips', {
-          method: 'POST',
-          body: JSON.stringify({
-            bus: { busId },
-            tripDate: date,
-            startTime: start + ':00',
-            eta: eta + ':00',
-            pickupLocation: { locationId: pickId },
-            dropLocation:   { locationId: dropId },
-          }),
-        });
+        if (tripEditId) {
+          // PUT keeps the existing tripStatus; send it through so the backend copies it.
+          const existing = tripsList.find(t => String(t.tripId) === String(tripEditId));
+          if (existing) body.tripStatus = existing.tripStatus;
+          await apiFetch(`/transport/trips/${tripEditId}`, { method: 'PUT', body: JSON.stringify(body) });
+        } else {
+          await apiFetch('/transport/trips', { method: 'POST', body: JSON.stringify(body) });
+        }
         document.getElementById('trip-modal').classList.remove('show');
         loaded.trips = false;
         loadTrips();

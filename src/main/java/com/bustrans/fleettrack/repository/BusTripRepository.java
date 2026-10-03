@@ -32,4 +32,18 @@ public interface BusTripRepository extends JpaRepository<BusTrip, Integer> {
            "AND bt.tripDate >= :today " +
            "ORDER BY bt.tripDate, bt.startTime")
     List<BusTrip> findAvailableTrips(@Param("today") LocalDate today);
+
+    // Used by UserService.deleteUser to guard against deleting a driver who is still assigned to trips.
+    boolean existsByDriverUserId(Integer driverUserId);
+
+    // Used by UserService.setUserStatus to block deactivating a driver with upcoming scheduled trips.
+    @Query("SELECT COUNT(t) FROM BusTrip t WHERE t.driverUserId = :driverId AND t.tripDate >= :today AND t.tripStatus <> 'Cancelled'")
+    long countUpcomingTripsByDriver(@Param("driverId") Integer driverId, @Param("today") LocalDate today);
+
+    // Used for bus-conflict detection: all non-cancelled trips for this bus on a given date.
+    // LocalTime is NOT used as a parameter (SQL Server JDBC maps it incorrectly); overlap is checked in Java.
+    List<BusTrip> findByTripDateAndBus_BusIdAndTripStatusNot(LocalDate tripDate, Long busId, String tripStatus);
+
+    // Used for driver-conflict detection: all non-cancelled trips for this driver on a given date.
+    List<BusTrip> findByTripDateAndDriverUserIdAndTripStatusNot(LocalDate tripDate, Integer driverUserId, String tripStatus);
 }

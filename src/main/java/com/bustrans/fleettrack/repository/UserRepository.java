@@ -17,4 +17,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByRoleName(String roleName);
     Optional<User> findByEmailAndAccountStatus(String email, String accountStatus);
     long countByAccountStatus(String accountStatus);
+    // Used to check whether any other active admin exists before deactivating one.
+    long countByRoleNameAndAccountStatus(String roleName, String accountStatus);
 }
