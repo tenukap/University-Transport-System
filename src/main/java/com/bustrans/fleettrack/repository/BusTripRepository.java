@@ -55,4 +55,12 @@ public interface BusTripRepository extends JpaRepository<BusTrip, Integer> {
 
     // Count future non-cancelled trips across all buses — used for the Dashboard "Upcoming Trips" metric.
     long countByTripStatusNotAndTripDateGreaterThanEqual(String status, LocalDate today);
+
+    // Driver portal: upcoming non-cancelled trips assigned to this driver.
+    @Query("SELECT bt FROM BusTrip bt WHERE bt.driverUserId = :driverId AND bt.tripDate >= :today AND bt.tripStatus <> 'Cancelled' ORDER BY bt.tripDate, bt.startTime")
+    List<BusTrip> findUpcomingByDriver(@Param("driverId") Integer driverId, @Param("today") LocalDate today);
+
+    // All trip IDs ever assigned to a driver (for GET filtering of status/location logs).
+    @Query("SELECT bt.tripId FROM BusTrip bt WHERE bt.driverUserId = :driverId")
+    List<Integer> findTripIdsByDriver(@Param("driverId") Integer driverId);
 }

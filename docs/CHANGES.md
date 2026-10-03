@@ -232,3 +232,51 @@ JwtAuthenticationFilter previously only validated the JWT signature and did not 
 - `src/…/service/RouteService.java`
 - `src/…/security/JwtAuthenticationFilter.java`
 - `docs/CHANGES.md` (this file)
+
+---
+
+## Prompt 14 — Driver trips and endpoint security
+
+Added a driver trips list endpoint and locked the four previously unprotected endpoint groups.
+
+### Part A — GET /api/driver/my-trips
+New `DriverPortalController` returns only the logged-in driver's upcoming non-cancelled trips (date ≥ today), ordered by date and start time. Each row includes tripId, tripDate, startTime, eta, pickup name, drop name, bus registration, tripStatus, and latestStatusType (most recent Trip_Status log, nullable). Driver identity always comes from the JWT principal, never from a query parameter. New `DriverTripDTO` carries these fields.
+
+### Part B — Security and ownership
+Replaced the single `permitAll()` rule for the four groups with role-specific matchers (specific before general, first match wins):
+
+| Endpoint group | POST | PUT | DELETE | GET |
+|---|---|---|---|---|
+| /api/trip-statuses/** | DRIVER | authenticated | authenticated | authenticated (DRIVER filtered) |
+| /api/location-updates/** | DRIVER | authenticated | authenticated | authenticated (DRIVER filtered) |
+| /api/emergency-reports/** | DRIVER | TRANSPORT_OFFICER | TRANSPORT_OFFICER | authenticated (DRIVER filtered) |
+| /api/crash-incidents/** | DRIVER | TRANSPORT_OFFICER | TRANSPORT_OFFICER | authenticated (DRIVER filtered) |
+| /api/driver/** | DRIVER | — | — | DRIVER |
+
+POST /api/trip-statuses and POST /api/location-updates: validate that the tripId is assigned to the logged-in driver (403 if not), that the trip is not Cancelled, and that statusType is one of: Scheduled, Departed, In Progress, Delayed, At Stop, Completed (400 otherwise). Latitude must be −90..90 and longitude −180..180 (400 otherwise). Logging "Completed" also sets BusTrip.tripStatus = "Completed" so the trip leaves the student booking dropdown. POST /api/emergency-reports: reporter id set from principal; validates title (≤255), type (≤100), description (≤2000). POST /api/crash-incidents: driverUserId set from principal; timestamp = LocalDateTime.now() so Time is never NULL; validates location, severity, description. GET on all four groups: DRIVER sees only their own rows; TRANSPORT_OFFICER and ADMIN see all. PUT/DELETE on emergency-reports and crash-incidents restricted to TRANSPORT_OFFICER (frontend does not call these from driver.html or any student page; emergency.html is a legacy prototype not linked from any portal).
+
+### Student decision — emergency.html
+`emergency.html` is not linked from any student-facing page and uses raw fetch calls without auth headers (legacy prototype). POST /api/emergency-reports is therefore DRIVER only. STUDENT role can still GET their own reports in case historical data exists.
+
+### Part C — driver.html
+Replaced the typed Trip ID inputs on Trip Status and Location Updates forms with dropdowns populated from GET /api/driver/my-trips (option text: "Pickup → Drop | DD Mon HH:MM | REG"). Empty state disables the submit buttons and shows "No trips assigned to you yet." "Use My GPS" continues to work. Client-side lat/lon range validation matches the server-side rules. All four tables have loading, empty, and error states; crash incident Time column now shows a real value.
+
+### Files changed
+- `src/…/config/SecurityConfig.java`
+- `src/…/controller/DriverPortalController.java` (new)
+- `src/…/controller/TripStatusController.java`
+- `src/…/controller/LocationUpdateController.java`
+- `src/…/controller/EmergencyReportController.java`
+- `src/…/controller/CrashIncidentController.java`
+- `src/…/service/TripStatusService.java`
+- `src/…/service/LocationUpdateService.java`
+- `src/…/service/EmergencyReportService.java`
+- `src/…/service/CrashIncidentService.java`
+- `src/…/repository/BusTripRepository.java`
+- `src/…/repository/TripStatusRepository.java`
+- `src/…/repository/LocationUpdateRepository.java`
+- `src/…/repository/EmergencyReportRepository.java`
+- `src/…/repository/CrashIncidentRepository.java`
+- `src/…/dto/DriverTripDTO.java` (new)
+- `frontend/driver.html`
+- `docs/CHANGES.md` (this file)

@@ -33,4 +33,8 @@ public class CrashIncidentService {
     public void deleteIncident(Integer id) {
         repository.deleteById(id);
     }
+
+    public List<CrashIncident> getIncidentsByDriver(Integer driverUserId) {
+        return repository.findByDriverUserId(driverUserId);
+    }
 }

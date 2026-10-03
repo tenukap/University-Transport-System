@@ -45,7 +45,17 @@ public class SecurityConfig {
                         // Student-facing endpoints (admin has access too).
                         .requestMatchers("/api/trips/**", "/api/locations/**", "/api/bookings/**", "/api/students/**", "/api/feedback/**")
                                 .hasAnyRole("STUDENT", "ADMIN")
-                        .requestMatchers("/api/emergency-reports/**", "/api/crash-incidents/**", "/api/trip-statuses/**", "/api/location-updates/**").permitAll()
+                        // Specific POST rules before the general authenticated() catch-all for these groups
+                        .requestMatchers(HttpMethod.POST, "/api/trip-statuses/**", "/api/location-updates/**").hasRole("DRIVER")
+                        .requestMatchers(HttpMethod.POST, "/api/emergency-reports/**").hasRole("DRIVER")
+                        .requestMatchers(HttpMethod.POST, "/api/crash-incidents/**").hasRole("DRIVER")
+                        // PUT/DELETE on incident/report records are transport-officer workflow
+                        .requestMatchers(HttpMethod.PUT, "/api/emergency-reports/**", "/api/crash-incidents/**").hasRole("TRANSPORT_OFFICER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/emergency-reports/**", "/api/crash-incidents/**").hasRole("TRANSPORT_OFFICER")
+                        // GET (and any remaining methods) require authentication; role filtering is in the controllers
+                        .requestMatchers("/api/emergency-reports/**", "/api/crash-incidents/**", "/api/trip-statuses/**", "/api/location-updates/**").authenticated()
+                        // Driver portal endpoints (no trailing 's' — distinct from admin /api/drivers/**)
+                        .requestMatchers("/api/driver/**").hasRole("DRIVER")
                         .requestMatchers("/api/transport/**").hasAnyRole("TRANSPORT_OFFICER", "ADMIN")
                         .requestMatchers("/api/student/**").hasRole("STUDENT")
                         // Slip download: authenticated; role + ownership check is inside SlipController

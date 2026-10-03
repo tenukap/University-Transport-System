@@ -184,7 +184,10 @@
         <div class="form-error" id="ts-err"></div>
         <div class="form-ok"  id="ts-ok">Status logged successfully.</div>
         <div class="form-row">
-          <div class="field"><label for="ts-tripid">Trip ID *</label><input type="number" id="ts-tripid" placeholder="Enter your trip ID" min="1" /></div>
+          <div class="field">
+            <label for="ts-tripid">Trip *</label>
+            <select id="ts-tripid"><option value="">Loading trips…</option></select>
+          </div>
           <div class="field"><label for="ts-type">Status Type *</label>
             <select id="ts-type">
               <option value="">— Select status —</option>
@@ -211,7 +214,10 @@
         <div class="form-error" id="lu-err"></div>
         <div class="form-ok"  id="lu-ok">Location recorded successfully.</div>
         <div class="form-row">
-          <div class="field"><label for="lu-tripid">Trip ID *</label><input type="number" id="lu-tripid" placeholder="Enter your trip ID" min="1" /></div>
+          <div class="field">
+            <label for="lu-tripid">Trip *</label>
+            <select id="lu-tripid"><option value="">Loading trips…</option></select>
+          </div>
           <div class="field"><label for="lu-lat">Latitude *</label><input type="number" id="lu-lat" placeholder="e.g. 6.9271" step="any" /></div>
         </div>
         <div class="form-row">
@@ -235,6 +241,8 @@
     const claims = checkAuth('DRIVER');
     if (claims) initPortal();
 
+    let myTrips = []; // cache of driver's upcoming trips for dropdown population
+
     function initPortal() {
       const u = JSON.parse(localStorage.getItem('user') || 'null');
       const name = (u && (u.fullName || u.name)) || 'Driver';
@@ -242,7 +250,36 @@
       document.getElementById('top-user').textContent = `${name} (DRIVER)`;
       document.getElementById('logout-btn').addEventListener('click', logout);
       setupTabs();
-      loadOverview();
+      loadMyTrips().then(() => loadOverview());
+    }
+
+    async function loadMyTrips() {
+      try {
+        myTrips = await apiFetch('/driver/my-trips');
+        if (!Array.isArray(myTrips)) myTrips = [];
+      } catch (_) { myTrips = []; }
+      populateTripDropdowns();
+    }
+
+    function populateTripDropdowns() {
+      ['ts-tripid', 'lu-tripid'].forEach(id => {
+        const sel = document.getElementById(id);
+        const submitId = id === 'ts-tripid' ? 'ts-submit' : 'lu-submit';
+        if (!myTrips.length) {
+          sel.innerHTML = '<option value="">No trips assigned to you yet.</option>';
+          document.getElementById(submitId).disabled = true;
+          return;
+        }
+        sel.innerHTML = '<option value="">— Select trip —</option>' +
+          myTrips.map(t => {
+            const date = t.tripDate ? new Date(t.tripDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '?';
+            const time = t.startTime ? t.startTime.substring(0, 5) : '?';
+            const reg  = t.busRegistration || '—';
+            const label = `${esc(t.pickupName || '?')} → ${esc(t.dropName || '?')} | ${date} ${time} | ${esc(reg)}`;
+            return `<option value="${t.tripId}">${label}</option>`;
+          }).join('');
+        document.getElementById(submitId).disabled = false;
+      });
     }
 
     function esc(s) {
@@ -264,8 +301,8 @@
       document.getElementById('page-title').textContent = TITLES[tab];
       if (tab === 'emergency') loadEmergencyReports();
       else if (tab === 'crash') loadCrashIncidents();
-      else if (tab === 'tripstatus') loadTripStatuses();
-      else if (tab === 'location') loadLocationUpdates();
+      else if (tab === 'tripstatus') { loadMyTrips(); loadTripStatuses(); }
+      else if (tab === 'location')   { loadMyTrips(); loadLocationUpdates(); }
     }
 
     async function apiFetch(path, options = {}) {
@@ -412,7 +449,7 @@
       errEl.classList.remove('show'); okEl.classList.remove('show');
       const tripId = parseInt(document.getElementById('ts-tripid').value, 10);
       const type   = document.getElementById('ts-type').value;
-      if (!tripId || !type) { errEl.textContent = 'Trip ID and status type are required.'; errEl.classList.add('show'); return; }
+      if (!tripId || !type) { errEl.textContent = 'Please select a trip and a status type.'; errEl.classList.add('show'); return; }
       try {
         await apiFetch('/trip-statuses', {
           method: 'POST',
@@ -422,6 +459,8 @@
         document.getElementById('ts-tripid').value = '';
         document.getElementById('ts-type').value = '';
         loadTripStatuses();
+        // Refresh dropdown in case trip status changed to Completed
+        loadMyTrips();
       } catch (err) { errEl.textContent = err.message; errEl.classList.add('show'); }
     });
 
@@ -460,7 +499,10 @@
       const tripId = parseInt(document.getElementById('lu-tripid').value, 10);
       const lat    = parseFloat(document.getElementById('lu-lat').value);
       const lng    = parseFloat(document.getElementById('lu-lng').value);
-      if (!tripId || isNaN(lat) || isNaN(lng)) { errEl.textContent = 'Trip ID, latitude, and longitude are required.'; errEl.classList.add('show'); return; }
+      if (!tripId) { errEl.textContent = 'Please select a trip.'; errEl.classList.add('show'); return; }
+      if (isNaN(lat) || isNaN(lng)) { errEl.textContent = 'Latitude and longitude are required.'; errEl.classList.add('show'); return; }
+      if (lat < -90 || lat > 90) { errEl.textContent = 'Latitude must be between -90 and 90.'; errEl.classList.add('show'); return; }
+      if (lng < -180 || lng > 180) { errEl.textContent = 'Longitude must be between -180 and 180.'; errEl.classList.add('show'); return; }
       try {
         await apiFetch('/location-updates', {
           method: 'POST',

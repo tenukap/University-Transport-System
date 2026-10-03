@@ -5,6 +5,7 @@ import com.bustrans.fleettrack.repository.TripStatusRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,5 +33,9 @@ public class TripStatusService {
 
     public void deleteStatus(Integer id) {
         repository.deleteById(id);
+    }
+
+    public List<TripStatus> getStatusesForTrips(Collection<Integer> tripIds) {
+        return repository.findByTripIdIn(tripIds);
     }
 }

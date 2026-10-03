@@ -33,4 +33,8 @@ public class EmergencyReportService {
     public void deleteReport(Integer id) {
         repository.deleteById(id);
     }
+
+    public List<EmergencyReport> getReportsByUser(Integer userId) {
+        return repository.findByStudentNo(userId);
+    }
 }
