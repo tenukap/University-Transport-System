@@ -1,9 +1,10 @@
 package com.bustrans.fleettrack.controller;
 
+import com.bustrans.fleettrack.entity.BusTrip;
 import com.bustrans.fleettrack.entity.CrashIncident;
+import com.bustrans.fleettrack.repository.BusTripRepository;
 import com.bustrans.fleettrack.service.CrashIncidentService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,9 +21,12 @@ public class CrashIncidentController {
     private static final int MAX_DESC_LEN     = 2000;
 
     private final CrashIncidentService service;
+    private final BusTripRepository busTripRepository;
 
-    public CrashIncidentController(CrashIncidentService service) {
+    public CrashIncidentController(CrashIncidentService service,
+                                   BusTripRepository busTripRepository) {
         this.service = service;
+        this.busTripRepository = busTripRepository;
     }
 
     @GetMapping
@@ -30,7 +34,6 @@ public class CrashIncidentController {
         if (isPrivileged(auth)) {
             return ResponseEntity.ok(service.getAllIncidents());
         }
-        // DRIVER sees only their own incidents
         Integer driverId = Integer.parseInt(auth.getName());
         return ResponseEntity.ok(service.getIncidentsByDriver(driverId));
     }
@@ -67,39 +70,38 @@ public class CrashIncidentController {
                     "Description must not exceed " + MAX_DESC_LEN + " characters"));
         }
 
+        Integer driverId = Integer.parseInt(auth.getName());
+
+        Integer tripId = incoming.getTripId();
+        if (tripId == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "A trip must be selected"));
+        }
+        BusTrip trip = busTripRepository.findById(tripId).orElse(null);
+        if (trip == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Trip not found"));
+        }
+        if (!driverId.equals(trip.getDriverUserId())) {
+            return ResponseEntity.status(403).body(Map.of("message", "This trip is not assigned to you"));
+        }
+
         CrashIncident incident = new CrashIncident();
         incident.setLocationCoordinates(location.strip());
         incident.setSeverityLevel(severity.strip());
         incident.setDescription(desc != null ? desc.strip() : null);
-        incident.setStatus("Reported");
-        // driverUserId and timestamp always set server-side
-        incident.setDriverUserId(Integer.parseInt(auth.getName()));
+        incident.setStatus("Pending");
+        // driverUserId, busNo, tripId, and timestamp always set server-side
+        incident.setDriverUserId(driverId);
+        incident.setTripId(tripId);
+        // Copy the bus from the trip so the crash is linked to the correct bus
+        if (trip.getBus() != null) {
+            incident.setBusNo(trip.getBus().getBusId());
+        }
         incident.setTimestamp(LocalDateTime.now());
 
         return ResponseEntity.ok(service.saveIncident(incident));
     }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('TRANSPORT_OFFICER')")
-    public ResponseEntity<CrashIncident> updateIncident(@PathVariable Integer id,
-                                                        @RequestBody CrashIncident detail) {
-        return service.getIncidentById(id)
-                .map(existing -> {
-                    detail.setIncidentId(existing.getIncidentId());
-                    return ResponseEntity.ok(service.saveIncident(detail));
-                })
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('TRANSPORT_OFFICER')")
-    public ResponseEntity<Void> deleteIncident(@PathVariable Integer id) {
-        if (service.getIncidentById(id).isPresent()) {
-            service.deleteIncident(id);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
-    }
+    // Generic PUT/DELETE removed — the transport-officer uses PUT /api/transport/crash-incidents/{id}/status
 
     private boolean isPrivileged(Authentication auth) {
         return auth.getAuthorities().stream().anyMatch(a ->

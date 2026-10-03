@@ -1,9 +1,10 @@
 package com.bustrans.fleettrack.controller;
 
+import com.bustrans.fleettrack.entity.BusTrip;
 import com.bustrans.fleettrack.entity.EmergencyReport;
+import com.bustrans.fleettrack.repository.BusTripRepository;
 import com.bustrans.fleettrack.service.EmergencyReportService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,9 +20,12 @@ public class EmergencyReportController {
     private static final int MAX_DESC_LEN  = 2000;
 
     private final EmergencyReportService service;
+    private final BusTripRepository busTripRepository;
 
-    public EmergencyReportController(EmergencyReportService service) {
+    public EmergencyReportController(EmergencyReportService service,
+                                     BusTripRepository busTripRepository) {
         this.service = service;
+        this.busTripRepository = busTripRepository;
     }
 
     @GetMapping
@@ -29,7 +33,6 @@ public class EmergencyReportController {
         if (isPrivileged(auth)) {
             return ResponseEntity.ok(service.getAllReports());
         }
-        // DRIVER or STUDENT see only their own reports
         Integer userId = Integer.parseInt(auth.getName());
         return ResponseEntity.ok(service.getReportsByUser(userId));
     }
@@ -77,30 +80,29 @@ public class EmergencyReportController {
         // Reporter identity always comes from the token, never from the client payload
         report.setStudentNo(Integer.parseInt(auth.getName()));
 
+        // DRIVER must supply a tripId that belongs to them; STUDENT tripId is optional
+        boolean isDriver = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_DRIVER"));
+        if (isDriver) {
+            Integer tripId = incoming.getTripId();
+            if (tripId == null) {
+                return ResponseEntity.badRequest().body(Map.of("message", "A trip must be selected"));
+            }
+            BusTrip trip = busTripRepository.findById(tripId).orElse(null);
+            if (trip == null) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Trip not found"));
+            }
+            Integer driverId = Integer.parseInt(auth.getName());
+            if (!driverId.equals(trip.getDriverUserId())) {
+                return ResponseEntity.status(403).body(Map.of("message", "This trip is not assigned to you"));
+            }
+            report.setTripId(tripId);
+        }
+
         return ResponseEntity.ok(service.saveReport(report));
     }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('TRANSPORT_OFFICER')")
-    public ResponseEntity<EmergencyReport> updateReport(@PathVariable Integer id,
-                                                        @RequestBody EmergencyReport detail) {
-        return service.getReportById(id)
-                .map(existing -> {
-                    detail.setReportId(existing.getReportId());
-                    return ResponseEntity.ok(service.saveReport(detail));
-                })
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('TRANSPORT_OFFICER')")
-    public ResponseEntity<Void> deleteReport(@PathVariable Integer id) {
-        if (service.getReportById(id).isPresent()) {
-            service.deleteReport(id);
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
-    }
+    // Generic PUT/DELETE removed — the transport-officer uses PUT /api/transport/emergency-reports/{id}/status
 
     private boolean isPrivileged(Authentication auth) {
         return auth.getAuthorities().stream().anyMatch(a ->

@@ -56,6 +56,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/emergency-reports/**", "/api/crash-incidents/**", "/api/trip-statuses/**", "/api/location-updates/**").authenticated()
                         // Driver portal endpoints (no trailing 's' — distinct from admin /api/drivers/**)
                         .requestMatchers("/api/driver/**").hasRole("DRIVER")
+                        // Status workflow is write-only for transport officers; admin is read-only
+                        .requestMatchers(HttpMethod.PUT, "/api/transport/emergency-reports/**", "/api/transport/crash-incidents/**").hasRole("TRANSPORT_OFFICER")
                         .requestMatchers("/api/transport/**").hasAnyRole("TRANSPORT_OFFICER", "ADMIN")
                         .requestMatchers("/api/student/**").hasRole("STUDENT")
                         // Slip download: authenticated; role + ownership check is inside SlipController

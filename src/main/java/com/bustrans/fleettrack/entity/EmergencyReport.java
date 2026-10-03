@@ -21,6 +21,7 @@ public class EmergencyReport {
     @Column(name = "Description", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
+    // insertable=false: timestamp is set by the DB DEFAULT (GETDATE()); never written by JPA on INSERT.
     @Column(name = "Timestamp", insertable = false)
     private LocalDateTime timestamp;
 
@@ -29,6 +30,9 @@ public class EmergencyReport {
 
     @Column(name = "user_id")
     private Integer studentNo;
+
+    @Column(name = "trip_id")
+    private Integer tripId;
 
     public Integer getReportId() {
         return reportId;
@@ -84,5 +88,13 @@ public class EmergencyReport {
 
     public void setStudentNo(Integer studentNo) {
         this.studentNo = studentNo;
+    }
+
+    public Integer getTripId() {
+        return tripId;
+    }
+
+    public void setTripId(Integer tripId) {
+        this.tripId = tripId;
     }
 }

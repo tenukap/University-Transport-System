@@ -280,3 +280,60 @@ Replaced the typed Trip ID inputs on Trip Status and Location Updates forms with
 - `src/…/dto/DriverTripDTO.java` (new)
 - `frontend/driver.html`
 - `docs/CHANGES.md` (this file)
+
+---
+
+## Prompt 15 — Emergency and crash handling for transport officer
+
+Added a status workflow for emergency reports and crash incidents and surfaced them in the transport officer and admin dashboards.
+
+### Migration
+
+**V9__trip_link_for_reports.sql** — Additive migration. Adds `trip_id INT NULL FK → bustrip(TripId)` to both `Emergency_Report` and `Crash_Incident`. IF NOT EXISTS guards throughout. Existing rows stay valid (NULL). Naming matches the lowercase-underscore FK style used in V5.
+
+### Part A — trip link in POST
+
+Emergency reports and crash incidents now require a `tripId` from a DRIVER. The controller validates that the trip belongs to the logged-in driver (403 otherwise). Crash incidents also copy `bus_id` from the trip. STUDENT emergency reports leave tripId optional. Both controllers had their unused generic PUT/DELETE removed (confirmed: no live frontend page calls them — only the legacy `emergency.html` prototype did).
+
+### Part B — status workflow
+
+Status values: Pending (new), Acknowledged, Resolved. Old "Reported" stored value is normalised to Pending in all DTOs. New crash incidents start Pending (previously "Reported"). `PUT /api/transport/emergency-reports/{id}/status` and `PUT /api/transport/crash-incidents/{id}/status` advance status forward-only; backwards transitions return 409. GET endpoints (`GET /api/transport/emergency-reports` and `/crash-incidents`) build DTOs with reporter/driver name and tripLabel in one batch-load per request (no N+1).
+
+### Part C — frontend
+
+`driver.html`: Emergency and Crash forms now have a required trip dropdown (same myTrips cache). Both lists show a Trip column. Old "Reported" is normalised to Pending in the display.
+
+`transport-officer-dashboard.html`: Two new tabs (Emergency Reports, Crash Incidents) with filter bar (All/Pending/Acknowledged/Resolved), status badges, Acknowledge/Resolve action buttons with confirm, red count badges on sidebar nav items showing Pending count, two new Overview metric cards (Open Emergencies, Open Incidents).
+
+`admin-dashboard.html`: New "Incidents" tab with two read-only tables, filter bar, status badges, no action buttons.
+
+### SecurityConfig
+
+Added two PUT matchers before the general `/api/transport/**` rule to restrict `PUT /api/transport/emergency-reports/**` and `PUT /api/transport/crash-incidents/**` to TRANSPORT_OFFICER only (ADMIN can read but cannot advance status).
+
+### Endpoint / role table
+
+| Method | Path | Roles |
+|---|---|---|
+| GET | /api/transport/emergency-reports | TRANSPORT_OFFICER, ADMIN |
+| GET | /api/transport/crash-incidents | TRANSPORT_OFFICER, ADMIN |
+| PUT | /api/transport/emergency-reports/{id}/status | TRANSPORT_OFFICER |
+| PUT | /api/transport/crash-incidents/{id}/status | TRANSPORT_OFFICER |
+
+### Files changed
+- `src/main/resources/db/migration/V9__trip_link_for_reports.sql` (new)
+- `src/…/entity/EmergencyReport.java`
+- `src/…/entity/CrashIncident.java`
+- `src/…/dto/EmergencyReportViewDTO.java` (new)
+- `src/…/dto/CrashIncidentViewDTO.java` (new)
+- `src/…/dto/StatusUpdateRequest.java` (new)
+- `src/…/repository/EmergencyReportRepository.java`
+- `src/…/repository/CrashIncidentRepository.java`
+- `src/…/controller/EmergencyReportController.java`
+- `src/…/controller/CrashIncidentController.java`
+- `src/…/controller/TransportController.java`
+- `src/…/config/SecurityConfig.java`
+- `frontend/driver.html`
+- `frontend/transport-officer-dashboard.html`
+- `frontend/admin-dashboard.html`
+- `docs/CHANGES.md` (this file)

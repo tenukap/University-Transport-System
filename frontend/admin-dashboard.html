@@ -116,6 +116,7 @@
       <button class="nav-link" data-tab="bookings">🎫 <span>Bookings</span></button>
       <button class="nav-link" data-tab="reports">📈 <span>Reports</span></button>
       <button class="nav-link" data-tab="finance">💰 <span>Finance</span></button>
+      <button class="nav-link" data-tab="incidents">🚨 <span>Incidents</span></button>
     </nav>
     <div class="sidebar__foot">
       <div class="sidebar__user-name" id="side-name">—</div>
@@ -245,6 +246,39 @@
         </table>
       </div>
     </section>
+
+    <!-- Incidents: read-only emergency reports and crash incidents -->
+    <section class="tab-panel" id="panel-incidents">
+      <div class="panel-head"><div><h2>Incidents</h2><p>Read-only view of driver-submitted emergency reports and crash incidents.</p></div></div>
+
+      <h3 style="font:700 15px/1 'Montserrat',sans-serif;color:var(--text);margin:0 0 10px;">Emergency Reports</h3>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;" id="admin-er-filters">
+        <button style="font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:5px 14px;background:var(--primary);color:#fff;cursor:pointer;" data-aer-filter="All">All</button>
+        <button style="font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:5px 14px;background:var(--surface);color:var(--muted);cursor:pointer;" data-aer-filter="Pending">Pending</button>
+        <button style="font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:5px 14px;background:var(--surface);color:var(--muted);cursor:pointer;" data-aer-filter="Acknowledged">Acknowledged</button>
+        <button style="font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:5px 14px;background:var(--surface);color:var(--muted);cursor:pointer;" data-aer-filter="Resolved">Resolved</button>
+      </div>
+      <div class="table-wrap" style="margin-bottom:28px;">
+        <table>
+          <thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Reporter</th><th>Trip</th><th>Bus</th><th>Status</th><th>Time</th></tr></thead>
+          <tbody id="admin-er-body"><tr><td colspan="8" class="state-msg">Loading…</td></tr></tbody>
+        </table>
+      </div>
+
+      <h3 style="font:700 15px/1 'Montserrat',sans-serif;color:var(--text);margin:0 0 10px;">Crash Incidents</h3>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;" id="admin-ci-filters">
+        <button style="font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:5px 14px;background:var(--primary);color:#fff;cursor:pointer;" data-aci-filter="All">All</button>
+        <button style="font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:5px 14px;background:var(--surface);color:var(--muted);cursor:pointer;" data-aci-filter="Pending">Pending</button>
+        <button style="font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:5px 14px;background:var(--surface);color:var(--muted);cursor:pointer;" data-aci-filter="Acknowledged">Acknowledged</button>
+        <button style="font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:5px 14px;background:var(--surface);color:var(--muted);cursor:pointer;" data-aci-filter="Resolved">Resolved</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Location</th><th>Severity</th><th>Driver</th><th>Bus</th><th>Trip</th><th>Status</th><th>Time</th></tr></thead>
+          <tbody id="admin-ci-body"><tr><td colspan="8" class="state-msg">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
   </main>
 
   <!-- User Create/Edit modal -->
@@ -352,7 +386,7 @@
     }
 
     // ---- Tabs ----
-    const TITLES = { dashboard: 'Dashboard', users: 'Users', trips: 'Trips', buses: 'Buses', bookings: 'Bookings', reports: 'Reports', finance: 'Finance Overview' };
+    const TITLES = { dashboard: 'Dashboard', users: 'Users', trips: 'Trips', buses: 'Buses', bookings: 'Bookings', reports: 'Reports', finance: 'Finance Overview', incidents: 'Incidents' };
     const loaded = {};
     function setupTabs() {
       document.querySelectorAll('.nav-link').forEach((btn) => {
@@ -371,6 +405,7 @@
       else if (tab === 'buses')  loadBuses();
       else if (tab === 'bookings') loadBookings();
       else if (tab === 'finance')  loadAdminFinance();
+      else if (tab === 'incidents') loadAdminIncidents();
     }
 
     // ---- Dashboard metrics ----
@@ -951,6 +986,87 @@
         alert('Slip error: ' + e.message);
       }
     }
+
+    // ---- Incidents tab (read-only) ----
+    let adminErData = [], adminCiData = [];
+    let adminErFilter = 'All', adminCiFilter = 'All';
+
+    async function loadAdminIncidents() {
+      try {
+        [adminErData, adminCiData] = await Promise.all([
+          apiFetch('/transport/emergency-reports'),
+          apiFetch('/transport/crash-incidents'),
+        ]);
+      } catch (err) {
+        document.getElementById('admin-er-body').innerHTML = `<tr><td colspan="8" class="state-msg">${esc(err.message)}</td></tr>`;
+        document.getElementById('admin-ci-body').innerHTML = `<tr><td colspan="8" class="state-msg">${esc(err.message)}</td></tr>`;
+        return;
+      }
+      renderAdminErTable();
+      renderAdminCiTable();
+    }
+
+    function incidentBadge(s) {
+      if (s === 'Resolved')     return `<span class="badge badge--active">${esc(s)}</span>`;
+      if (s === 'Acknowledged') return `<span class="badge badge--warn">${esc(s)}</span>`;
+      return `<span class="badge badge--other">${esc(s || 'Pending')}</span>`;
+    }
+
+    function fmtDt(v) { return v ? String(v).replace('T', ' ').substring(0, 16) : '—'; }
+
+    function renderAdminErTable() {
+      const body = document.getElementById('admin-er-body');
+      const data = adminErFilter === 'All' ? adminErData : adminErData.filter(r => r.status === adminErFilter);
+      if (!data.length) { body.innerHTML = '<tr><td colspan="8" class="state-msg">No emergency reports.</td></tr>'; return; }
+      body.innerHTML = data.map(r => `<tr>
+        <td>${esc(r.id)}</td>
+        <td>${esc(r.title)}</td>
+        <td>${esc(r.type)}</td>
+        <td>${esc(r.reporterName)}${r.reporterRole ? ` <span style="color:var(--muted);font-size:11px">(${esc(r.reporterRole)})</span>` : ''}</td>
+        <td>${esc(r.tripLabel || '—')}</td>
+        <td>${esc(r.busRegistration || '—')}</td>
+        <td>${incidentBadge(r.status)}</td>
+        <td>${fmtDt(r.timestamp)}</td>
+      </tr>`).join('');
+    }
+
+    function renderAdminCiTable() {
+      const body = document.getElementById('admin-ci-body');
+      const data = adminCiFilter === 'All' ? adminCiData : adminCiData.filter(r => r.status === adminCiFilter);
+      if (!data.length) { body.innerHTML = '<tr><td colspan="8" class="state-msg">No crash incidents.</td></tr>'; return; }
+      body.innerHTML = data.map(r => `<tr>
+        <td>${esc(r.id)}</td>
+        <td>${esc(r.location)}</td>
+        <td>${esc(r.severity)}</td>
+        <td>${esc(r.driverName)}</td>
+        <td>${esc(r.busRegistration || '—')}</td>
+        <td>${esc(r.tripLabel || '—')}</td>
+        <td>${incidentBadge(r.status)}</td>
+        <td>${fmtDt(r.timestamp)}</td>
+      </tr>`).join('');
+    }
+
+    // Wire filter buttons for both admin incident tables
+    document.getElementById('admin-er-filters').addEventListener('click', e => {
+      const btn = e.target.closest('[data-aer-filter]');
+      if (!btn) return;
+      adminErFilter = btn.dataset.aerFilter;
+      document.querySelectorAll('[data-aer-filter]').forEach(b => {
+        b.style.background = b === btn ? 'var(--primary)' : 'var(--surface)';
+        b.style.color = b === btn ? '#fff' : 'var(--muted)';
+      });
+      renderAdminErTable();
+    });
+    document.getElementById('admin-ci-filters').addEventListener('click', e => {
+      const btn = e.target.closest('[data-aci-filter]');
+      if (!btn) return;
+      adminCiFilter = btn.dataset.aciFilter;
+      document.querySelectorAll('[data-aci-filter]').forEach(b => {
+        b.style.background = b === btn ? 'var(--primary)' : 'var(--surface)';
+        b.style.color = b === btn ? '#fff' : 'var(--muted)';
+      });
+      renderAdminCiTable();
+    });
   </script>
 </body>
 </html>

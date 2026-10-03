@@ -1,14 +1,13 @@
 package com.bustrans.fleettrack.controller;
 
-import com.bustrans.fleettrack.dto.BusAvailableDTO;
-import com.bustrans.fleettrack.dto.DriverSummaryDTO;
-import com.bustrans.fleettrack.dto.TransportTripDTO;
+import com.bustrans.fleettrack.dto.*;
 import com.bustrans.fleettrack.entity.*;
 import com.bustrans.fleettrack.repository.*;
 import com.bustrans.fleettrack.service.PaymentService;
 import com.bustrans.fleettrack.service.RouteService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +15,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.List;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
@@ -35,6 +35,8 @@ public class TransportController {
     @Autowired private BusRepository busRepo;
     @Autowired private DriverRepository driverRepo;
     @Autowired private UserRepository userRepo;
+    @Autowired private EmergencyReportRepository emergencyReportRepo;
+    @Autowired private CrashIncidentRepository crashIncidentRepo;
 
     // --- BUS AVAILABILITY ---
 
@@ -210,6 +212,134 @@ public class TransportController {
     }
 
     // ─────────────────────────────────────────────────────────────
+    // Emergency Reports (read + status workflow)
+    // ─────────────────────────────────────────────────────────────
+
+    /** Returns all emergency reports newest-first; filtered by ?status= if supplied. */
+    @GetMapping("/emergency-reports")
+    public List<EmergencyReportViewDTO> getEmergencyReports(
+            @RequestParam(required = false) String status) {
+        List<EmergencyReport> reports = emergencyReportRepo.findAllByOrderByTimestampDesc();
+        // Batch-load users and trips to avoid N+1 queries
+        Map<Long, User> userMap = batchLoadUsers(
+                reports.stream().map(r -> r.getStudentNo() != null ? r.getStudentNo().longValue() : null)
+                       .filter(Objects::nonNull).collect(Collectors.toSet()));
+        Map<Integer, BusTrip> tripMap = batchLoadTrips(
+                reports.stream().map(EmergencyReport::getTripId)
+                       .filter(Objects::nonNull).collect(Collectors.toSet()));
+
+        return reports.stream()
+                .map(r -> {
+                    User u = r.getStudentNo() != null ? userMap.get(r.getStudentNo().longValue()) : null;
+                    BusTrip trip = r.getTripId() != null ? tripMap.get(r.getTripId()) : null;
+                    return new EmergencyReportViewDTO(
+                            r.getReportId(),
+                            r.getReportTitle(),
+                            r.getEmergencyType(),
+                            r.getDescription(),
+                            u != null ? u.getFullName() : "Unknown",
+                            u != null ? u.getRoleName() : null,
+                            trip != null ? buildTripLabel(trip) : null,
+                            trip != null && trip.getBus() != null ? trip.getBus().getRegistrationNumber() : null,
+                            normalizeStatus(r.getResolutionStatus()),
+                            r.getTimestamp() != null ? r.getTimestamp().toString() : null
+                    );
+                })
+                .filter(d -> status == null || status.equalsIgnoreCase(d.getStatus()))
+                .collect(Collectors.toList());
+    }
+
+    /** Advance an emergency report's status (Pending→Acknowledged→Resolved). TRANSPORT_OFFICER only. */
+    @PutMapping("/emergency-reports/{id}/status")
+    public ResponseEntity<?> updateEmergencyStatus(@PathVariable Integer id,
+                                                   @RequestBody StatusUpdateRequest req) {
+        String newStatus = req.getStatus();
+        if (!"Acknowledged".equals(newStatus) && !"Resolved".equals(newStatus)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Status must be Acknowledged or Resolved"));
+        }
+        EmergencyReport report = emergencyReportRepo.findById(id).orElse(null);
+        if (report == null) return ResponseEntity.notFound().build();
+
+        String current = normalizeStatus(report.getResolutionStatus());
+        if ("Resolved".equals(current)) {
+            return ResponseEntity.status(409).body(Map.of("message", "This report is already resolved"));
+        }
+        if (statusRank(newStatus) <= statusRank(current)) {
+            return ResponseEntity.status(409).body(Map.of("message", "Status cannot move backwards"));
+        }
+        report.setResolutionStatus(newStatus);
+        emergencyReportRepo.save(report);
+        return ResponseEntity.ok(Map.of("status", newStatus));
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Crash Incidents (read + status workflow)
+    // ─────────────────────────────────────────────────────────────
+
+    /** Returns all crash incidents newest-first; filtered by ?status= if supplied. */
+    @GetMapping("/crash-incidents")
+    public List<CrashIncidentViewDTO> getCrashIncidents(
+            @RequestParam(required = false) String status) {
+        List<CrashIncident> incidents = crashIncidentRepo.findAllByOrderByTimestampDesc();
+        // Batch-load drivers and trips
+        Map<Long, User> driverMap = batchLoadUsers(
+                incidents.stream().map(i -> i.getDriverUserId() != null ? i.getDriverUserId().longValue() : null)
+                         .filter(Objects::nonNull).collect(Collectors.toSet()));
+        Map<Integer, BusTrip> tripMap = batchLoadTrips(
+                incidents.stream().map(CrashIncident::getTripId)
+                         .filter(Objects::nonNull).collect(Collectors.toSet()));
+
+        return incidents.stream()
+                .map(i -> {
+                    User driver = i.getDriverUserId() != null ? driverMap.get(i.getDriverUserId().longValue()) : null;
+                    BusTrip trip = i.getTripId() != null ? tripMap.get(i.getTripId()) : null;
+                    // busRegistration: prefer trip's bus, fall back to direct bus_id column
+                    String busReg = null;
+                    if (trip != null && trip.getBus() != null) {
+                        busReg = trip.getBus().getRegistrationNumber();
+                    } else if (i.getBusNo() != null) {
+                        busReg = busRepo.findById(i.getBusNo()).map(Bus::getRegistrationNumber).orElse(null);
+                    }
+                    return new CrashIncidentViewDTO(
+                            i.getIncidentId(),
+                            i.getLocationCoordinates(),
+                            i.getSeverityLevel(),
+                            i.getDescription(),
+                            driver != null ? driver.getFullName() : "Unknown",
+                            busReg,
+                            trip != null ? buildTripLabel(trip) : null,
+                            normalizeStatus(i.getStatus()),
+                            i.getTimestamp() != null ? i.getTimestamp().toString() : null
+                    );
+                })
+                .filter(d -> status == null || status.equalsIgnoreCase(d.getStatus()))
+                .collect(Collectors.toList());
+    }
+
+    /** Advance a crash incident's status (Pending→Acknowledged→Resolved). TRANSPORT_OFFICER only. */
+    @PutMapping("/crash-incidents/{id}/status")
+    public ResponseEntity<?> updateCrashStatus(@PathVariable Integer id,
+                                               @RequestBody StatusUpdateRequest req) {
+        String newStatus = req.getStatus();
+        if (!"Acknowledged".equals(newStatus) && !"Resolved".equals(newStatus)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Status must be Acknowledged or Resolved"));
+        }
+        CrashIncident incident = crashIncidentRepo.findById(id).orElse(null);
+        if (incident == null) return ResponseEntity.notFound().build();
+
+        String current = normalizeStatus(incident.getStatus());
+        if ("Resolved".equals(current)) {
+            return ResponseEntity.status(409).body(Map.of("message", "This report is already resolved"));
+        }
+        if (statusRank(newStatus) <= statusRank(current)) {
+            return ResponseEntity.status(409).body(Map.of("message", "Status cannot move backwards"));
+        }
+        incident.setStatus(newStatus);
+        crashIncidentRepo.save(incident);
+        return ResponseEntity.ok(Map.of("status", newStatus));
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Validation helpers
     // ─────────────────────────────────────────────────────────────
 
@@ -301,6 +431,47 @@ public class TransportController {
                         " from " + t.getStartTime() + " to " + t.getEta() +
                         " (trip #" + t.getTripId() + ")");
                 });
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Incident helpers
+    // ─────────────────────────────────────────────────────────────
+
+    /** Maps "Reported" (legacy value) to "Pending" so the UI always shows a consistent status. */
+    private String normalizeStatus(String s) {
+        return "Reported".equalsIgnoreCase(s) ? "Pending" : (s != null ? s : "Pending");
+    }
+
+    /** Pending=0, Acknowledged=1, Resolved=2. Used for forward-only validation. */
+    private int statusRank(String s) {
+        return switch (normalizeStatus(s)) {
+            case "Acknowledged" -> 1;
+            case "Resolved"     -> 2;
+            default             -> 0; // Pending
+        };
+    }
+
+    /** "Pickup -> Drop, 10 Oct 07:30" — shown in the TO and admin tables. */
+    private String buildTripLabel(BusTrip trip) {
+        String pickup  = trip.getPickupLocation() != null ? trip.getPickupLocation().getLocationName() : "?";
+        String drop    = trip.getDropLocation()   != null ? trip.getDropLocation().getLocationName()   : "?";
+        String dateStr = trip.getTripDate()   != null ? trip.getTripDate().format(DateTimeFormatter.ofPattern("d MMM")) : "?";
+        String timeStr = trip.getStartTime()  != null ? trip.getStartTime().toString().substring(0, 5) : "?";
+        return pickup + " -> " + drop + ", " + dateStr + " " + timeStr;
+    }
+
+    /** One UserRepository call for a set of IDs — avoids N+1 per row. */
+    private Map<Long, User> batchLoadUsers(Set<Long> ids) {
+        if (ids.isEmpty()) return Map.of();
+        return userRepo.findAllById(ids).stream()
+                .collect(Collectors.toMap(User::getUserId, u -> u));
+    }
+
+    /** One BusTripRepository call for a set of trip IDs — avoids N+1 per row. */
+    private Map<Integer, BusTrip> batchLoadTrips(Set<Integer> ids) {
+        if (ids.isEmpty()) return Map.of();
+        return busTripRepo.findAllById(ids).stream()
+                .collect(Collectors.toMap(BusTrip::getTripId, t -> t));
     }
 
     // ─────────────────────────────────────────────────────────────

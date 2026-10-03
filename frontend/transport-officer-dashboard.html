@@ -58,6 +58,12 @@
     .badge--warn { background: rgba(245,158,11,.12);  color: var(--warn); }
     .badge--other { background: rgba(180,70,60,.12);  color: var(--danger); }
     .row-actions { display: flex; gap: 8px; }
+    /* Red pill badge on sidebar nav items showing pending counts */
+    .nav-badge { background: var(--danger); color: #fff; border-radius: 9999px; padding: 2px 7px; font-size: 11px; font-weight: 700; margin-left: auto; }
+    /* Filter bar for incident tabs */
+    .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-btn { font-family: 'Montserrat',sans-serif; font-size: 12px; font-weight: 600; border: 1px solid var(--line); border-radius: 6px; padding: 5px 14px; background: var(--surface); color: var(--muted); cursor: pointer; }
+    .filter-btn.is-active { background: var(--primary); color: #fff; border-color: var(--primary); }
     .link-btn { background: none; border: none; color: var(--primary); font-weight: 600; cursor: pointer; font-size: 13px; }
     .link-btn--danger { color: var(--danger); }
     .state-msg { padding: 24px; color: var(--muted); text-align: center; }
@@ -98,6 +104,8 @@
       <button class="nav-link" data-tab="trips">🚌 <span>Trips</span></button>
       <button class="nav-link" data-tab="locations">📍 <span>Locations</span></button>
       <button class="nav-link" data-tab="payments">💳 <span>Payments</span></button>
+      <button class="nav-link" data-tab="emergency">🚨 <span>Emergency Reports</span><span class="nav-badge" id="badge-emergency" style="display:none">0</span></button>
+      <button class="nav-link" data-tab="crash">⚠️ <span>Crash Incidents</span><span class="nav-badge" id="badge-crash" style="display:none">0</span></button>
     </nav>
     <div class="sidebar__foot">
       <div class="sidebar__user-name" id="side-name">—</div>
@@ -120,6 +128,8 @@
         <div class="metric"><div class="metric__label">Trips</div><div class="metric__value" id="cnt-trips">—</div></div>
         <div class="metric"><div class="metric__label">Locations</div><div class="metric__value" id="cnt-locations">—</div></div>
         <div class="metric"><div class="metric__label">Payments</div><div class="metric__value" id="cnt-payments">—</div></div>
+        <div class="metric"><div class="metric__label">Open Emergencies</div><div class="metric__value" id="cnt-open-emergency">—</div></div>
+        <div class="metric"><div class="metric__label">Open Incidents</div><div class="metric__value" id="cnt-open-crash">—</div></div>
       </div>
     </div>
 
@@ -161,6 +171,36 @@
       <div class="table-wrap">
         <table><thead><tr><th>ID</th><th>Payment ID</th><th>Reason</th><th>Cancelled At</th></tr></thead>
         <tbody id="pcancels-body"><tr><td colspan="4" class="state-msg">Loading…</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- Emergency Reports -->
+    <div class="tab-panel" id="panel-emergency">
+      <div class="panel-head"><div><h2>Emergency Reports</h2><p>Driver-submitted emergency reports</p></div></div>
+      <div class="filter-bar" id="er-filters">
+        <button class="filter-btn is-active" data-er-filter="All">All</button>
+        <button class="filter-btn" data-er-filter="Pending">Pending</button>
+        <button class="filter-btn" data-er-filter="Acknowledged">Acknowledged</button>
+        <button class="filter-btn" data-er-filter="Resolved">Resolved</button>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Reporter</th><th>Trip</th><th>Bus</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
+        <tbody id="er-body"><tr><td colspan="9" class="state-msg">Loading…</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- Crash Incidents -->
+    <div class="tab-panel" id="panel-crash">
+      <div class="panel-head"><div><h2>Crash Incidents</h2><p>Driver-reported crash incidents</p></div></div>
+      <div class="filter-bar" id="ci-filters">
+        <button class="filter-btn is-active" data-ci-filter="All">All</button>
+        <button class="filter-btn" data-ci-filter="Pending">Pending</button>
+        <button class="filter-btn" data-ci-filter="Acknowledged">Acknowledged</button>
+        <button class="filter-btn" data-ci-filter="Resolved">Resolved</button>
+      </div>
+      <div class="table-wrap">
+        <table><thead><tr><th>ID</th><th>Location</th><th>Severity</th><th>Driver</th><th>Bus</th><th>Trip</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
+        <tbody id="ci-body"><tr><td colspan="9" class="state-msg">Loading…</td></tr></tbody></table>
       </div>
     </div>
 
@@ -263,7 +303,8 @@
 
     const TITLES = {
       overview: 'Overview', trips: 'Trips',
-      locations: 'Locations', payments: 'Payments'
+      locations: 'Locations', payments: 'Payments',
+      emergency: 'Emergency Reports', crash: 'Crash Incidents'
     };
     const loaded = {};
     function setupTabs() {
@@ -281,6 +322,8 @@
       if (tab === 'trips') loadTrips();
       else if (tab === 'locations') loadLocations();
       else if (tab === 'payments') loadPayments();
+      else if (tab === 'emergency') loadEmergencyReports();
+      else if (tab === 'crash') loadCrashIncidents();
     }
 
     async function apiFetch(path, options = {}) {
@@ -308,14 +351,23 @@
     // ---- Overview ----
     async function loadOverview() {
       try {
-        const [trips, locs, pays] = await Promise.all([
+        const [trips, locs, pays, erList, ciList] = await Promise.all([
           apiFetch('/transport/trips'),
           apiFetch('/transport/locations'),
           apiFetch('/transport/payments'),
+          apiFetch('/transport/emergency-reports'),
+          apiFetch('/transport/crash-incidents'),
         ]);
         document.getElementById('cnt-trips').textContent    = Array.isArray(trips) ? trips.length : '—';
         document.getElementById('cnt-locations').textContent = Array.isArray(locs) ? locs.length  : '—';
         document.getElementById('cnt-payments').textContent = Array.isArray(pays)  ? pays.length  : '—';
+        const openER = Array.isArray(erList) ? erList.filter(r => r.status !== 'Resolved').length : 0;
+        const openCI = Array.isArray(ciList) ? ciList.filter(r => r.status !== 'Resolved').length : 0;
+        document.getElementById('cnt-open-emergency').textContent = openER;
+        document.getElementById('cnt-open-crash').textContent = openCI;
+        // Update sidebar badges (Pending count only)
+        updateBadge('badge-emergency', Array.isArray(erList) ? erList.filter(r => r.status === 'Pending').length : 0);
+        updateBadge('badge-crash',     Array.isArray(ciList) ? ciList.filter(r => r.status === 'Pending').length : 0);
       } catch (err) { /* overview is best-effort */ }
     }
 
@@ -669,6 +721,150 @@
         loadPayments();
       } catch (err) { errEl.textContent = err.message; errEl.classList.add('show'); }
     }
+
+    // ---- Badge helper ----
+    function updateBadge(id, count) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (count > 0) { el.textContent = count; el.style.display = ''; }
+      else { el.style.display = 'none'; }
+    }
+
+    // ---- Emergency report status badge ----
+    function incidentBadge(s) {
+      if (s === 'Resolved')     return `<span class="badge badge--ok">${esc(s)}</span>`;
+      if (s === 'Acknowledged') return `<span class="badge badge--warn">${esc(s)}</span>`;
+      return `<span class="badge badge--other">${esc(s || 'Pending')}</span>`;
+    }
+
+    // ---- Emergency Reports tab ----
+    let erCurrentFilter = 'All';
+    let erData = [];
+
+    async function loadEmergencyReports() {
+      const body = document.getElementById('er-body');
+      body.innerHTML = '<tr><td colspan="9" class="state-msg">Loading…</td></tr>';
+      try {
+        erData = await apiFetch('/transport/emergency-reports');
+        renderEmergencyTable();
+        updateBadge('badge-emergency', erData.filter(r => r.status === 'Pending').length);
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="9" class="state-msg">${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    function renderEmergencyTable() {
+      const body = document.getElementById('er-body');
+      const filtered = erCurrentFilter === 'All' ? erData : erData.filter(r => r.status === erCurrentFilter);
+      if (!filtered.length) { body.innerHTML = '<tr><td colspan="9" class="state-msg">No emergency reports.</td></tr>'; return; }
+      body.innerHTML = filtered.map(r => `<tr>
+        <td>${esc(r.id)}</td>
+        <td>${esc(r.title)}</td>
+        <td>${esc(r.type)}</td>
+        <td>${esc(r.reporterName)}${r.reporterRole ? ` <span style="color:var(--muted);font-size:11px">(${esc(r.reporterRole)})</span>` : ''}</td>
+        <td>${esc(r.tripLabel || '—')}</td>
+        <td>${esc(r.busRegistration || '—')}</td>
+        <td>${incidentBadge(r.status)}</td>
+        <td>${fmtDt(r.timestamp)}</td>
+        <td><div class="row-actions">
+          ${r.status === 'Pending'
+            ? `<button class="link-btn" data-er-ack="${esc(r.id)}">Acknowledge</button>`
+            : ''}
+          ${r.status !== 'Resolved'
+            ? `<button class="link-btn" data-er-res="${esc(r.id)}">Resolve</button>`
+            : '<span style="color:var(--muted);font-size:13px">Resolved</span>'}
+        </div></td>
+      </tr>`).join('');
+      body.querySelectorAll('[data-er-ack]').forEach(b =>
+        b.addEventListener('click', () => updateEmergencyStatus(b.dataset.erAck, 'Acknowledged')));
+      body.querySelectorAll('[data-er-res]').forEach(b =>
+        b.addEventListener('click', () => updateEmergencyStatus(b.dataset.erRes, 'Resolved')));
+    }
+
+    async function updateEmergencyStatus(id, newStatus) {
+      if (!confirm(`Mark emergency report #${id} as ${newStatus}?`)) return;
+      try {
+        await apiFetch(`/transport/emergency-reports/${id}/status`, {
+          method: 'PUT', body: JSON.stringify({ status: newStatus })
+        });
+        // Reload to get updated list and refresh badge
+        await loadEmergencyReports();
+        loadOverview();
+      } catch (err) { alert(err.message); }
+    }
+
+    // Wire emergency filter buttons
+    document.getElementById('er-filters').addEventListener('click', e => {
+      const btn = e.target.closest('[data-er-filter]');
+      if (!btn) return;
+      erCurrentFilter = btn.dataset.erFilter;
+      document.querySelectorAll('[data-er-filter]').forEach(b => b.classList.toggle('is-active', b === btn));
+      renderEmergencyTable();
+    });
+
+    // ---- Crash Incidents tab ----
+    let ciCurrentFilter = 'All';
+    let ciData = [];
+
+    async function loadCrashIncidents() {
+      const body = document.getElementById('ci-body');
+      body.innerHTML = '<tr><td colspan="9" class="state-msg">Loading…</td></tr>';
+      try {
+        ciData = await apiFetch('/transport/crash-incidents');
+        renderCrashTable();
+        updateBadge('badge-crash', ciData.filter(r => r.status === 'Pending').length);
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="9" class="state-msg">${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    function renderCrashTable() {
+      const body = document.getElementById('ci-body');
+      const filtered = ciCurrentFilter === 'All' ? ciData : ciData.filter(r => r.status === ciCurrentFilter);
+      if (!filtered.length) { body.innerHTML = '<tr><td colspan="9" class="state-msg">No crash incidents.</td></tr>'; return; }
+      body.innerHTML = filtered.map(r => `<tr>
+        <td>${esc(r.id)}</td>
+        <td>${esc(r.location)}</td>
+        <td>${esc(r.severity)}</td>
+        <td>${esc(r.driverName)}</td>
+        <td>${esc(r.busRegistration || '—')}</td>
+        <td>${esc(r.tripLabel || '—')}</td>
+        <td>${incidentBadge(r.status)}</td>
+        <td>${fmtDt(r.timestamp)}</td>
+        <td><div class="row-actions">
+          ${r.status === 'Pending'
+            ? `<button class="link-btn" data-ci-ack="${esc(r.id)}">Acknowledge</button>`
+            : ''}
+          ${r.status !== 'Resolved'
+            ? `<button class="link-btn" data-ci-res="${esc(r.id)}">Resolve</button>`
+            : '<span style="color:var(--muted);font-size:13px">Resolved</span>'}
+        </div></td>
+      </tr>`).join('');
+      body.querySelectorAll('[data-ci-ack]').forEach(b =>
+        b.addEventListener('click', () => updateCrashStatus(b.dataset.ciAck, 'Acknowledged')));
+      body.querySelectorAll('[data-ci-res]').forEach(b =>
+        b.addEventListener('click', () => updateCrashStatus(b.dataset.ciRes, 'Resolved')));
+    }
+
+    async function updateCrashStatus(id, newStatus) {
+      if (!confirm(`Mark crash incident #${id} as ${newStatus}?`)) return;
+      try {
+        await apiFetch(`/transport/crash-incidents/${id}/status`, {
+          method: 'PUT', body: JSON.stringify({ status: newStatus })
+        });
+        await loadCrashIncidents();
+        loadOverview();
+      } catch (err) { alert(err.message); }
+    }
+
+    // Wire crash filter buttons
+    document.getElementById('ci-filters').addEventListener('click', e => {
+      const btn = e.target.closest('[data-ci-filter]');
+      if (!btn) return;
+      ciCurrentFilter = btn.dataset.ciFilter;
+      document.querySelectorAll('[data-ci-filter]').forEach(b => b.classList.toggle('is-active', b === btn));
+      renderCrashTable();
+    });
   </script>
 </body>
 </html>

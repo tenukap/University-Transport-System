@@ -138,12 +138,16 @@
             </select>
           </div>
         </div>
+        <div class="field">
+          <label for="er-tripid">Trip *</label>
+          <select id="er-tripid"><option value="">Loading trips…</option></select>
+        </div>
         <div class="field"><label for="er-desc">Description *</label><textarea id="er-desc" placeholder="Describe the emergency situation in detail…"></textarea></div>
         <button class="btn btn--primary" id="er-submit">Submit Report</button>
       </div>
       <div class="table-wrap">
-        <table><thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Status</th><th>Time</th></tr></thead>
-        <tbody id="er-body"><tr><td colspan="5" class="state-msg">Loading…</td></tr></tbody></table>
+        <table><thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Trip</th><th>Status</th><th>Time</th></tr></thead>
+        <tbody id="er-body"><tr><td colspan="6" class="state-msg">Loading…</td></tr></tbody></table>
       </div>
     </div>
 
@@ -165,12 +169,16 @@
             </select>
           </div>
         </div>
+        <div class="field">
+          <label for="ci-tripid">Trip *</label>
+          <select id="ci-tripid"><option value="">Loading trips…</option></select>
+        </div>
         <div class="field"><label for="ci-desc">Description</label><textarea id="ci-desc" placeholder="Describe what happened…"></textarea></div>
         <button class="btn btn--primary" id="ci-submit">Report Incident</button>
       </div>
       <div class="table-wrap">
-        <table><thead><tr><th>ID</th><th>Location</th><th>Severity</th><th>Status</th><th>Time</th></tr></thead>
-        <tbody id="ci-body"><tr><td colspan="5" class="state-msg">Loading…</td></tr></tbody></table>
+        <table><thead><tr><th>ID</th><th>Location</th><th>Severity</th><th>Trip</th><th>Status</th><th>Time</th></tr></thead>
+        <tbody id="ci-body"><tr><td colspan="6" class="state-msg">Loading…</td></tr></tbody></table>
       </div>
     </div>
 
@@ -262,12 +270,15 @@
     }
 
     function populateTripDropdowns() {
-      ['ts-tripid', 'lu-tripid'].forEach(id => {
-        const sel = document.getElementById(id);
-        const submitId = id === 'ts-tripid' ? 'ts-submit' : 'lu-submit';
+      // All four dropdowns that show the driver's trips
+      const dropdownMap = { 'ts-tripid': 'ts-submit', 'lu-tripid': 'lu-submit', 'er-tripid': 'er-submit', 'ci-tripid': 'ci-submit' };
+      Object.entries(dropdownMap).forEach(([selId, submitId]) => {
+        const sel = document.getElementById(selId);
+        if (!sel) return;
+        const submitEl = document.getElementById(submitId);
         if (!myTrips.length) {
           sel.innerHTML = '<option value="">No trips assigned to you yet.</option>';
-          document.getElementById(submitId).disabled = true;
+          if (submitEl) submitEl.disabled = true;
           return;
         }
         sel.innerHTML = '<option value="">— Select trip —</option>' +
@@ -278,7 +289,7 @@
             const label = `${esc(t.pickupName || '?')} → ${esc(t.dropName || '?')} | ${date} ${time} | ${esc(reg)}`;
             return `<option value="${t.tripId}">${label}</option>`;
           }).join('');
-        document.getElementById(submitId).disabled = false;
+        if (submitEl) submitEl.disabled = false;
       });
     }
 
@@ -299,8 +310,8 @@
       document.querySelectorAll('.nav-link').forEach(b => b.classList.toggle('is-active', b.dataset.tab === tab));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('is-active', p.id === `panel-${tab}`));
       document.getElementById('page-title').textContent = TITLES[tab];
-      if (tab === 'emergency') loadEmergencyReports();
-      else if (tab === 'crash') loadCrashIncidents();
+      if (tab === 'emergency') { loadMyTrips(); loadEmergencyReports(); }
+      else if (tab === 'crash')    { loadMyTrips(); loadCrashIncidents(); }
       else if (tab === 'tripstatus') { loadMyTrips(); loadTripStatuses(); }
       else if (tab === 'location')   { loadMyTrips(); loadLocationUpdates(); }
     }
@@ -346,21 +357,24 @@
     }
 
     // ---- Emergency Reports ----
+    function normSt(s) { return s === 'Reported' ? 'Pending' : (s || '—'); }
+
     async function loadEmergencyReports() {
       const body = document.getElementById('er-body');
-      body.innerHTML = '<tr><td colspan="5" class="state-msg">Loading…</td></tr>';
+      body.innerHTML = '<tr><td colspan="6" class="state-msg">Loading…</td></tr>';
       try {
         const list = await apiFetch('/emergency-reports');
-        if (!list.length) { body.innerHTML = '<tr><td colspan="5" class="state-msg">No reports yet.</td></tr>'; return; }
+        if (!list.length) { body.innerHTML = '<tr><td colspan="6" class="state-msg">No reports yet.</td></tr>'; return; }
         body.innerHTML = list.map(r => `<tr>
           <td>${esc(r.reportId)}</td>
           <td>${esc(r.reportTitle)}</td>
           <td>${esc(r.emergencyType)}</td>
-          <td>${statusBadge(r.resolutionStatus)}</td>
+          <td>${r.tripId ? esc(r.tripId) : '—'}</td>
+          <td>${statusBadge(normSt(r.resolutionStatus))}</td>
           <td>${fmtDt(r.timestamp)}</td>
         </tr>`).join('');
       } catch (err) {
-        body.innerHTML = `<tr><td colspan="5" class="state-msg">${esc(err.message)}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="6" class="state-msg">${esc(err.message)}</td></tr>`;
       }
     }
 
@@ -368,19 +382,22 @@
       const errEl = document.getElementById('er-err');
       const okEl  = document.getElementById('er-ok');
       errEl.classList.remove('show'); okEl.classList.remove('show');
-      const title = document.getElementById('er-title').value.trim();
-      const type  = document.getElementById('er-type').value;
-      const desc  = document.getElementById('er-desc').value.trim();
+      const title  = document.getElementById('er-title').value.trim();
+      const type   = document.getElementById('er-type').value;
+      const desc   = document.getElementById('er-desc').value.trim();
+      const tripId = parseInt(document.getElementById('er-tripid').value, 10);
       if (!title || !type || !desc) { errEl.textContent = 'Title, type, and description are required.'; errEl.classList.add('show'); return; }
+      if (!tripId) { errEl.textContent = 'Please select a trip.'; errEl.classList.add('show'); return; }
       try {
         await apiFetch('/emergency-reports', {
           method: 'POST',
-          body: JSON.stringify({ reportTitle: title, emergencyType: type, description: desc, resolutionStatus: 'Pending' }),
+          body: JSON.stringify({ reportTitle: title, emergencyType: type, description: desc, tripId }),
         });
         okEl.classList.add('show');
         document.getElementById('er-title').value = '';
         document.getElementById('er-type').value = '';
         document.getElementById('er-desc').value = '';
+        document.getElementById('er-tripid').value = '';
         loadEmergencyReports();
       } catch (err) { errEl.textContent = err.message; errEl.classList.add('show'); }
     });
@@ -388,19 +405,20 @@
     // ---- Crash Incidents ----
     async function loadCrashIncidents() {
       const body = document.getElementById('ci-body');
-      body.innerHTML = '<tr><td colspan="5" class="state-msg">Loading…</td></tr>';
+      body.innerHTML = '<tr><td colspan="6" class="state-msg">Loading…</td></tr>';
       try {
         const list = await apiFetch('/crash-incidents');
-        if (!list.length) { body.innerHTML = '<tr><td colspan="5" class="state-msg">No incidents yet.</td></tr>'; return; }
+        if (!list.length) { body.innerHTML = '<tr><td colspan="6" class="state-msg">No incidents yet.</td></tr>'; return; }
         body.innerHTML = list.map(r => `<tr>
           <td>${esc(r.incidentId)}</td>
           <td>${esc(r.locationCoordinates)}</td>
           <td>${esc(r.severityLevel)}</td>
-          <td>${statusBadge(r.status)}</td>
+          <td>${r.tripId ? esc(r.tripId) : '—'}</td>
+          <td>${statusBadge(normSt(r.status))}</td>
           <td>${fmtDt(r.timestamp)}</td>
         </tr>`).join('');
       } catch (err) {
-        body.innerHTML = `<tr><td colspan="5" class="state-msg">${esc(err.message)}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="6" class="state-msg">${esc(err.message)}</td></tr>`;
       }
     }
 
@@ -411,16 +429,19 @@
       const coords   = document.getElementById('ci-coords').value.trim();
       const severity = document.getElementById('ci-severity').value;
       const desc     = document.getElementById('ci-desc').value.trim();
+      const tripId   = parseInt(document.getElementById('ci-tripid').value, 10);
       if (!coords || !severity) { errEl.textContent = 'Location and severity are required.'; errEl.classList.add('show'); return; }
+      if (!tripId) { errEl.textContent = 'Please select a trip.'; errEl.classList.add('show'); return; }
       try {
         await apiFetch('/crash-incidents', {
           method: 'POST',
-          body: JSON.stringify({ locationCoordinates: coords, severityLevel: severity, description: desc, status: 'Reported' }),
+          body: JSON.stringify({ locationCoordinates: coords, severityLevel: severity, description: desc, tripId }),
         });
         okEl.classList.add('show');
         document.getElementById('ci-coords').value = '';
         document.getElementById('ci-severity').value = '';
         document.getElementById('ci-desc').value = '';
+        document.getElementById('ci-tripid').value = '';
         loadCrashIncidents();
       } catch (err) { errEl.textContent = err.message; errEl.classList.add('show'); }
     });

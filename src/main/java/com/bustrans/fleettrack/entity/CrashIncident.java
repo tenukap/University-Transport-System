@@ -31,7 +31,10 @@ public class CrashIncident {
     private LocalDateTime timestamp;
 
     @Column(name = "Status", length = 50)
-    private String status = "Reported";
+    private String status = "Pending";
+
+    @Column(name = "trip_id")
+    private Integer tripId;
 
     public CrashIncident() {
     }
@@ -59,4 +62,7 @@ public class CrashIncident {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public Integer getTripId() { return tripId; }
+    public void setTripId(Integer tripId) { this.tripId = tripId; }
 }

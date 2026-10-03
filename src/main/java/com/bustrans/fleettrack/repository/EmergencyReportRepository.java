@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface EmergencyReportRepository extends JpaRepository<EmergencyReport, Integer> {
     List<EmergencyReport> findByStudentNo(Integer userId);
+    List<EmergencyReport> findAllByOrderByTimestampDesc();
 }
