@@ -33,3 +33,6 @@ build/
 .env.local
 .env.*.local
 /target-preview/
+
+# Bank slip uploads — excluded for privacy (files contain bank details)
+uploads/

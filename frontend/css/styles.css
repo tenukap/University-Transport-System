@@ -752,3 +752,124 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 13px;
   margin: 12px 0 0;
 }
+
+/* ==========================================================================
+   Invoices page
+   ========================================================================== */
+
+/* Invoice status badges */
+.badge--inv-paid    { background-color: var(--primary);   color: #fff; }
+.badge--inv-pending { background-color: var(--muted);     color: var(--text-primary); }
+.badge--inv-overdue { background-color: var(--secondary); color: #fff; }
+
+/* Full-width scrollable table card */
+.invoice-table-wrap {
+  background-color: var(--surface);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
+  overflow-x: auto;
+}
+
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 700px;
+}
+
+.invoice-table th {
+  text-align: left;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--muted);
+  white-space: nowrap;
+}
+
+.invoice-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(166,169,208,.3);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.invoice-table tbody tr:last-child td { border-bottom: none; }
+
+/* Highlight overdue rows with a faint red tint */
+.invoice-table tr.row--overdue td { background-color: rgba(180,98,88,.06); }
+
+.invoice-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn--action {
+  background: none;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.btn--action:disabled { opacity: .5; cursor: not-allowed; }
+.btn--action:not(:disabled):hover { background-color: var(--primary); color: #fff; }
+
+.btn--action-ghost {
+  background: none;
+  border: 1px solid var(--muted);
+  color: var(--text-muted);
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.btn--action-ghost:hover { border-color: var(--text-muted); color: var(--text-primary); }
+
+/* Pay modal form fields */
+.modal-field { margin-top: 14px; }
+.modal-field label {
+  display: block;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 6px;
+}
+.modal-field .field-input { width: 100%; }
+
+/* History modal payment rows */
+.history-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(166,169,208,.3);
+  font-size: 13px;
+}
+.history-row:last-child { border-bottom: none; }
+.history-row__top { display: flex; align-items: center; justify-content: space-between; }
+.history-row__meta { color: var(--text-muted); font-size: 12px; }
+.history-row__reason {
+  color: var(--secondary);
+  font-size: 12px;
+  background-color: rgba(180,98,88,.08);
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-top: 2px;
+}
+.notice--invoice-success {
+  color: var(--primary);
+  background-color: var(--info-bg);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}

@@ -33,4 +33,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findChargeableByUserAndMonth(@Param("userId") Long userId,
                                                @Param("firstDay") LocalDate firstDay,
                                                @Param("nextMonth") LocalDate nextMonth);
+
+    /** All non-CANCELLED bookings for a student — used by invoice sync to find all billing months. */
+    List<Booking> findByUser_UserIdAndStatusNot(Long userId, String status);
 }

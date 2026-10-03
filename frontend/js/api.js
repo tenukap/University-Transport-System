@@ -99,3 +99,37 @@ const updateStudent = (id, data) => request(`/students/${id}`, { method: 'PUT', 
 
 // PUT /users/{id}  body: { fullName, phone }  (student self-service)
 const updateUser = (id, data) => request(`/users/${id}`, { method: 'PUT', body: data });
+
+// POST multipart/form-data — does NOT set Content-Type so the browser adds the boundary automatically.
+// Same 401-redirect and error-surface behaviour as request().
+async function requestFormData(path, formData) {
+  const token = getToken();
+  const headers = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE}${path}`, { method: 'POST', headers, body: formData });
+
+  if (res.status === 401) {
+    localStorage.clear();
+    window.location.replace('login.html');
+    throw new Error('Your session has expired. Please log in again.');
+  }
+
+  const text = await res.text();
+  if (!res.ok) {
+    let msg = text;
+    try {
+      const j = text ? JSON.parse(text) : null;
+      if (j && (j.message || j.error)) msg = j.message || j.error;
+    } catch (_) { /* plain text — use as-is */ }
+    throw new Error(msg || `Request failed (${res.status})`);
+  }
+  return text ? JSON.parse(text) : null;
+}
+
+// GET /student/invoices  (authenticated student — returns all their invoices with embedded payments)
+const getMyInvoices = () => request('/student/invoices');
+
+// POST /student/invoices/{id}/payments  multipart: amount + slip file
+const submitSlip = (invoiceId, formData) =>
+  requestFormData(`/student/invoices/${invoiceId}/payments`, formData);

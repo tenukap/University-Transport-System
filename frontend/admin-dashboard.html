@@ -115,6 +115,7 @@
       <button class="nav-link" data-tab="buses">🚍 <span>Buses</span></button>
       <button class="nav-link" data-tab="bookings">🎫 <span>Bookings</span></button>
       <button class="nav-link" data-tab="reports">📈 <span>Reports</span></button>
+      <button class="nav-link" data-tab="finance">💰 <span>Finance</span></button>
     </nav>
     <div class="sidebar__foot">
       <div class="sidebar__user-name" id="side-name">—</div>
@@ -207,6 +208,40 @@
         <table>
           <thead><tr><th colspan="4" class="state-msg" style="text-align:left;color:var(--muted);">Individual booking rows are on the Bookings tab.</th></tr></thead>
           <tbody id="report-body"><tr><td colspan="4" class="state-msg">Run a report to see summary.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+    <!-- Finance: read-only overview of invoices and student payments -->
+    <section class="tab-panel" id="panel-finance">
+      <div class="panel-head">
+        <div><h2>Finance Overview</h2><p>Read-only view. Approve or reject slip submissions in the Finance Officer dashboard.</p></div>
+      </div>
+
+      <!-- Invoices sub-table -->
+      <h3 style="font:700 15px/1 'Montserrat',sans-serif;color:var(--text);margin:0 0 12px;">Invoices</h3>
+      <div id="admin-inv-err"></div>
+      <div class="table-wrap" style="margin-bottom:28px;">
+        <table>
+          <thead><tr>
+            <th>Student</th><th>Period</th><th>Due</th>
+            <th style="text-align:right">Total</th><th style="text-align:right">Paid</th>
+            <th style="text-align:right">Balance</th><th>Status</th>
+          </tr></thead>
+          <tbody id="admin-inv-body"><tr><td colspan="7" class="state-msg">Loading…</td></tr></tbody>
+        </table>
+      </div>
+
+      <!-- Payments sub-table -->
+      <h3 style="font:700 15px/1 'Montserrat',sans-serif;color:var(--text);margin:0 0 12px;">Payments</h3>
+      <div id="admin-pay-err"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Student</th><th>Invoice</th>
+            <th style="text-align:right">Amount</th><th>Date</th>
+            <th>Status</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="admin-pay-body"><tr><td colspan="6" class="state-msg">Loading…</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -317,7 +352,7 @@
     }
 
     // ---- Tabs ----
-    const TITLES = { dashboard: 'Dashboard', users: 'Users', trips: 'Trips', buses: 'Buses', bookings: 'Bookings', reports: 'Reports' };
+    const TITLES = { dashboard: 'Dashboard', users: 'Users', trips: 'Trips', buses: 'Buses', bookings: 'Bookings', reports: 'Reports', finance: 'Finance Overview' };
     const loaded = {};
     function setupTabs() {
       document.querySelectorAll('.nav-link').forEach((btn) => {
@@ -335,6 +370,7 @@
       else if (tab === 'trips')  loadTrips();
       else if (tab === 'buses')  loadBuses();
       else if (tab === 'bookings') loadBookings();
+      else if (tab === 'finance')  loadAdminFinance();
     }
 
     // ---- Dashboard metrics ----
@@ -801,6 +837,120 @@
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
     function show(el, msg) { el.textContent = msg; el.classList.add('show'); }
     function hide(el) { el.textContent = ''; el.classList.remove('show'); }
+
+    // ── Finance read-only tab ─────────────────────────────────────────────
+
+    // Local helpers for the finance section (keep them scoped to avoid naming conflicts).
+    const _fi = {
+      esc: (s) => s == null ? '' : String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'),
+      fmt: (n) => n == null ? '—' : Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      months: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+      period: (m, y) => `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m-1]} ${y}`,
+      invBadge: (s) => {
+        const cls = s === 'PAID' ? 'badge--active' : s === 'OVERDUE' ? 'badge--other' : 'badge--warn';
+        return `<span class="badge ${cls}">${s}</span>`;
+      },
+      /** Human-readable payment status considering whether a bank slip was attached. */
+      payText: (p) => {
+        const s = (p.status || '').toUpperCase();
+        if (s === 'PENDING') return 'Pending review';
+        if (s === 'PAID')    return p.hasSlip ? 'Approved' : 'Paid';
+        if (s === 'FAILED')  return p.hasSlip ? 'Rejected'  : 'Failed';
+        return s;
+      },
+      payBadge: (p) => {
+        const text = _fi.payText(p);
+        const s    = (p.status || '').toUpperCase();
+        const cls  = s === 'PENDING' ? 'badge--warn' : s === 'PAID' ? 'badge--active' : 'badge--other';
+        return `<span class="badge ${cls}">${_fi.esc(text)}</span>`;
+      },
+    };
+
+    async function loadAdminFinance() {
+      loadAdminInvoices();
+      loadAdminPayments();
+    }
+
+    async function loadAdminInvoices() {
+      const tbody = document.getElementById('admin-inv-body');
+      const errEl = document.getElementById('admin-inv-err');
+      errEl.innerHTML = '';
+      tbody.innerHTML = '<tr><td colspan="7" class="state-msg">Loading…</td></tr>';
+      try {
+        const list = await apiFetch('/finance/invoices');
+        if (!list.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="state-msg">No invoices yet.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = list.map(inv => `
+          <tr>
+            <td>${_fi.esc(inv.studentName || '—')}<br><small style="color:var(--muted);font-size:12px">${_fi.esc(inv.studentIndex || '')}</small></td>
+            <td>${_fi.esc(_fi.period(inv.billingMonth, inv.billingYear))}</td>
+            <td>${_fi.esc(inv.dueDate || '—')}</td>
+            <td style="text-align:right">LKR ${_fi.fmt(inv.totalAmount)}</td>
+            <td style="text-align:right">LKR ${_fi.fmt(inv.amountPaid)}</td>
+            <td style="text-align:right">LKR ${_fi.fmt(inv.balance)}</td>
+            <td>${_fi.invBadge(inv.status)}</td>
+          </tr>`).join('');
+      } catch (e) {
+        errEl.innerHTML = `<div class="modal__error show" style="margin-bottom:12px;">${_fi.esc(e.message)}</div>`;
+        tbody.innerHTML = '';
+      }
+    }
+
+    async function loadAdminPayments() {
+      const tbody = document.getElementById('admin-pay-body');
+      const errEl = document.getElementById('admin-pay-err');
+      errEl.innerHTML = '';
+      tbody.innerHTML = '<tr><td colspan="6" class="state-msg">Loading…</td></tr>';
+      try {
+        const list = await apiFetch('/finance/payments');
+        if (!list.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="state-msg">No payments yet.</td></tr>';
+          return;
+        }
+        // Sort: pending slip reviews first, then newest
+        const sorted = [...list].sort((a, b) => {
+          const ap = a.status === 'PENDING' && a.hasSlip ? 0 : 1;
+          const bp = b.status === 'PENDING' && b.hasSlip ? 0 : 1;
+          if (ap !== bp) return ap - bp;
+          return b.id - a.id;
+        });
+        tbody.innerHTML = sorted.map(p => {
+          const viewSlipBtn = p.hasSlip
+            ? `<button class="link-btn" onclick="viewAdminSlip(${p.id})">View slip</button>` : '—';
+          return `
+            <tr>
+              <td>${_fi.esc(p.studentName || '—')}</td>
+              <td>${_fi.esc(p.invoiceLabel || '—')}</td>
+              <td style="text-align:right">LKR ${_fi.fmt(p.amount)}</td>
+              <td>${_fi.esc(p.paymentDate || '—')}</td>
+              <td>${_fi.payBadge(p)}</td>
+              <td class="row-actions">${viewSlipBtn}</td>
+            </tr>`;
+        }).join('');
+      } catch (e) {
+        errEl.innerHTML = `<div class="modal__error show" style="margin-bottom:12px;">${_fi.esc(e.message)}</div>`;
+        tbody.innerHTML = '';
+      }
+    }
+
+    async function viewAdminSlip(paymentId) {
+      // Fetch with Bearer token — cannot send auth header via a plain <a href>
+      const token = getToken();
+      const headers = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      try {
+        const res = await fetch(`${API_BASE}/slips/${paymentId}`, { headers });
+        if (!res.ok) throw new Error(`Could not load slip (${res.status})`);
+        const blob = await res.blob();
+        const url  = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60000); // Revoke after 60 s to free memory
+      } catch (e) {
+        alert('Slip error: ' + e.message);
+      }
+    }
   </script>
 </body>
 </html>

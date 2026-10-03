@@ -47,6 +47,10 @@ public class SecurityConfig {
                                 .hasAnyRole("STUDENT", "ADMIN")
                         .requestMatchers("/api/emergency-reports/**", "/api/crash-incidents/**", "/api/trip-statuses/**", "/api/location-updates/**").permitAll()
                         .requestMatchers("/api/transport/**").hasAnyRole("TRANSPORT_OFFICER", "ADMIN")
+                        .requestMatchers("/api/student/**").hasRole("STUDENT")
+                        // Slip download: authenticated; role + ownership check is inside SlipController
+                        .requestMatchers("/api/slips/**").authenticated()
+                        .requestMatchers("/api/finance/**").hasAnyRole("FINANCE_OFFICER", "ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

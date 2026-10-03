@@ -139,10 +139,11 @@ function buildChargesShell() {
 
   chargesRoot.innerHTML = `
     <div class="card">
-      <div style="margin-bottom:16px;">
+      <div style="margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
         <h3 style="font:700 17px/1 'Montserrat',sans-serif;color:var(--text-primary);margin:0;">
           Monthly Travel Charges
         </h3>
+        <a href="invoices.html" style="font-size:13px;color:var(--primary);font-weight:600;text-decoration:none;">View invoices →</a>
       </div>
       <div class="charges-selectors">
         <div>
