@@ -46,4 +46,13 @@ public interface BusTripRepository extends JpaRepository<BusTrip, Integer> {
 
     // Used for driver-conflict detection: all non-cancelled trips for this driver on a given date.
     List<BusTrip> findByTripDateAndDriverUserIdAndTripStatusNot(LocalDate tripDate, Integer driverUserId, String tripStatus);
+
+    // All upcoming non-cancelled trips for a given bus (used for status-change and capacity guards).
+    List<BusTrip> findByBus_BusIdAndTripDateGreaterThanEqualAndTripStatusNot(Long busId, LocalDate today, String status);
+
+    // True if the bus has ever been used on any trip (used to block hard-delete).
+    boolean existsByBus_BusId(Long busId);
+
+    // Count future non-cancelled trips across all buses — used for the Dashboard "Upcoming Trips" metric.
+    long countByTripStatusNotAndTripDateGreaterThanEqual(String status, LocalDate today);
 }

@@ -64,10 +64,13 @@
     .badge { border-radius: 9999px; padding: 3px 10px; font-size: 11px; font-weight: 700; }
     .badge--active { background: rgba(16,185,129,.12); color: var(--ok); }
     .badge--other { background: rgba(180,70,60,.12); color: var(--danger); }
-    .row-actions { display: flex; gap: 8px; }
-    .link-btn { background: none; border: none; color: var(--primary); font-weight: 600; cursor: pointer; font-size: 13px; }
+    .badge--warn  { background: rgba(245,158,11,.12);  color: var(--warn); }
+    .row-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .link-btn { background: none; border: none; color: var(--primary); font-weight: 600; cursor: pointer; font-size: 13px; white-space: nowrap; }
     .link-btn--danger { color: var(--danger); }
     .state-msg { padding: 24px; color: var(--muted); text-align: center; }
+    /* Actions column needs a guaranteed minimum so buttons never get clipped at 1280px */
+    .actions-col { min-width: 160px; }
 
     /* Filters */
     .filters { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; background: var(--surface); border-radius: 10px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.08); margin-bottom: 20px; }
@@ -109,6 +112,7 @@
       <button class="nav-link is-active" data-tab="dashboard">📊 <span>Dashboard</span></button>
       <button class="nav-link" data-tab="users">👥 <span>Users</span></button>
       <button class="nav-link" data-tab="trips">🚌 <span>Trips</span></button>
+      <button class="nav-link" data-tab="buses">🚍 <span>Buses</span></button>
       <button class="nav-link" data-tab="bookings">🎫 <span>Bookings</span></button>
       <button class="nav-link" data-tab="reports">📈 <span>Reports</span></button>
     </nav>
@@ -147,19 +151,34 @@
       </label>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th class="actions-col">Actions</th></tr></thead>
           <tbody id="users-body"><tr><td colspan="5" class="state-msg">Loading users…</td></tr></tbody>
         </table>
       </div>
     </section>
 
-    <!-- Trips -->
+    <!-- Trips (read-only; calls GET /api/transport/trips which admin can access) -->
     <section class="tab-panel" id="panel-trips">
-      <div class="panel-head"><div><h2>Trips</h2><p>All scheduled bus trips.</p></div></div>
+      <div class="panel-head"><div><h2>Trips</h2><p>All bus trips — newest first.</p></div></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Trip ID</th><th>Route</th><th>Date</th><th>Start</th><th>ETA</th></tr></thead>
-          <tbody id="trips-body"><tr><td colspan="5" class="state-msg">Loading trips…</td></tr></tbody>
+          <thead><tr><th>ID</th><th>Date</th><th>Start</th><th>ETA</th><th>Route</th><th>Bus</th><th>Driver</th><th>Status</th></tr></thead>
+          <tbody id="trips-body"><tr><td colspan="8" class="state-msg">Loading trips…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Buses -->
+    <section class="tab-panel" id="panel-buses">
+      <div class="panel-head">
+        <div><h2>Bus Fleet</h2><p>Add, edit or retire buses.</p></div>
+        <button class="btn btn--primary" id="add-bus-btn">+ Add Bus</button>
+      </div>
+      <div class="modal__error" id="buses-err" style="margin-bottom:14px;"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Registration</th><th>Capacity</th><th>Status</th><th class="actions-col">Actions</th></tr></thead>
+          <tbody id="buses-body"><tr><td colspan="4" class="state-msg">Loading buses…</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -169,31 +188,25 @@
       <div class="panel-head"><div><h2>Bookings</h2><p>All bookings across the system.</p></div></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>ID</th><th>User ID</th><th>Trip ID</th><th>Seat</th><th>Date Booked</th><th>Status</th><th>Fare</th></tr></thead>
+          <thead><tr><th>ID</th><th>Student</th><th>Trip</th><th>Seat</th><th>Date Booked</th><th>Status</th><th>Fare</th></tr></thead>
           <tbody id="bookings-body"><tr><td colspan="7" class="state-msg">Loading bookings…</td></tr></tbody>
         </table>
       </div>
     </section>
 
-    <!-- Reports -->
+    <!-- Reports (date range only; route/group filters removed — backend does not support them) -->
     <section class="tab-panel" id="panel-reports">
-      <div class="panel-head"><div><h2>Financial Report</h2><p>Revenue by date range, route, and student group.</p></div></div>
+      <div class="panel-head"><div><h2>Financial Report</h2><p>Confirmed revenue and booking counts, optionally filtered by booking date range.</p></div></div>
       <div class="filters">
         <div class="field"><label for="rp-start">Start date</label><input type="date" id="rp-start" /></div>
         <div class="field"><label for="rp-end">End date</label><input type="date" id="rp-end" /></div>
-        <div class="field"><label for="rp-route">Route</label>
-          <select id="rp-route"><option>All Routes</option><option>Route A</option><option>Route B</option></select>
-        </div>
-        <div class="field"><label for="rp-group">Student group</label>
-          <select id="rp-group"><option>All Groups</option><option>Undergraduates</option><option>Postgraduates</option></select>
-        </div>
         <button class="btn btn--primary" id="run-report-btn">Generate</button>
       </div>
       <div class="report-summary" id="report-summary"></div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>ID</th><th>User ID</th><th>Trip ID</th><th>Seat</th><th>Date Booked</th><th>Status</th><th>Fare</th></tr></thead>
-          <tbody id="report-body"><tr><td colspan="7" class="state-msg">Run a report to see results.</td></tr></tbody>
+          <thead><tr><th colspan="4" class="state-msg" style="text-align:left;color:var(--muted);">Individual booking rows are on the Bookings tab.</th></tr></thead>
+          <tbody id="report-body"><tr><td colspan="4" class="state-msg">Run a report to see summary.</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -228,6 +241,28 @@
         <button type="submit" class="btn btn--primary" id="uf-submit">Save</button>
       </div>
     </form>
+  </div>
+
+  <!-- Bus Add / Edit modal -->
+  <div class="modal-overlay" id="bus-modal">
+    <div class="modal">
+      <h3 id="bm-title">Add Bus</h3>
+      <div class="modal__error" id="bm-err"></div>
+      <input type="hidden" id="bm-id" />
+      <div class="field"><label for="bm-reg">Registration Number * (max 50)</label><input type="text" id="bm-reg" maxlength="50" placeholder="e.g. NC-5678" /></div>
+      <div class="field"><label for="bm-cap">Capacity * (1 – 100)</label><input type="number" id="bm-cap" min="1" max="100" placeholder="e.g. 40" /></div>
+      <div class="field" id="bm-status-field" style="display:none;"><label for="bm-status">Status</label>
+        <select id="bm-status">
+          <option value="Available">Available</option>
+          <option value="Maintenance">Maintenance</option>
+          <option value="Out of Service">Out of Service</option>
+        </select>
+      </div>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" id="bm-cancel">Cancel</button>
+        <button type="button" class="btn btn--primary" id="bm-save">Save</button>
+      </div>
+    </div>
   </div>
 
   <!-- Delete confirm modal -->
@@ -282,7 +317,7 @@
     }
 
     // ---- Tabs ----
-    const TITLES = { dashboard: 'Dashboard', users: 'Users', trips: 'Trips', bookings: 'Bookings', reports: 'Reports' };
+    const TITLES = { dashboard: 'Dashboard', users: 'Users', trips: 'Trips', buses: 'Buses', bookings: 'Bookings', reports: 'Reports' };
     const loaded = {};
     function setupTabs() {
       document.querySelectorAll('.nav-link').forEach((btn) => {
@@ -296,8 +331,9 @@
       // Lazy-load each tab's data once.
       if (loaded[tab]) return;
       loaded[tab] = true;
-      if (tab === 'users') loadUsers();
-      else if (tab === 'trips') loadTrips();
+      if (tab === 'users')     loadUsers();
+      else if (tab === 'trips')  loadTrips();
+      else if (tab === 'buses')  loadBuses();
       else if (tab === 'bookings') loadBookings();
     }
 
@@ -394,21 +430,31 @@
       }
     }
 
-    // ---- Trips ----
+    // ---- Trips (read-only) ----
     async function loadTrips() {
       const body = document.getElementById('trips-body');
       try {
-        const trips = await apiFetch('/trips');
+        // Admin has access to /api/transport/trips which returns TransportTripDTO with bus + driver info.
+        const trips = await apiFetch('/transport/trips');
         const list = Array.isArray(trips) ? trips : [];
-        if (!list.length) { body.innerHTML = '<tr><td colspan="5" class="state-msg">No trips found.</td></tr>'; return; }
+        if (!list.length) { body.innerHTML = '<tr><td colspan="8" class="state-msg">No trips found.</td></tr>'; return; }
+        // Sort newest date first so the most recent trips appear at the top.
+        list.sort((a, b) => (b.tripDate || '').localeCompare(a.tripDate || '') || (b.startTime || '').localeCompare(a.startTime || ''));
+        const statusBadge = (s) => {
+          const cls = s === 'Completed' ? 'badge--active' : s === 'Cancelled' ? 'badge--other' : 'badge--warn';
+          return `<span class="badge ${cls}">${esc(s || '—')}</span>`;
+        };
         body.innerHTML = list.map((t) => `<tr>
           <td>${t.tripId ?? '—'}</td>
-          <td>${esc(t.pickupLocationName || '')} → ${esc(t.dropLocationName || '')}</td>
           <td>${esc(t.tripDate || '—')}</td>
-          <td>${esc(t.startTime || '—')}</td>
-          <td>${esc(t.eta || '—')}</td></tr>`).join('');
+          <td>${esc(t.startTime ? String(t.startTime).substring(0,5) : '—')}</td>
+          <td>${esc(t.eta ? String(t.eta).substring(0,5) : '—')}</td>
+          <td>${esc(t.pickupLocationName || '—')} → ${esc(t.dropLocationName || '—')}</td>
+          <td>${esc(t.busLabel || '—')}</td>
+          <td>${esc(t.driverName || '—')}</td>
+          <td>${statusBadge(t.tripStatus)}</td></tr>`).join('');
       } catch (err) {
-        body.innerHTML = `<tr><td colspan="5" class="state-msg">${err.message}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="8" class="state-msg">${err.message}</td></tr>`;
       }
     }
 
@@ -426,39 +472,175 @@
     }
     function bookingRow(b) {
       const st = b.status || '';
-      const badge = /confirm|active/i.test(st) ? 'badge--active' : 'badge--other';
+      const badge = /confirm/i.test(st) ? 'badge--active' : st === 'CANCELLED' ? 'badge--other' : 'badge--warn';
+      // Build a human-readable trip label from the fields the DTO now provides.
+      const pickup  = b.pickupName  || '?';
+      const dropoff = b.dropoffName || '?';
+      const tripDate  = b.tripDate  ? String(b.tripDate).substring(5).replace('-',' ') : '';
+      const tripTime  = b.startTime ? String(b.startTime).substring(0,5) : '';
+      const tripLabel = `${pickup} → ${dropoff}${tripDate ? ' ' + tripDate : ''}${tripTime ? ' ' + tripTime : ''}`;
+      // studentName includes deactivated students' names — history must still be visible.
+      const studentCell = b.studentName
+          ? `<td title="User ID: ${b.userId}">${esc(b.studentName)}</td>`
+          : `<td>${b.userId ?? '—'}</td>`;
       return `<tr>
-        <td>${b.id ?? '—'}</td><td>${b.userId ?? '—'}</td><td>${b.tripId ?? '—'}</td>
-        <td>${b.seatNumber ?? '—'}</td><td>${esc(b.createdAt || '—')}</td>
+        <td>${b.id ?? '—'}</td>${studentCell}
+        <td title="Trip #${b.tripId}">${esc(tripLabel)}</td>
+        <td>${b.seatNumber ?? '—'}</td>
+        <td>${esc((b.createdAt || '').toString().substring(0,10))}</td>
         <td><span class="badge ${badge}">${esc(st || '—')}</span></td>
         <td>${b.fareAmount != null ? 'Rs. ' + b.fareAmount : '—'}</td></tr>`;
     }
 
     // ---- Reports ----
+    // Source: GET /api/reports/financial?startDate=&endDate= (BookingService range query).
+    // totalBookings: all bookings in range (any status). grossRevenue: non-CANCELLED fares only.
+    // pendingBookings / cancelledBookings: counts by status. Route and group filters were removed
+    // because the backend does not support them (they were UI-only placeholders).
     document.getElementById('run-report-btn').addEventListener('click', runReport);
     async function runReport() {
       const start = document.getElementById('rp-start').value;
-      const end = document.getElementById('rp-end').value;
+      const end   = document.getElementById('rp-end').value;
       const params = new URLSearchParams();
       if (start) params.set('startDate', start);
-      if (end) params.set('endDate', end);
+      if (end)   params.set('endDate', end);
 
       const summary = document.getElementById('report-summary');
-      const body = document.getElementById('report-body');
+      const body    = document.getElementById('report-body');
       summary.innerHTML = '';
-      body.innerHTML = '<tr><td colspan="7" class="state-msg">Generating…</td></tr>';
+      body.innerHTML = '<tr><td colspan="4" class="state-msg">Generating…</td></tr>';
       try {
         const r = await apiFetch(`/reports/financial?${params.toString()}`);
         summary.innerHTML = `
           <div class="metric"><div class="metric__label">Total Bookings</div><div class="metric__value">${r.totalBookings ?? 0}</div></div>
-          <div class="metric"><div class="metric__label">Gross Revenue</div><div class="metric__value">Rs. ${r.grossRevenue ?? 0}</div></div>
+          <div class="metric"><div class="metric__label">Confirmed Revenue (LKR)</div><div class="metric__value">${r.grossRevenue ?? 0}</div></div>
           <div class="metric"><div class="metric__label">Pending</div><div class="metric__value">${r.pendingBookings ?? 0}</div></div>
           <div class="metric"><div class="metric__label">Cancelled</div><div class="metric__value">${r.cancelledBookings ?? 0}</div></div>`;
-        body.innerHTML = '<tr><td colspan="7" class="state-msg">Summary shown above. See the Bookings tab for individual rows.</td></tr>';
+        body.innerHTML = '<tr><td colspan="4" class="state-msg">See the Bookings tab for individual rows.</td></tr>';
       } catch (err) {
-        body.innerHTML = `<tr><td colspan="7" class="state-msg">${err.message}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="4" class="state-msg">${err.message}</td></tr>`;
       }
     }
+
+    // ---- Buses ----
+    let busesCache = [];
+    let busEditId = null; // null = create mode
+
+    async function loadBuses() {
+      const bodyEl = document.getElementById('buses-body');
+      bodyEl.innerHTML = '<tr><td colspan="4" class="state-msg">Loading buses…</td></tr>';
+      hide(document.getElementById('buses-err'));
+      try {
+        const buses = await apiFetch('/buses/all');
+        busesCache = Array.isArray(buses) ? buses : [];
+        renderBuses();
+      } catch (err) {
+        bodyEl.innerHTML = `<tr><td colspan="4" class="state-msg">${err.message}</td></tr>`;
+      }
+    }
+
+    function renderBuses() {
+      const bodyEl = document.getElementById('buses-body');
+      if (!busesCache.length) {
+        bodyEl.innerHTML = '<tr><td colspan="4" class="state-msg">No buses yet. Click "+ Add Bus" to deploy one.</td></tr>';
+        return;
+      }
+      bodyEl.innerHTML = busesCache.map(b => {
+        const st = b.status || 'Available';
+        const cls = st === 'Available' ? 'badge--active' : st === 'Maintenance' ? 'badge--warn' : 'badge--other';
+        return `<tr>
+          <td>${esc(b.registrationNumber)}</td>
+          <td>${b.passengerCapacity ?? '—'}</td>
+          <td><span class="badge ${cls}">${esc(st)}</span></td>
+          <td class="actions-col"><div class="row-actions">
+            <button class="link-btn" data-edit-bus="${b.busId}">Edit</button>
+            <button class="link-btn" data-status-bus="${b.busId}" data-current="${esc(st)}">Status</button>
+            <button class="link-btn link-btn--danger" data-del-bus="${b.busId}">Delete</button>
+          </div></td></tr>`;
+      }).join('');
+      bodyEl.querySelectorAll('[data-edit-bus]').forEach(btn =>
+        btn.addEventListener('click', () => openEditBus(btn.dataset.editBus)));
+      bodyEl.querySelectorAll('[data-status-bus]').forEach(btn =>
+        btn.addEventListener('click', () => openStatusBus(btn.dataset.statusBus, btn.dataset.current)));
+      bodyEl.querySelectorAll('[data-del-bus]').forEach(btn =>
+        btn.addEventListener('click', () => confirmDeleteBus(btn.dataset.delBus)));
+    }
+
+    function openAddBus() {
+      busEditId = null;
+      document.getElementById('bm-title').textContent = 'Add Bus';
+      document.getElementById('bm-id').value = '';
+      document.getElementById('bm-reg').value = '';
+      document.getElementById('bm-cap').value = '';
+      document.getElementById('bm-status-field').style.display = 'none';
+      hide(document.getElementById('bm-err'));
+      document.getElementById('bus-modal').classList.add('show');
+    }
+
+    function openEditBus(id) {
+      const b = busesCache.find(x => String(x.busId) === String(id));
+      if (!b) return;
+      busEditId = id;
+      document.getElementById('bm-title').textContent = 'Edit Bus';
+      document.getElementById('bm-id').value = id;
+      document.getElementById('bm-reg').value = b.registrationNumber || '';
+      document.getElementById('bm-cap').value = b.passengerCapacity ?? '';
+      document.getElementById('bm-status-field').style.display = 'none'; // status has its own flow
+      hide(document.getElementById('bm-err'));
+      document.getElementById('bus-modal').classList.add('show');
+    }
+
+    async function saveBus() {
+      const errEl = document.getElementById('bm-err');
+      hide(errEl);
+      const reg = document.getElementById('bm-reg').value.trim();
+      const cap = parseInt(document.getElementById('bm-cap').value, 10);
+      if (!reg) { show(errEl, 'Registration number is required.'); return; }
+      if (!cap || cap < 1 || cap > 100) { show(errEl, 'Capacity must be between 1 and 100.'); return; }
+      const body = { registrationNumber: reg, passengerCapacity: cap };
+      try {
+        if (busEditId) {
+          await apiFetch(`/buses/${busEditId}`, { method: 'PUT', body: JSON.stringify(body) });
+        } else {
+          await apiFetch('/buses/add', { method: 'POST', body: JSON.stringify(body) });
+        }
+        document.getElementById('bus-modal').classList.remove('show');
+        loaded.buses = false; loadBuses();
+      } catch (err) { show(errEl, err.message); }
+    }
+
+    /** Prompts the officer to choose a new status then PATCHes it. */
+    async function openStatusBus(id, currentStatus) {
+      const b = busesCache.find(x => String(x.busId) === String(id));
+      const reg = b ? b.registrationNumber : '#' + id;
+      const choice = prompt(`Change status for ${reg}\n\nEnter: Available | Maintenance | Out of Service\n(Current: ${currentStatus})`);
+      if (!choice) return;
+      const busErrEl = document.getElementById('buses-err');
+      hide(busErrEl);
+      try {
+        await apiFetch(`/buses/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status: choice.trim() }) });
+        loaded.buses = false; loadBuses();
+      } catch (err) {
+        show(busErrEl, err.message);
+      }
+    }
+
+    async function confirmDeleteBus(id) {
+      const b = busesCache.find(x => String(x.busId) === String(id));
+      const reg = b ? b.registrationNumber : '#' + id;
+      if (!confirm(`Permanently delete bus ${reg}?\n\nThis is only allowed if the bus has never been used on any trip.`)) return;
+      const busErrEl = document.getElementById('buses-err');
+      hide(busErrEl);
+      try {
+        await apiFetch(`/buses/delete/${id}`, { method: 'DELETE' });
+        loaded.buses = false; loadBuses();
+      } catch (err) { show(busErrEl, err.message); }
+    }
+
+    document.getElementById('add-bus-btn').addEventListener('click', openAddBus);
+    document.getElementById('bm-cancel').addEventListener('click', () => document.getElementById('bus-modal').classList.remove('show'));
+    document.getElementById('bm-save').addEventListener('click', saveBus);
+    document.getElementById('bus-modal').addEventListener('click', (e) => { if (e.target === document.getElementById('bus-modal')) document.getElementById('bus-modal').classList.remove('show'); });
 
     // ---- User modal (create + edit) ----
     const userModal = document.getElementById('user-modal');

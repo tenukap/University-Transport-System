@@ -14,4 +14,8 @@ import java.util.Optional;
 @Repository
 public interface BusRepository extends JpaRepository<Bus, Long> {
     List<Bus> findByStatus(String status);
+    // Used to reject duplicate registrations at add time.
+    boolean existsByRegistrationNumber(String registrationNumber);
+    // Used to reject duplicate registrations at edit time (allows the bus to keep its own number).
+    boolean existsByRegistrationNumberAndBusIdNot(String registrationNumber, Long busId);
 }

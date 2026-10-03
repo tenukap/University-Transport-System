@@ -31,4 +31,6 @@ public class BookingResponseDTO {
     private LocalTime startTime;
     private String pickupName;
     private String dropoffName;
+    // Student display name — looked up at mapping time; null for deactivated or missing users.
+    private String studentName;
 }

@@ -301,6 +301,8 @@ public class BookingService {
                     ? booking.getPickupLocation().getLocationName() : null)
                 .dropoffName(booking.getDropoffLocation() != null
                     ? booking.getDropoffLocation().getLocationName() : null)
+                // User is @ManyToOne (EAGER), so getFullName() is always safe here.
+                .studentName(booking.getUser() != null ? booking.getUser().getFullName() : null)
                 .build();
     }
 }

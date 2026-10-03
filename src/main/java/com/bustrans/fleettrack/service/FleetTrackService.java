@@ -26,8 +26,10 @@ public class FleetTrackService {
     public Map<String, Object> getDashboardSummary() {
         Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("totalUsers", userRepository.count());
-        summary.put("activeBookings", bookingRepository.countByStatus("PENDING"));
-        summary.put("upcomingTrips", busTripRepository.findByTripStatus("Scheduled").size());
+        // Count CONFIRMED (not PENDING) — a booking is confirmed when its seat is reserved.
+        summary.put("activeBookings", bookingRepository.countByStatus("CONFIRMED"));
+        // Count non-cancelled trips from today onwards; findByTripStatus("Scheduled") counted ALL trips including past ones.
+        summary.put("upcomingTrips", busTripRepository.countByTripStatusNotAndTripDateGreaterThanEqual("Cancelled", LocalDate.now()));
         summary.put("activeUsers", userRepository.countByAccountStatus("Active"));
         return summary;
     }
@@ -47,7 +49,9 @@ public class FleetTrackService {
             bookings = bookingRepository.findAll();
         }
 
+        // Exclude CANCELLED bookings from revenue — their fares were never collected.
         BigDecimal grossRevenue = bookings.stream()
+                .filter(b -> !"CANCELLED".equalsIgnoreCase(b.getStatus()))
                 .map(Booking::getFareAmount)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
