@@ -45,3 +45,25 @@ Existing `POST /api/buses/add` now validates uniqueness and capacity range (1–
 - `frontend/admin-dashboard.html`
 - `frontend/buses.html`
 - `docs/CHANGES.md` (this file)
+
+---
+
+## Prompt 9 — Cleanups: booking date picker, routes removed, deactivated token check
+
+### Part A — booking date picker removed
+The `<input type="date">` on `book.html` was cosmetic (book.js never sent its value to the server) and misled students into thinking they could pick any date. Replaced with a read-only text line that shows the selected trip's actual date and departure time, populated from the trip data already loaded in the dropdown.
+
+### Part B — Routes feature removed
+The BusRoute entity and table have no FK link to trips or bookings, making the Routes tab useless in the transport officer dashboard. Removed the sidebar tab, panel, modal, all JS functions (`loadRoutes`, `openEditRoute`, `deleteRoute`, `saveRoute`), the Overview counter card, and the four route CRUD API endpoints (`POST/GET/PUT/DELETE /api/transport/routes`) from TransportController. Removed the matching service methods from RouteService; `scheduleTrip()` is kept because it is still called by trip creation. The BusRoute entity, BusRouteRepository and DB table are unchanged.
+
+### Part C — deactivated user token check
+JwtAuthenticationFilter previously only validated the JWT signature and did not check whether the account was still active. A one-query-per-request check was added: after parsing the JWT, the filter loads the user row and returns 401 `{"error":"This account has been deactivated"}` if `AccountStatus` is not `Active`, stopping the filter chain before any endpoint logic runs.
+
+### Files changed
+- `frontend/book.html`
+- `frontend/js/book.js`
+- `frontend/transport-officer-dashboard.html`
+- `src/…/controller/TransportController.java`
+- `src/…/service/RouteService.java`
+- `src/…/security/JwtAuthenticationFilter.java`
+- `docs/CHANGES.md` (this file)

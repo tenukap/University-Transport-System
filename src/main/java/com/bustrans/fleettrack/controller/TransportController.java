@@ -36,28 +36,6 @@ public class TransportController {
     @Autowired private DriverRepository driverRepo;
     @Autowired private UserRepository userRepo;
 
-    // --- ROUTE CRUD ---
-
-    @PostMapping("/routes")
-    public BusRoute createRoute(@RequestBody BusRoute route) {
-        return routeService.addRoute(route);
-    }
-
-    @GetMapping("/routes")
-    public List<BusRoute> getRoutes() {
-        return routeService.getAllRoutes();
-    }
-
-    @PutMapping("/routes/{id}")
-    public BusRoute updateRoute(@PathVariable int id, @RequestBody BusRoute route) {
-        return routeService.updateRoute(id, route);
-    }
-
-    @DeleteMapping("/routes/{id}")
-    public void deleteRoute(@PathVariable int id) {
-        routeService.deleteRoute(id);
-    }
-
     // --- BUS AVAILABILITY ---
 
     /** Returns buses whose status is 'Available', as small DTOs (no sensitive fields). */

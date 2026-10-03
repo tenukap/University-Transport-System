@@ -8,20 +8,26 @@ function formatTime(t) {
   return `${String(hour12).padStart(2, '0')}:${String(m).padStart(2, '0')} ${period}`;
 }
 
-function today() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 let trips = [];
 
-const tripSelect = document.getElementById('trip-select');
-const dateInput  = document.getElementById('travel-date');
-const bookBtn    = document.getElementById('book-btn');
-const errorEl    = document.getElementById('book-error');
-const successEl  = document.getElementById('book-success');
-const seatHint   = document.getElementById('seat-hint');
+const tripSelect      = document.getElementById('trip-select');
+const tripDateDisplay = document.getElementById('trip-date-display');
+const bookBtn         = document.getElementById('book-btn');
+const errorEl         = document.getElementById('book-error');
+const successEl       = document.getElementById('book-success');
+const seatHint        = document.getElementById('seat-hint');
 
-dateInput.value = today();
+/** Shows the selected trip's date and departure time; blanks out if nothing is selected. */
+function updateTripDateDisplay() {
+  const selected = trips.find(t => String(t.tripId) === String(tripSelect.value));
+  if (selected && selected.tripDate) {
+    const time = selected.startTime ? formatTime(selected.startTime) : '';
+    tripDateDisplay.textContent =
+      `Date: ${selected.tripDate}${time ? '  •  Departs: ' + time : ''}`;
+  } else {
+    tripDateDisplay.textContent = '';
+  }
+}
 
 // Fetch seat availability for the currently selected trip and update the hint.
 async function updateSeatHint() {
@@ -53,6 +59,7 @@ async function loadTrips() {
     if (!trips.length) {
       tripSelect.innerHTML = '<option>No trips available</option>';
       seatHint.textContent = 'No trips available';
+      tripDateDisplay.textContent = '';
       bookBtn.disabled = true;
       return;
     }
@@ -64,11 +71,13 @@ async function loadTrips() {
         return `<option value="${escapeHtml(t.tripId)}">${pickup} → ${dropoff} • ${time}</option>`;
       })
       .join('');
+    updateTripDateDisplay();
     await updateSeatHint();
   } catch (err) {
     errorEl.textContent = err.message || 'Failed to load trips';
     tripSelect.innerHTML = '<option>Failed to load</option>';
     seatHint.textContent = '';
+    tripDateDisplay.textContent = '';
   }
 }
 
@@ -106,6 +115,9 @@ async function handleBook() {
   }
 }
 
-tripSelect.addEventListener('change', updateSeatHint);
+tripSelect.addEventListener('change', () => {
+  updateTripDateDisplay();
+  updateSeatHint();
+});
 bookBtn.addEventListener('click', handleBook);
 loadTrips();

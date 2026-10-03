@@ -1,5 +1,7 @@
 package com.bustrans.fleettrack.security;
 
+import com.bustrans.fleettrack.entity.User;
+import com.bustrans.fleettrack.repository.UserRepository;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -17,9 +19,11 @@ import java.util.List;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
+    private final UserRepository userRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository) {
         this.jwtService = jwtService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -29,6 +33,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (authorization != null && authorization.startsWith("Bearer ")) {
             try {
                 Claims claims = jwtService.parse(authorization.substring(7));
+                Long userId = Long.parseLong(claims.getSubject());
+
+                // One DB lookup per authenticated request to enforce deactivation in real time.
+                User user = userRepository.findById(userId).orElse(null);
+                if (user != null && !"Active".equalsIgnoreCase(user.getAccountStatus())) {
+                    // Account is deactivated: stop the filter chain and return 401.
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"error\":\"This account has been deactivated\"}");
+                    return;
+                }
+
                 String role = claims.get("role", String.class);
                 var authentication = new UsernamePasswordAuthenticationToken(
                         claims.getSubject(), null, List.of(new SimpleGrantedAuthority("ROLE_" + role)));

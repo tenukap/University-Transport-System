@@ -95,7 +95,6 @@
     </div>
     <nav class="sidebar__nav">
       <button class="nav-link is-active" data-tab="overview">📊 <span>Overview</span></button>
-      <button class="nav-link" data-tab="routes">🗺️ <span>Routes</span></button>
       <button class="nav-link" data-tab="trips">🚌 <span>Trips</span></button>
       <button class="nav-link" data-tab="locations">📍 <span>Locations</span></button>
       <button class="nav-link" data-tab="payments">💳 <span>Payments</span></button>
@@ -118,22 +117,9 @@
     <div class="tab-panel is-active" id="panel-overview">
       <div class="panel-head"><div><h2>Overview</h2><p>System activity summary</p></div></div>
       <div class="metric-grid">
-        <div class="metric"><div class="metric__label">Routes</div><div class="metric__value" id="cnt-routes">—</div></div>
         <div class="metric"><div class="metric__label">Trips</div><div class="metric__value" id="cnt-trips">—</div></div>
         <div class="metric"><div class="metric__label">Locations</div><div class="metric__value" id="cnt-locations">—</div></div>
         <div class="metric"><div class="metric__label">Payments</div><div class="metric__value" id="cnt-payments">—</div></div>
-      </div>
-    </div>
-
-    <!-- Routes -->
-    <div class="tab-panel" id="panel-routes">
-      <div class="panel-head">
-        <div><h2>Routes</h2><p>Manage bus routes</p></div>
-        <button class="btn btn--primary" id="new-route-btn">+ New Route</button>
-      </div>
-      <div class="table-wrap">
-        <table><thead><tr><th>ID</th><th>Route Name</th><th>Start Point</th><th>End Point</th><th>Actions</th></tr></thead>
-        <tbody id="routes-body"><tr><td colspan="5" class="state-msg">Loading…</td></tr></tbody></table>
       </div>
     </div>
 
@@ -179,21 +165,6 @@
     </div>
 
   </main>
-
-  <!-- Route Modal -->
-  <div class="modal-overlay" id="route-modal">
-    <div class="modal">
-      <h3 id="rm-title">New Route</h3>
-      <div class="modal__error" id="rm-err"></div>
-      <div class="field"><label for="rm-name">Route Name *</label><input type="text" id="rm-name" placeholder="e.g. Main Gate — City Center" /></div>
-      <div class="field"><label for="rm-start">Start Point *</label><input type="text" id="rm-start" placeholder="e.g. Main Gate" /></div>
-      <div class="field"><label for="rm-end">End Point *</label><input type="text" id="rm-end" placeholder="e.g. City Center" /></div>
-      <div class="modal__actions">
-        <button class="btn btn--ghost" id="rm-cancel">Cancel</button>
-        <button class="btn btn--primary" id="rm-save">Save Route</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Trip Modal (used for both create and edit) -->
   <div class="modal-overlay" id="trip-modal">
@@ -291,7 +262,7 @@
     }
 
     const TITLES = {
-      overview: 'Overview', routes: 'Routes', trips: 'Trips',
+      overview: 'Overview', trips: 'Trips',
       locations: 'Locations', payments: 'Payments'
     };
     const loaded = {};
@@ -307,8 +278,7 @@
       if (!loaded[tab]) { loaded[tab] = true; lazyLoad(tab); }
     }
     function lazyLoad(tab) {
-      if (tab === 'routes') loadRoutes();
-      else if (tab === 'trips') loadTrips();
+      if (tab === 'trips') loadTrips();
       else if (tab === 'locations') loadLocations();
       else if (tab === 'payments') loadPayments();
     }
@@ -338,62 +308,15 @@
     // ---- Overview ----
     async function loadOverview() {
       try {
-        const [routes, trips, locs, pays] = await Promise.all([
-          apiFetch('/transport/routes'),
+        const [trips, locs, pays] = await Promise.all([
           apiFetch('/transport/trips'),
           apiFetch('/transport/locations'),
           apiFetch('/transport/payments'),
         ]);
-        document.getElementById('cnt-routes').textContent   = Array.isArray(routes) ? routes.length : '—';
-        document.getElementById('cnt-trips').textContent    = Array.isArray(trips)  ? trips.length  : '—';
-        document.getElementById('cnt-locations').textContent = Array.isArray(locs)  ? locs.length   : '—';
-        document.getElementById('cnt-payments').textContent = Array.isArray(pays)   ? pays.length   : '—';
+        document.getElementById('cnt-trips').textContent    = Array.isArray(trips) ? trips.length : '—';
+        document.getElementById('cnt-locations').textContent = Array.isArray(locs) ? locs.length  : '—';
+        document.getElementById('cnt-payments').textContent = Array.isArray(pays)  ? pays.length  : '—';
       } catch (err) { /* overview is best-effort */ }
-    }
-
-    // ---- Routes ----
-    let routeEditId = null;
-    async function loadRoutes() {
-      const body = document.getElementById('routes-body');
-      body.innerHTML = '<tr><td colspan="5" class="state-msg">Loading…</td></tr>';
-      try {
-        const list = await apiFetch('/transport/routes');
-        if (!list.length) { body.innerHTML = '<tr><td colspan="5" class="state-msg">No routes yet.</td></tr>'; return; }
-        body.innerHTML = list.map(r => `<tr>
-          <td>${esc(r.routeId)}</td>
-          <td>${esc(r.routeName)}</td>
-          <td>${esc(r.startPoint)}</td>
-          <td>${esc(r.endPoint)}</td>
-          <td><div class="row-actions">
-            <button class="link-btn" data-edit-route="${esc(r.routeId)}" data-name="${esc(r.routeName)}" data-start="${esc(r.startPoint)}" data-end="${esc(r.endPoint)}">Edit</button>
-            <button class="link-btn link-btn--danger" data-del-route="${esc(r.routeId)}">Delete</button>
-          </div></td>
-        </tr>`).join('');
-        body.querySelectorAll('[data-edit-route]').forEach(b => {
-          b.addEventListener('click', () => openEditRoute(b.dataset.editRoute, b.dataset.name, b.dataset.start, b.dataset.end));
-        });
-        body.querySelectorAll('[data-del-route]').forEach(b => {
-          b.addEventListener('click', () => deleteRoute(b.dataset.delRoute));
-        });
-      } catch (err) {
-        body.innerHTML = `<tr><td colspan="5" class="state-msg">${esc(err.message)}</td></tr>`;
-      }
-    }
-
-    function openEditRoute(id, name, start, end) {
-      routeEditId = id;
-      document.getElementById('rm-title').textContent = 'Edit Route';
-      document.getElementById('rm-name').value  = name;
-      document.getElementById('rm-start').value = start;
-      document.getElementById('rm-end').value   = end;
-      document.getElementById('rm-err').classList.remove('show');
-      document.getElementById('route-modal').classList.add('show');
-    }
-
-    async function deleteRoute(id) {
-      if (!confirm('Delete this route?')) return;
-      try { await apiFetch(`/transport/routes/${id}`, { method: 'DELETE' }); loadRoutes(); }
-      catch (err) { alert(err.message); }
     }
 
     // ---- Trips ----
@@ -566,19 +489,6 @@
 
     // ---- Modal wiring ----
     function wireModals() {
-      // Route modal
-      document.getElementById('new-route-btn').addEventListener('click', () => {
-        routeEditId = null;
-        document.getElementById('rm-title').textContent = 'New Route';
-        document.getElementById('rm-name').value = '';
-        document.getElementById('rm-start').value = '';
-        document.getElementById('rm-end').value = '';
-        document.getElementById('rm-err').classList.remove('show');
-        document.getElementById('route-modal').classList.add('show');
-      });
-      document.getElementById('rm-cancel').addEventListener('click', () => document.getElementById('route-modal').classList.remove('show'));
-      document.getElementById('rm-save').addEventListener('click', saveRoute);
-
       // Trip modal
       document.getElementById('new-trip-btn').addEventListener('click', openNewTrip);
       document.getElementById('tm-cancel').addEventListener('click', () => document.getElementById('trip-modal').classList.remove('show'));
@@ -652,25 +562,6 @@
         document.getElementById('tm-err').classList.add('show');
         saveBtn.disabled = true;
       }
-    }
-
-    async function saveRoute() {
-      const errEl = document.getElementById('rm-err');
-      errEl.classList.remove('show');
-      const name  = document.getElementById('rm-name').value.trim();
-      const start = document.getElementById('rm-start').value.trim();
-      const end   = document.getElementById('rm-end').value.trim();
-      if (!name || !start || !end) { errEl.textContent = 'All fields are required.'; errEl.classList.add('show'); return; }
-      try {
-        const body = { routeName: name, startPoint: start, endPoint: end };
-        if (routeEditId) {
-          await apiFetch(`/transport/routes/${routeEditId}`, { method: 'PUT', body: JSON.stringify(body) });
-        } else {
-          await apiFetch('/transport/routes', { method: 'POST', body: JSON.stringify(body) });
-        }
-        document.getElementById('route-modal').classList.remove('show');
-        loadRoutes();
-      } catch (err) { errEl.textContent = err.message; errEl.classList.add('show'); }
     }
 
     async function saveTrip() {
