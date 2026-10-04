@@ -13,7 +13,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/buses")
 @CrossOrigin(origins = "*")
-@PreAuthorize("hasRole('ADMIN')")
+// SecurityConfig enforces write-vs-read split; this annotation ensures both roles clear method security.
+@PreAuthorize("hasAnyRole('TRANSPORT_OFFICER', 'ADMIN')")
 public class BusController {
 
     @Autowired

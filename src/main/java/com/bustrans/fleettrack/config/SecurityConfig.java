@@ -68,6 +68,13 @@ public class SecurityConfig {
                         // Slip download: authenticated; role + ownership check is inside SlipController
                         .requestMatchers("/api/slips/**").authenticated()
                         .requestMatchers("/api/finance/**").hasAnyRole("FINANCE_OFFICER", "ADMIN")
+                        // Bus management: writes are TRANSPORT_OFFICER only; reads are TRANSPORT_OFFICER + ADMIN.
+                        // Specific method rules must appear before the general GET rule (first match wins).
+                        .requestMatchers(HttpMethod.POST,   "/api/buses/**").hasRole("TRANSPORT_OFFICER")
+                        .requestMatchers(HttpMethod.PUT,    "/api/buses/**").hasRole("TRANSPORT_OFFICER")
+                        .requestMatchers(HttpMethod.PATCH,  "/api/buses/**").hasRole("TRANSPORT_OFFICER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/buses/**").hasRole("TRANSPORT_OFFICER")
+                        .requestMatchers(HttpMethod.GET,    "/api/buses/**").hasAnyRole("TRANSPORT_OFFICER", "ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

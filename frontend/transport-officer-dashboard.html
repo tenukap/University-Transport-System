@@ -105,6 +105,7 @@
     <nav class="sidebar__nav">
       <button class="nav-link is-active" data-tab="overview">📊 <span>Overview</span></button>
       <button class="nav-link" data-tab="trips">🚌 <span>Trips</span></button>
+      <button class="nav-link" data-tab="buses">🚍 <span>Buses</span></button>
       <button class="nav-link" data-tab="locations">📍 <span>Locations</span></button>
       <button class="nav-link" data-tab="payments">💳 <span>Payments</span></button>
       <button class="nav-link" data-tab="emergency">🚨 <span>Emergency Reports</span><span class="nav-badge" id="badge-emergency" style="display:none">0</span></button>
@@ -146,6 +147,21 @@
       <div class="table-wrap">
         <table><thead><tr><th>ID</th><th>Date</th><th>Start</th><th>ETA</th><th>Bus</th><th>Driver</th><th>Pickup</th><th>Drop</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody id="trips-body"><tr><td colspan="10" class="state-msg">Loading…</td></tr></tbody></table>
+      </div>
+    </div>
+
+    <!-- Buses -->
+    <div class="tab-panel" id="panel-buses">
+      <div class="panel-head">
+        <div><h2>Bus Fleet</h2><p>Add, edit or retire buses.</p></div>
+        <button class="btn btn--primary" id="add-bus-btn">+ Add Bus</button>
+      </div>
+      <div class="modal__error" id="buses-err" style="margin-bottom:14px;"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Registration</th><th>Capacity</th><th>Status</th><th class="actions-col">Actions</th></tr></thead>
+          <tbody id="buses-body"><tr><td colspan="4" class="state-msg">Loading buses…</td></tr></tbody>
+        </table>
       </div>
     </div>
 
@@ -261,6 +277,41 @@
     </div>
   </div>
 
+  <!-- Bus Add / Edit modal -->
+  <div class="modal-overlay" id="bus-modal">
+    <div class="modal">
+      <h3 id="bm-title">Add Bus</h3>
+      <div class="modal__error" id="bm-err"></div>
+      <input type="hidden" id="bm-id" />
+      <div class="field"><label for="bm-reg">Registration Number * (max 50)</label><input type="text" id="bm-reg" maxlength="50" placeholder="e.g. NC-5678" /></div>
+      <div class="field"><label for="bm-cap">Capacity * (1 – 100)</label><input type="number" id="bm-cap" min="1" max="100" placeholder="e.g. 40" /></div>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" id="bm-cancel">Cancel</button>
+        <button type="button" class="btn btn--primary" id="bm-save">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bus Status modal — uses a select so the officer picks from valid values, not free text -->
+  <div class="modal-overlay" id="bus-status-modal">
+    <div class="modal">
+      <h3>Change Bus Status</h3>
+      <div class="modal__error" id="bsm-err"></div>
+      <p id="bsm-bus-label" style="color:var(--muted);font-size:14px;margin:0 0 14px"></p>
+      <div class="field"><label for="bsm-select">New Status *</label>
+        <select id="bsm-select">
+          <option value="Available">Available</option>
+          <option value="Maintenance">Maintenance</option>
+          <option value="Out of Service">Out of Service</option>
+        </select>
+      </div>
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" id="bsm-cancel">Cancel</button>
+        <button type="button" class="btn btn--primary" id="bsm-save">Save</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Trip Modal (used for both create and edit) -->
   <div class="modal-overlay" id="trip-modal">
     <div class="modal">
@@ -268,7 +319,7 @@
       <div class="modal__error" id="tm-err"></div>
       <!-- Shown when no Available buses exist in the database -->
       <div id="tm-no-buses-msg" style="display:none;background:#FBEAE8;color:#B4463C;border-radius:8px;padding:9px 11px;font-size:13px;margin-bottom:10px;">
-        No available buses — ask an admin to add one or mark a bus as Available.
+        No available buses — add one in the Buses tab or change a bus status to Available.
       </div>
       <div class="field"><label for="tm-bus">Bus *</label>
         <select id="tm-bus"><option value="">— Loading buses… —</option></select>
@@ -358,7 +409,7 @@
     }
 
     const TITLES = {
-      overview: 'Overview', trips: 'Trips',
+      overview: 'Overview', trips: 'Trips', buses: 'Bus Fleet',
       locations: 'Locations', payments: 'Payments',
       emergency: 'Emergency Reports', crash: 'Crash Incidents', tracking: 'Tracking'
     };
@@ -381,6 +432,7 @@
     }
     function lazyLoad(tab) {
       if (tab === 'trips') loadTrips();
+      else if (tab === 'buses') loadBuses();
       else if (tab === 'locations') loadLocations();
       else if (tab === 'payments') loadPayments();
       else if (tab === 'emergency') loadEmergencyReports();
@@ -620,6 +672,14 @@
       });
       document.getElementById('lm-cancel').addEventListener('click', () => document.getElementById('loc-modal').classList.remove('show'));
       document.getElementById('lm-save').addEventListener('click', saveLocation);
+
+      // Bus modals
+      document.getElementById('add-bus-btn').addEventListener('click', openAddBus);
+      document.getElementById('bm-cancel').addEventListener('click', () => document.getElementById('bus-modal').classList.remove('show'));
+      document.getElementById('bm-save').addEventListener('click', saveBus);
+      document.getElementById('bus-modal').addEventListener('click', e => { if (e.target === document.getElementById('bus-modal')) document.getElementById('bus-modal').classList.remove('show'); });
+      document.getElementById('bsm-cancel').addEventListener('click', () => document.getElementById('bus-status-modal').classList.remove('show'));
+      document.getElementById('bsm-save').addEventListener('click', saveStatusBus);
 
       // Cancel trip modal
       document.getElementById('ct-cancel').addEventListener('click', () => document.getElementById('cancel-trip-modal').classList.remove('show'));
@@ -1157,6 +1217,127 @@
       } catch (err) {
         content.innerHTML = `<p class="state-msg">${esc(err.message)}</p>`;
       }
+    }
+
+    // ---- Bus Fleet ----
+    let busesCache = [];
+    let busEditId = null;
+    let pendingStatusBusId = null;
+
+    async function loadBuses() {
+      const bodyEl = document.getElementById('buses-body');
+      bodyEl.innerHTML = '<tr><td colspan="4" class="state-msg">Loading buses…</td></tr>';
+      document.getElementById('buses-err').classList.remove('show');
+      try {
+        const buses = await apiFetch('/buses/all');
+        busesCache = Array.isArray(buses) ? buses : [];
+        renderBuses();
+      } catch (err) {
+        bodyEl.innerHTML = `<tr><td colspan="4" class="state-msg">${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    function renderBuses() {
+      const bodyEl = document.getElementById('buses-body');
+      if (!busesCache.length) {
+        bodyEl.innerHTML = '<tr><td colspan="4" class="state-msg">No buses yet.</td></tr>';
+        return;
+      }
+      bodyEl.innerHTML = busesCache.map(b => {
+        const st = b.status || 'Available';
+        // badge--ok = green (Available), badge--warn = amber (Maintenance), badge--other = red (Out of Service)
+        const cls = st === 'Available' ? 'badge--ok' : st === 'Maintenance' ? 'badge--warn' : 'badge--other';
+        return `<tr>
+          <td>${esc(b.registrationNumber)}</td>
+          <td>${b.passengerCapacity ?? '—'}</td>
+          <td><span class="badge ${cls}">${esc(st)}</span></td>
+          <td class="actions-col"><div class="row-actions">
+            <button class="link-btn" data-edit-bus="${b.busId}">Edit</button>
+            <button class="link-btn" data-status-bus="${b.busId}" data-current="${esc(st)}">Status</button>
+            <button class="link-btn link-btn--danger" data-del-bus="${b.busId}">Delete</button>
+          </div></td></tr>`;
+      }).join('');
+      bodyEl.querySelectorAll('[data-edit-bus]').forEach(btn =>
+        btn.addEventListener('click', () => openEditBus(btn.dataset.editBus)));
+      bodyEl.querySelectorAll('[data-status-bus]').forEach(btn =>
+        btn.addEventListener('click', () => openStatusBus(btn.dataset.statusBus, btn.dataset.current)));
+      bodyEl.querySelectorAll('[data-del-bus]').forEach(btn =>
+        btn.addEventListener('click', () => confirmDeleteBus(btn.dataset.delBus)));
+    }
+
+    function openAddBus() {
+      busEditId = null;
+      document.getElementById('bm-title').textContent = 'Add Bus';
+      document.getElementById('bm-id').value = '';
+      document.getElementById('bm-reg').value = '';
+      document.getElementById('bm-cap').value = '';
+      document.getElementById('bm-err').classList.remove('show');
+      document.getElementById('bus-modal').classList.add('show');
+    }
+
+    function openEditBus(id) {
+      const b = busesCache.find(x => String(x.busId) === String(id));
+      if (!b) return;
+      busEditId = id;
+      document.getElementById('bm-title').textContent = 'Edit Bus';
+      document.getElementById('bm-id').value = id;
+      document.getElementById('bm-reg').value = b.registrationNumber || '';
+      document.getElementById('bm-cap').value = b.passengerCapacity ?? '';
+      document.getElementById('bm-err').classList.remove('show');
+      document.getElementById('bus-modal').classList.add('show');
+    }
+
+    async function saveBus() {
+      const errEl = document.getElementById('bm-err');
+      errEl.classList.remove('show');
+      const reg = document.getElementById('bm-reg').value.trim();
+      const cap = parseInt(document.getElementById('bm-cap').value, 10);
+      if (!reg) { errEl.textContent = 'Registration number is required.'; errEl.classList.add('show'); return; }
+      if (!cap || cap < 1 || cap > 100) { errEl.textContent = 'Capacity must be between 1 and 100.'; errEl.classList.add('show'); return; }
+      const body = { registrationNumber: reg, passengerCapacity: cap };
+      try {
+        if (busEditId) {
+          await apiFetch(`/buses/${busEditId}`, { method: 'PUT', body: JSON.stringify(body) });
+        } else {
+          await apiFetch('/buses/add', { method: 'POST', body: JSON.stringify(body) });
+        }
+        document.getElementById('bus-modal').classList.remove('show');
+        // Reset so the trip modal re-fetches available buses on next open
+        loaded.buses = false; loadBuses();
+      } catch (err) { errEl.textContent = err.message; errEl.classList.add('show'); }
+    }
+
+    function openStatusBus(id, currentStatus) {
+      const b = busesCache.find(x => String(x.busId) === String(id));
+      pendingStatusBusId = id;
+      document.getElementById('bsm-bus-label').textContent =
+        (b ? b.registrationNumber : '#' + id) + ' — current: ' + (currentStatus || '?');
+      document.getElementById('bsm-select').value = currentStatus || 'Available';
+      document.getElementById('bsm-err').classList.remove('show');
+      document.getElementById('bus-status-modal').classList.add('show');
+    }
+
+    async function saveStatusBus() {
+      const errEl = document.getElementById('bsm-err');
+      errEl.classList.remove('show');
+      const status = document.getElementById('bsm-select').value;
+      try {
+        await apiFetch(`/buses/${pendingStatusBusId}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
+        document.getElementById('bus-status-modal').classList.remove('show');
+        loaded.buses = false; loadBuses();
+      } catch (err) { errEl.textContent = err.message; errEl.classList.add('show'); }
+    }
+
+    async function confirmDeleteBus(id) {
+      const b = busesCache.find(x => String(x.busId) === String(id));
+      const reg = b ? b.registrationNumber : '#' + id;
+      if (!confirm(`Permanently delete bus ${reg}?\n\nThis is only allowed if the bus has never been used on any trip.`)) return;
+      const busErrEl = document.getElementById('buses-err');
+      busErrEl.classList.remove('show');
+      try {
+        await apiFetch(`/buses/delete/${id}`, { method: 'DELETE' });
+        loaded.buses = false; loadBuses();
+      } catch (err) { busErrEl.textContent = err.message; busErrEl.classList.add('show'); }
     }
 
     // Close bus detail modal on backdrop click

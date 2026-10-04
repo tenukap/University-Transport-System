@@ -1,5 +1,19 @@
 # Change Log
 
+## Prompt 21 — Bus management moved to the transport officer
+
+Bus CRUD (add, edit, status change, delete) moved from admin to transport officer. Admin retains a read-only Buses tab for oversight. The "no available buses" hint in the Schedule Trip modal no longer directs the officer to ask an admin.
+
+**Before / After role table:**
+
+| Endpoint | Before | After |
+|---|---|---|
+| `GET /api/buses/**` | ADMIN only | TRANSPORT_OFFICER + ADMIN |
+| `POST /api/buses/add` | ADMIN only | TRANSPORT_OFFICER only |
+| `PUT /api/buses/{id}` | ADMIN only | TRANSPORT_OFFICER only |
+| `PATCH /api/buses/{id}/status` | ADMIN only | TRANSPORT_OFFICER only |
+| `DELETE /api/buses/delete/{id}` | ADMIN only | TRANSPORT_OFFICER only |
+
 ## Prompt 19 — Trip cancellation cancels bookings, emergency timestamp
 
 When the transport officer cancels a trip, all CONFIRMED and PENDING bookings on that trip are now bulk-cancelled in the same transaction; the cancel-trip response includes a `bookingsCancelled` count, and the dashboard shows a toast. Trips already marked Completed are not affected. The emergency report `Timestamp` is now set by Java (`LocalDateTime.now()`) instead of the SQL Server `GETDATE()` default, aligning it with the JVM clock used by trip statuses and location updates.
