@@ -21,8 +21,8 @@ public class EmergencyReport {
     @Column(name = "Description", nullable = false, columnDefinition = "NVARCHAR(MAX)")
     private String description;
 
-    // insertable=false: timestamp is set by the DB DEFAULT (GETDATE()); never written by JPA on INSERT.
-    @Column(name = "Timestamp", insertable = false)
+    // Timestamp set by Java at creation so it uses the same JVM clock as TripStatus and LocationUpdate.
+    @Column(name = "Timestamp")
     private LocalDateTime timestamp;
 
     @Column(name = "Resolution_Status", length = 50)

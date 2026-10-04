@@ -1,5 +1,9 @@
 # Change Log
 
+## Prompt 19 — Trip cancellation cancels bookings, emergency timestamp
+
+When the transport officer cancels a trip, all CONFIRMED and PENDING bookings on that trip are now bulk-cancelled in the same transaction; the cancel-trip response includes a `bookingsCancelled` count, and the dashboard shows a toast. Trips already marked Completed are not affected. The emergency report `Timestamp` is now set by Java (`LocalDateTime.now()`) instead of the SQL Server `GETDATE()` default, aligning it with the JVM clock used by trip statuses and location updates.
+
 ## Fix — Feedback eligibility time comparison
 `BookingRepository.findDepartedConfirmedBookings` removed the `startTime <= :now` JPQL predicate (SQL Server JDBC maps `LocalTime` as `datetime`, causing a type-incompatibility 400). The date query now returns trips with `tripDate <= today`; the same-day `startTime` check is applied in Java in `FeedbackApiController.eligible()`. `GlobalExceptionHandler` gains a `DataAccessException` handler that logs the real error and returns a clean 500 `{"message":"Something went wrong, please try again."}` instead of exposing the raw JDBC exception to clients.
 

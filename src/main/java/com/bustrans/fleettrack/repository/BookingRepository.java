@@ -2,6 +2,7 @@ package com.bustrans.fleettrack.repository;
 
 import com.bustrans.fleettrack.entity.*;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -54,4 +55,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
            "AND b.busTrip.tripDate <= :today")
     List<Booking> findDepartedConfirmedBookings(@Param("userId") Long userId,
                                                 @Param("today") LocalDate today);
+
+    /** Bulk-cancels all CONFIRMED or PENDING bookings for a trip. Returns the number of rows updated.
+     *  Invoices are recalculated from non-cancelled bookings on the next read, so charges disappear automatically. */
+    @Modifying
+    @Query("UPDATE Booking b SET b.status = 'CANCELLED' " +
+           "WHERE b.busTrip.tripId = :tripId AND b.status IN ('CONFIRMED', 'PENDING')")
+    int cancelBookingsForTrip(@Param("tripId") Integer tripId);
 }

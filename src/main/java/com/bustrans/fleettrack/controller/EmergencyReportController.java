@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @CrossOrigin(origins = "*")
@@ -77,6 +78,8 @@ public class EmergencyReportController {
         report.setEmergencyType(type.strip());
         report.setDescription(desc.strip());
         report.setResolutionStatus("Pending");
+        // Timestamp set server-side so it uses the same JVM clock as TripStatus and LocationUpdate
+        report.setTimestamp(LocalDateTime.now());
         // Reporter identity always comes from the token, never from the client payload
         report.setStudentNo(Integer.parseInt(auth.getName()));
 

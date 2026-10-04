@@ -66,6 +66,8 @@
     .filter-btn.is-active { background: var(--primary); color: #fff; border-color: var(--primary); }
     .link-btn { background: none; border: none; color: var(--primary); font-weight: 600; cursor: pointer; font-size: 13px; }
     .link-btn--danger { color: var(--danger); }
+    .toast { position: fixed; bottom: 28px; right: 28px; background: #1e2c33; color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-weight: 500; box-shadow: 0 4px 16px rgba(0,0,0,.25); z-index: 999; opacity: 0; transform: translateY(8px); transition: opacity .25s, transform .25s; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateY(0); }
     .state-msg { padding: 24px; color: var(--muted); text-align: center; }
 
     .section-head { font-size: 14px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 28px 0 12px; }
@@ -94,6 +96,7 @@
   </style>
 </head>
 <body>
+  <div class="toast" id="toast"></div>
   <aside class="sidebar">
     <div class="sidebar__logo">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6M16 6v6M2 12h19.6M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v8c0 .4.1.8.2 1.2C2.5 16.3 3 18 3 18h3"/><circle cx="7" cy="18" r="2"/><path d="M9 18h5"/><circle cx="16" cy="18" r="2"/></svg>
@@ -309,7 +312,8 @@
     <div class="modal">
       <h3>Cancel Trip</h3>
       <div class="modal__error" id="ct-err"></div>
-      <p style="color:var(--muted);font-size:14px;margin:0 0 14px">Trip <strong id="ct-trip-id"></strong> will be marked as Cancelled.</p>
+      <p style="color:var(--muted);font-size:14px;margin:0 0 6px">Trip <strong id="ct-trip-id"></strong> will be marked as Cancelled.</p>
+      <p style="color:var(--danger);font-size:13px;margin:0 0 14px">Bookings on this trip will also be cancelled.</p>
       <div class="field"><label for="ct-reason">Reason *</label><input type="text" id="ct-reason" placeholder="e.g. Driver unavailable" /></div>
       <div class="modal__actions">
         <button class="btn btn--ghost" id="ct-cancel">Back</button>
@@ -754,8 +758,10 @@
       errEl.classList.remove('show');
       if (!reason) { errEl.textContent = 'A reason is required.'; errEl.classList.add('show'); return; }
       try {
-        await apiFetch(`/transport/trips/${pendingCancelTripId}/cancel?reason=${encodeURIComponent(reason)}`, { method: 'PUT' });
+        const result = await apiFetch(`/transport/trips/${pendingCancelTripId}/cancel?reason=${encodeURIComponent(reason)}`, { method: 'PUT' });
         document.getElementById('cancel-trip-modal').classList.remove('show');
+        const n = result && result.bookingsCancelled != null ? result.bookingsCancelled : 0;
+        showToast(`Trip cancelled. ${n} booking(s) cancelled.`);
         loadTrips();
       } catch (err) { errEl.textContent = err.message; errEl.classList.add('show'); }
     }
@@ -778,6 +784,16 @@
         document.getElementById('cancel-pay-modal').classList.remove('show');
         loadPayments();
       } catch (err) { errEl.textContent = err.message; errEl.classList.add('show'); }
+    }
+
+    // ---- Toast helper ----
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 4000);
     }
 
     // ---- Badge helper ----

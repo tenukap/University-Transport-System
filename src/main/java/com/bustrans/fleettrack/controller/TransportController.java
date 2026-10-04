@@ -9,6 +9,7 @@ import com.bustrans.fleettrack.service.RouteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -37,6 +38,8 @@ public class TransportController {
     @Autowired private UserRepository userRepo;
     @Autowired private EmergencyReportRepository emergencyReportRepo;
     @Autowired private CrashIncidentRepository crashIncidentRepo;
+    @Autowired private BookingRepository bookingRepo;
+    @Autowired private SeatReservationRepository seatReservationRepo;
 
     // --- BUS AVAILABILITY ---
 
@@ -122,18 +125,49 @@ public class TransportController {
         return mapToDTO(busTripRepo.save(existing));
     }
 
+    @Transactional
     @PutMapping("/trips/{id}/cancel")
-    public BusTrip cancelTrip(@PathVariable int id, @RequestParam String reason) {
+    public ResponseEntity<?> cancelTrip(@PathVariable int id, @RequestParam String reason) {
         BusTrip trip = busTripRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Trip not found: " + id));
+
+        // Already cancelled — no-op, return 0 bookings cancelled
+        if ("Cancelled".equals(trip.getTripStatus())) {
+            return ResponseEntity.ok(Map.of("tripId", trip.getTripId(),
+                    "tripStatus", "Cancelled", "bookingsCancelled", 0));
+        }
+
+        // Capture status before overwriting so we can decide whether bookings need cancelling
+        boolean wasCompleted = "Completed".equals(trip.getTripStatus());
+
         trip.setTripStatus("Cancelled");
         busTripRepo.save(trip);
+
         TripCancellation cancel = new TripCancellation();
         cancel.setTripId(id);
         cancel.setReason(reason);
         cancel.setCancelledAt(LocalDateTime.now());
         tripCancelRepo.save(cancel);
-        return trip;
+
+        // Do NOT cancel bookings for a trip that was already Completed — those trips have already run.
+        // Invoices are recalculated from non-cancelled bookings on the next read, so cancelled-trip charges disappear automatically.
+        int bookingsCancelled = 0;
+        if (!wasCompleted) {
+            // Delete seat reservations first (FK: seat_reservation.booking_id → booking.id)
+            seatReservationRepo.deleteByTripId(id);
+            bookingsCancelled = bookingRepo.cancelBookingsForTrip(id);
+        }
+
+        Map<String, Object> resp = new LinkedHashMap<>();
+        resp.put("tripId", trip.getTripId());
+        resp.put("tripDate", trip.getTripDate());
+        resp.put("startTime", trip.getStartTime());
+        resp.put("eta", trip.getEta());
+        resp.put("tripStatus", trip.getTripStatus());
+        resp.put("driverUserId", trip.getDriverUserId());
+        resp.put("operatingCost", trip.getOperatingCost());
+        resp.put("bookingsCancelled", bookingsCancelled);
+        return ResponseEntity.ok(resp);
     }
 
     @PutMapping("/trips/{id}/complete")
