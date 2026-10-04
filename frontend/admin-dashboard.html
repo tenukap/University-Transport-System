@@ -117,6 +117,8 @@
       <button class="nav-link" data-tab="reports">📈 <span>Reports</span></button>
       <button class="nav-link" data-tab="finance">💰 <span>Finance</span></button>
       <button class="nav-link" data-tab="incidents">🚨 <span>Incidents</span></button>
+      <button class="nav-link" data-tab="tracking">📡 <span>Tracking</span></button>
+      <button class="nav-link" data-tab="feedback" id="nav-feedback">⭐ <span>Feedback <span id="feedback-badge" style="display:none;background:#B4463C;color:#fff;border-radius:9999px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px;">0</span></span></button>
     </nav>
     <div class="sidebar__foot">
       <div class="sidebar__user-name" id="side-name">—</div>
@@ -247,6 +249,42 @@
       </div>
     </section>
 
+    <!-- Tracking: read-only trip and bus status (same endpoints as transport officer) -->
+    <section class="tab-panel" id="panel-tracking">
+      <div class="panel-head">
+        <div><h2>Tracking</h2><p>Real-time trip and bus status (read-only)</p></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn--primary" id="atrk-by-trip-btn">By Trip</button>
+          <button class="btn btn--ghost"   id="atrk-by-bus-btn">By Bus</button>
+        </div>
+      </div>
+      <div id="atrk-trip-view">
+        <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;align-items:flex-end;">
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:600;">Date</label>
+            <input type="date" id="atrk-date-filter" />
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:600;">Bus / Driver search</label>
+            <input type="text" id="atrk-text-search" placeholder="e.g. NC-5678 or John" style="width:220px;" />
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Trip (pickup → drop)</th><th>Date</th><th>Time</th>
+              <th>Bus</th><th>Driver</th><th>Trip Status</th>
+              <th>Latest Status</th><th>Last Location</th>
+            </tr></thead>
+            <tbody id="atrk-trips-body"><tr><td colspan="8" class="state-msg">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div id="atrk-bus-view" style="display:none;">
+        <div id="atrk-buses-container"><p class="state-msg">Loading…</p></div>
+      </div>
+    </section>
+
     <!-- Incidents: read-only emergency reports and crash incidents -->
     <section class="tab-panel" id="panel-incidents">
       <div class="panel-head"><div><h2>Incidents</h2><p>Read-only view of driver-submitted emergency reports and crash incidents.</p></div></div>
@@ -279,7 +317,71 @@
         </table>
       </div>
     </section>
+
+    <!-- Feedback -->
+    <section class="tab-panel" id="panel-feedback">
+      <div class="panel-head"><div><h2>Student Feedback</h2><p>Review and reply to student trip ratings.</p></div></div>
+
+      <!-- Summary cards -->
+      <div class="metric-grid" id="fb-summary-grid" style="margin-bottom:24px;">
+        <div class="state-msg">Loading summary…</div>
+      </div>
+
+      <!-- Filter -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;" id="fb-filter-row">
+        <button style="font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:5px 14px;background:var(--primary);color:#fff;cursor:pointer;" data-fb-filter="">All</button>
+        <button style="font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:5px 14px;background:var(--surface);color:var(--muted);cursor:pointer;" data-fb-filter="Pending">Pending</button>
+        <button style="font-family:'Montserrat',sans-serif;font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:5px 14px;background:var(--surface);color:var(--muted);cursor:pointer;" data-fb-filter="Reviewed">Reviewed</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Student</th><th>Trip</th><th>Bus</th><th>Rating</th>
+            <th>Comment</th><th>Status</th><th>Date</th><th class="actions-col">Actions</th>
+          </tr></thead>
+          <tbody id="fb-table-body"><tr><td colspan="8" class="state-msg">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
   </main>
+
+  <!-- Feedback review modal -->
+  <div class="modal-overlay" id="fb-review-modal">
+    <div class="modal" style="max-width:540px;">
+      <h3 id="fb-review-title">Review Feedback</h3>
+      <div class="modal__error" id="fb-review-error"></div>
+      <input type="hidden" id="fb-review-id" />
+
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Student</div>
+        <div id="fb-review-student" style="font-size:14px;"></div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Trip</div>
+        <div id="fb-review-trip" style="font-size:14px;"></div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Rating</div>
+        <div id="fb-review-rating" style="font-size:18px;color:#f59e0b;"></div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Comment</div>
+        <div id="fb-review-comment" style="font-size:14px;white-space:pre-wrap;word-break:break-word;background:var(--bg);border-radius:8px;padding:10px;"></div>
+      </div>
+      <div class="field" style="margin-bottom:14px;">
+        <label for="fb-reply-text" style="display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Admin Reply (optional)</label>
+        <textarea id="fb-reply-text" rows="3" maxlength="1000"
+          style="width:100%;font-family:inherit;font-size:14px;padding:9px 11px;border:1px solid #C9D2D6;border-radius:8px;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+        <div style="text-align:right;font-size:12px;color:var(--muted);margin-top:4px;"><span id="fb-reply-count">0</span> / 1000</div>
+      </div>
+
+      <div class="modal__actions">
+        <button type="button" class="btn btn--ghost" id="fb-review-cancel">Cancel</button>
+        <button type="button" class="btn btn--primary" id="fb-review-submit">Mark Reviewed</button>
+      </div>
+    </div>
+  </div>
 
   <!-- User Create/Edit modal -->
   <div class="modal-overlay" id="user-modal">
@@ -331,6 +433,17 @@
         <button type="button" class="btn btn--ghost" id="bm-cancel">Cancel</button>
         <button type="button" class="btn btn--primary" id="bm-save">Save</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Bus detail modal (Tracking tab) -->
+  <div class="modal-overlay" id="abus-detail-modal">
+    <div class="modal" style="max-width:640px;max-height:85vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 id="abus-detail-title" style="margin:0;">Bus Details</h3>
+        <button onclick="document.getElementById('abus-detail-modal').classList.remove('show')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);">✕</button>
+      </div>
+      <div id="abus-detail-content"><p class="state-msg">Loading…</p></div>
     </div>
   </div>
 
@@ -386,26 +499,30 @@
     }
 
     // ---- Tabs ----
-    const TITLES = { dashboard: 'Dashboard', users: 'Users', trips: 'Trips', buses: 'Buses', bookings: 'Bookings', reports: 'Reports', finance: 'Finance Overview', incidents: 'Incidents' };
+    const TITLES = { dashboard: 'Dashboard', users: 'Users', trips: 'Trips', buses: 'Buses', bookings: 'Bookings', reports: 'Reports', finance: 'Finance Overview', incidents: 'Incidents', tracking: 'Tracking', feedback: 'Student Feedback' };
     const loaded = {};
+    let atrkTimer = null; // 30 s refresh for Tracking tab
+
     function setupTabs() {
       document.querySelectorAll('.nav-link').forEach((btn) => {
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));
       });
     }
     function switchTab(tab) {
+      if (tab !== 'tracking' && atrkTimer) { clearInterval(atrkTimer); atrkTimer = null; }
       document.querySelectorAll('.nav-link').forEach((b) => b.classList.toggle('is-active', b.dataset.tab === tab));
       document.querySelectorAll('.tab-panel').forEach((p) => p.classList.toggle('is-active', p.id === `panel-${tab}`));
-      document.getElementById('page-title').textContent = TITLES[tab];
-      // Lazy-load each tab's data once.
-      if (loaded[tab]) return;
+      document.getElementById('page-title').textContent = TITLES[tab] || tab;
+      if (loaded[tab]) { if (tab === 'tracking') startAtrkRefresh(); return; }
       loaded[tab] = true;
-      if (tab === 'users')     loadUsers();
+      if (tab === 'users')      loadUsers();
       else if (tab === 'trips')  loadTrips();
       else if (tab === 'buses')  loadBuses();
-      else if (tab === 'bookings') loadBookings();
-      else if (tab === 'finance')  loadAdminFinance();
+      else if (tab === 'bookings')  loadBookings();
+      else if (tab === 'finance')   loadAdminFinance();
       else if (tab === 'incidents') loadAdminIncidents();
+      else if (tab === 'tracking')  initAtrk();
+      else if (tab === 'feedback')  loadAdminFeedback();
     }
 
     // ---- Dashboard metrics ----
@@ -1046,6 +1163,183 @@
       </tr>`).join('');
     }
 
+    // ---- Admin Tracking tab ----
+    let atrkView = 'trip';
+    let atrkTrips = [], atrkBuses = [], atrkServerTime = null;
+    let atrkDateFilter = new Date().toISOString().slice(0, 10);
+    let atrkTextSearch = '';
+
+    function initAtrk() {
+      document.getElementById('atrk-date-filter').value = atrkDateFilter;
+      document.getElementById('atrk-by-trip-btn').addEventListener('click', () => switchAtrkView('trip'));
+      document.getElementById('atrk-by-bus-btn').addEventListener('click',  () => switchAtrkView('bus'));
+      document.getElementById('atrk-date-filter').addEventListener('change', e => { atrkDateFilter = e.target.value; renderAtrkTrips(); });
+      document.getElementById('atrk-text-search').addEventListener('input',  e => { atrkTextSearch = e.target.value.toLowerCase(); renderAtrkTrips(); });
+      Promise.all([fetchAtrkTrips(), fetchAtrkBuses()]).then(startAtrkRefresh);
+    }
+
+    function startAtrkRefresh() {
+      if (atrkTimer) clearInterval(atrkTimer);
+      atrkTimer = setInterval(() => { if (atrkView === 'trip') fetchAtrkTrips(); else fetchAtrkBuses(); }, 30000);
+    }
+
+    function switchAtrkView(view) {
+      atrkView = view;
+      document.getElementById('atrk-trip-view').style.display = view === 'trip' ? '' : 'none';
+      document.getElementById('atrk-bus-view').style.display  = view === 'bus'  ? '' : 'none';
+      document.getElementById('atrk-by-trip-btn').className = view === 'trip' ? 'btn btn--primary' : 'btn btn--ghost';
+      document.getElementById('atrk-by-bus-btn').className  = view === 'bus'  ? 'btn btn--primary' : 'btn btn--ghost';
+    }
+
+    async function fetchAtrkTrips() {
+      try {
+        const resp = await apiFetch('/transport/tracking/trips');
+        atrkServerTime = resp.serverTime; atrkTrips = Array.isArray(resp.data) ? resp.data : [];
+        renderAtrkTrips();
+      } catch (err) {
+        document.getElementById('atrk-trips-body').innerHTML = `<tr><td colspan="8" class="state-msg">${esc(err.message)}</td></tr>`;
+      }
+    }
+    async function fetchAtrkBuses() {
+      try {
+        const resp = await apiFetch('/transport/tracking/buses');
+        atrkServerTime = resp.serverTime; atrkBuses = Array.isArray(resp.data) ? resp.data : [];
+        renderAtrkBuses();
+      } catch (err) {
+        document.getElementById('atrk-buses-container').innerHTML = `<p class="state-msg">${esc(err.message)}</p>`;
+      }
+    }
+
+    function atrkAge(ds) {
+      if (!ds || !atrkServerTime) return null;
+      const d = new Date(atrkServerTime) - new Date(ds);
+      if (isNaN(d) || d < 0) return 'just now';
+      const m = Math.floor(d / 60000); if (m < 1) return 'just now'; if (m < 60) return m + ' min ago';
+      const h = Math.floor(m / 60); return h < 24 ? h + ' h ago' : Math.floor(h / 24) + ' d ago';
+    }
+    function atrkStale(ds) { return ds && atrkServerTime && (new Date(atrkServerTime) - new Date(ds)) > 1800000; }
+
+    function atrkStatusBadge(s) {
+      if (!s) return '<span style="color:var(--muted);font-size:12px;">No updates yet</span>';
+      const cls = s === 'Completed' ? 'badge--active' : ['Cancelled','Breakdown'].includes(s) ? 'badge--other' : 'badge--warn';
+      return `<span class="badge ${cls}">${esc(s)}</span>`;
+    }
+    function atrkMapLink(lat, lng) {
+      if (!lat || !lng) return '';
+      return ` <a href="https://www.openstreetmap.org/?mlat=${encodeURIComponent(lat)}&mlon=${encodeURIComponent(lng)}#map=16/${encodeURIComponent(lat)}/${encodeURIComponent(lng)}" target="_blank" rel="noopener" style="color:var(--primary);font-weight:600;font-size:12px;">Map</a>`;
+    }
+    function atrkTripStatusBadge(s) {
+      const cls = s === 'Completed' ? 'badge--active' : s === 'Cancelled' ? 'badge--other' : 'badge--warn';
+      return `<span class="badge ${cls}">${esc(s || '—')}</span>`;
+    }
+
+    function renderAtrkTrips() {
+      const body = document.getElementById('atrk-trips-body');
+      let data = atrkTrips;
+      if (atrkDateFilter) data = data.filter(t => t.tripDate === atrkDateFilter);
+      if (atrkTextSearch) data = data.filter(t =>
+        (t.busRegistration || '').toLowerCase().includes(atrkTextSearch) ||
+        (t.driverName || '').toLowerCase().includes(atrkTextSearch));
+      if (!data.length) { body.innerHTML = '<tr><td colspan="8" class="state-msg">No trips match the filter.</td></tr>'; return; }
+      body.innerHTML = data.map(t => {
+        const staleS = atrkStale(t.latestStatusAt), staleL = atrkStale(t.latestLocationAt);
+        const ss = 'color:var(--muted);font-style:italic;';
+        const statusCell = t.latestStatusType
+          ? `${atrkStatusBadge(t.latestStatusType)} <span style="font-size:11px;${staleS ? ss : ''}">${atrkAge(t.latestStatusAt) || ''}</span>`
+          : '<span style="color:var(--muted);font-size:12px;">No updates yet</span>';
+        const locCell = t.latestLat
+          ? `<span style="font-size:12px;${staleL ? ss : ''}">${esc(t.latestLat)}, ${esc(t.latestLng)} (${atrkAge(t.latestLocationAt) || ''})</span>${atrkMapLink(t.latestLat, t.latestLng)}`
+          : '<span style="color:var(--muted);font-size:12px;">No updates yet</span>';
+        return `<tr>
+          <td>${esc(t.pickupName || '?')} → ${esc(t.dropName || '?')}</td>
+          <td>${esc(t.tripDate || '—')}</td>
+          <td>${esc(t.startTime ? t.startTime.substring(0,5) : '—')}</td>
+          <td>${esc(t.busRegistration || '—')}</td>
+          <td>${esc(t.driverName || '—')}</td>
+          <td>${atrkTripStatusBadge(t.tripStatus)}</td>
+          <td>${statusCell}</td>
+          <td style="white-space:normal;min-width:180px;">${locCell}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderAtrkBuses() {
+      const container = document.getElementById('atrk-buses-container');
+      if (!atrkBuses.length) { container.innerHTML = '<p class="state-msg">No buses found.</p>'; return; }
+      container.innerHTML = atrkBuses.map(bus => {
+        const trip = bus.currentOrNextTrip;
+        const statusCls = bus.busStatus === 'Available' ? 'badge--active' : bus.busStatus === 'Maintenance' ? 'badge--warn' : 'badge--other';
+        let tripBlock = '<div style="margin-top:8px;color:var(--muted);font-size:13px;">No trips scheduled</div>';
+        if (trip) {
+          const stale = atrkStale(trip.latestLocationAt || trip.latestStatusAt);
+          const ss = stale ? 'color:var(--muted);font-style:italic;' : '';
+          tripBlock = `<div style="margin-top:8px;">
+            <span style="font-size:13px;font-weight:600;">${esc(trip.pickupName || '?')} → ${esc(trip.dropName || '?')}</span>
+            <span style="color:var(--muted);font-size:12px;"> ${esc(trip.tripDate || '')} ${esc(trip.startTime ? trip.startTime.substring(0,5) : '')}</span>
+            <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+              ${atrkTripStatusBadge(trip.tripStatus)}
+              ${trip.latestStatusType ? `${atrkStatusBadge(trip.latestStatusType)} <span style="font-size:11px;${atrkStale(trip.latestStatusAt)?'color:var(--muted);':''}">${atrkAge(trip.latestStatusAt) || ''}</span>` : '<span style="color:var(--muted);font-size:12px;">No status yet</span>'}
+            </div>
+            <div style="margin-top:4px;font-size:12px;${ss}">
+              ${trip.latestLat ? `${esc(trip.latestLat)}, ${esc(trip.latestLng)} (${atrkAge(trip.latestLocationAt) || ''})${atrkMapLink(trip.latestLat, trip.latestLng)}` : '<span style="color:var(--muted);">No location yet</span>'}
+            </div></div>`;
+        }
+        return `<div style="background:var(--surface);border-radius:10px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <strong style="font-size:15px;">${esc(bus.registration || '—')}</strong>
+              <span class="badge ${statusCls}">${esc(bus.busStatus || '—')}</span>
+              <span style="color:var(--muted);font-size:12px;">${bus.capacity} seats · ${bus.tripsToday} trip(s) today</span>
+            </div>${tripBlock}
+          </div>
+          <button class="btn btn--ghost btn--sm" data-abus-detail="${esc(String(bus.busId))}">Details</button>
+        </div>`;
+      }).join('');
+      container.querySelectorAll('[data-abus-detail]').forEach(btn =>
+        btn.addEventListener('click', () => openAbusDetail(btn.dataset.abusDetail)));
+    }
+
+    async function openAbusDetail(busId) {
+      const modal = document.getElementById('abus-detail-modal');
+      const content = document.getElementById('abus-detail-content');
+      const title   = document.getElementById('abus-detail-title');
+      const bus = atrkBuses.find(b => String(b.busId) === String(busId));
+      title.textContent = bus ? `Bus ${bus.registration} — Details` : `Bus #${busId}`;
+      content.innerHTML = '<p class="state-msg">Loading…</p>';
+      modal.classList.add('show');
+      try {
+        const resp = await apiFetch(`/transport/tracking/buses/${busId}`);
+        const detail = resp.data;
+        if (!detail.trips || !detail.trips.length) {
+          content.innerHTML = '<p class="state-msg">No trips scheduled for this bus in the current window.</p>'; return;
+        }
+        content.innerHTML = detail.trips.map(trip => {
+          const sLog = trip.statusLog && trip.statusLog.length
+            ? trip.statusLog.map(s => `<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--line);">${atrkStatusBadge(s.statusType)} <span style="color:var(--muted);">${esc(s.time ? s.time.substring(0,16).replace('T',' ') : '—')}</span></div>`).join('')
+            : '<div style="color:var(--muted);font-size:12px;">No status updates</div>';
+          const pLog = trip.recentPings && trip.recentPings.length
+            ? trip.recentPings.map(p => `<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--line);">${esc(p.lat)}, ${esc(p.lng)} <span style="color:var(--muted);">${esc(p.time ? p.time.substring(0,16).replace('T',' ') : '—')}</span>${atrkMapLink(p.lat, p.lng)}</div>`).join('')
+            : '<div style="color:var(--muted);font-size:12px;">No location pings</div>';
+          return `<div style="border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+              <strong>Trip #${esc(trip.tripId)}</strong>
+              <span style="font-size:13px;">${esc(trip.pickupName || '?')} → ${esc(trip.dropName || '?')}</span>
+              <span style="color:var(--muted);font-size:12px;">${esc(trip.tripDate || '')} ${esc(trip.startTime ? trip.startTime.substring(0,5) : '')}</span>
+              ${atrkTripStatusBadge(trip.tripStatus)}
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div><div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Status Log</div>${sLog}</div>
+              <div><div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Recent Pings (last 10)</div>${pLog}</div>
+            </div></div>`;
+        }).join('');
+      } catch (err) { content.innerHTML = `<p class="state-msg">${esc(err.message)}</p>`; }
+    }
+
+    document.getElementById('abus-detail-modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('abus-detail-modal'))
+        document.getElementById('abus-detail-modal').classList.remove('show');
+    });
+
     // Wire filter buttons for both admin incident tables
     document.getElementById('admin-er-filters').addEventListener('click', e => {
       const btn = e.target.closest('[data-aer-filter]');
@@ -1067,6 +1361,170 @@
       });
       renderAdminCiTable();
     });
+
+    // ---- Admin Feedback ----
+    let fbAllData = [];
+    let fbFilter = '';
+
+    async function loadAdminFeedback() {
+      await Promise.all([loadFbSummary(), loadFbTable()]);
+      updateFeedbackBadge();
+      wireFbFilters();
+      wireFbReviewModal();
+    }
+
+    async function loadFbSummary() {
+      const grid = document.getElementById('fb-summary-grid');
+      try {
+        const s = await apiFetch('/feedback/summary');
+        const avg = s.averageRating != null ? s.averageRating.toFixed(1) : '—';
+        grid.innerHTML = [
+          ['Total', s.total],
+          ['Pending Review', s.pending],
+          ['Reviewed', s.reviewed],
+          ['Avg Rating', avg + (s.averageRating != null ? ' / 5' : '')],
+        ].map(([label, val]) =>
+          `<div class="metric"><div class="metric__label">${label}</div><div class="metric__value">${val}</div></div>`
+        ).join('');
+      } catch (err) {
+        grid.innerHTML = `<div class="state-msg">${esc(err.message)}</div>`;
+      }
+    }
+
+    async function loadFbTable() {
+      const body = document.getElementById('fb-table-body');
+      body.innerHTML = '<tr><td colspan="8" class="state-msg">Loading…</td></tr>';
+      try {
+        const url = fbFilter ? `/feedback?status=${encodeURIComponent(fbFilter)}` : '/feedback';
+        fbAllData = await apiFetch(url);
+        renderFbTable();
+      } catch (err) {
+        body.innerHTML = `<tr><td colspan="8" class="state-msg">${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    function renderFbTable() {
+      const body = document.getElementById('fb-table-body');
+      if (!fbAllData.length) {
+        body.innerHTML = '<tr><td colspan="8" class="state-msg">No feedback found.</td></tr>';
+        return;
+      }
+      body.innerHTML = fbAllData.map(fb => {
+        const stars = fb.rating ? '★'.repeat(fb.rating) + '☆'.repeat(5 - fb.rating) : '—';
+        const statusBadge = fb.status === 'Reviewed'
+          ? '<span class="badge badge--active">Reviewed</span>'
+          : '<span class="badge badge--warn">Pending</span>';
+        const date = fb.submittedAt
+          ? new Date(fb.submittedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+          : '—';
+        const commentShort = fb.comments && fb.comments.length > 80
+          ? esc(fb.comments.substring(0, 80)) + '…'
+          : esc(fb.comments || '');
+        const actionLabel = fb.status === 'Reviewed' ? 'Edit Reply' : 'Review';
+        return `<tr>
+          <td><div>${esc(fb.studentName || '—')}</div><div style="color:var(--muted);font-size:12px;">#${esc(fb.studentIndex || '')}</div></td>
+          <td style="white-space:normal;min-width:160px;">${esc(fb.tripLabel || '—')}</td>
+          <td>${esc(fb.busRegistration || '—')}</td>
+          <td style="color:#f59e0b;">${esc(stars)}</td>
+          <td style="white-space:normal;max-width:200px;">${commentShort}</td>
+          <td>${statusBadge}</td>
+          <td>${esc(date)}</td>
+          <td><button class="link-btn" data-fb-review="${esc(String(fb.id))}">${actionLabel}</button></td>
+        </tr>`;
+      }).join('');
+
+      body.querySelectorAll('[data-fb-review]').forEach(btn =>
+        btn.addEventListener('click', () => openFbReviewModal(btn.dataset.fbReview)));
+    }
+
+    function updateFeedbackBadge() {
+      const pending = fbAllData.filter(f => f.status === 'Pending').length;
+      const badge = document.getElementById('feedback-badge');
+      if (pending > 0) {
+        badge.textContent = pending;
+        badge.style.display = 'inline';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    function wireFbFilters() {
+      document.getElementById('fb-filter-row').addEventListener('click', e => {
+        const btn = e.target.closest('[data-fb-filter]');
+        if (!btn) return;
+        fbFilter = btn.dataset.fbFilter;
+        document.querySelectorAll('[data-fb-filter]').forEach(b => {
+          b.style.background = b === btn ? 'var(--primary)' : 'var(--surface)';
+          b.style.color = b === btn ? '#fff' : 'var(--muted)';
+        });
+        loadFbTable();
+      });
+    }
+
+    function openFbReviewModal(idStr) {
+      const fb = fbAllData.find(f => String(f.id) === String(idStr));
+      if (!fb) return;
+      document.getElementById('fb-review-id').value = fb.id;
+      document.getElementById('fb-review-title').textContent = fb.status === 'Reviewed' ? 'Edit Reply' : 'Review Feedback';
+      document.getElementById('fb-review-student').textContent = `${fb.studentName || '—'} (#${fb.studentIndex || ''})`;
+      document.getElementById('fb-review-trip').textContent = fb.tripLabel || '—';
+      const stars = fb.rating ? '★'.repeat(fb.rating) + '☆'.repeat(5 - fb.rating) : '—';
+      document.getElementById('fb-review-rating').textContent = stars;
+      document.getElementById('fb-review-comment').textContent = fb.comments || '';
+      document.getElementById('fb-reply-text').value = fb.adminResponse || '';
+      document.getElementById('fb-reply-count').textContent = (fb.adminResponse || '').length;
+      hideFbReviewError();
+      document.getElementById('fb-review-modal').classList.add('show');
+    }
+
+    function closeFbReviewModal() {
+      document.getElementById('fb-review-modal').classList.remove('show');
+    }
+
+    function hideFbReviewError() {
+      const el = document.getElementById('fb-review-error');
+      el.textContent = ''; el.classList.remove('show');
+    }
+
+    function wireFbReviewModal() {
+      document.getElementById('fb-review-cancel').addEventListener('click', closeFbReviewModal);
+      document.getElementById('fb-review-modal').addEventListener('click', e => {
+        if (e.target === document.getElementById('fb-review-modal')) closeFbReviewModal();
+      });
+      document.getElementById('fb-reply-text').addEventListener('input', () => {
+        document.getElementById('fb-reply-count').textContent = document.getElementById('fb-reply-text').value.length;
+      });
+      document.getElementById('fb-review-submit').addEventListener('click', submitFbReview);
+    }
+
+    async function submitFbReview() {
+      hideFbReviewError();
+      const id = document.getElementById('fb-review-id').value;
+      const reply = document.getElementById('fb-reply-text').value.trim();
+      if (reply.length > 1000) {
+        const el = document.getElementById('fb-review-error');
+        el.textContent = 'Reply cannot exceed 1000 characters.'; el.classList.add('show');
+        return;
+      }
+      const btn = document.getElementById('fb-review-submit');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      try {
+        await apiFetch(`/feedback/${id}/review`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adminResponse: reply || null }),
+        });
+        closeFbReviewModal();
+        // Reload both summary and table so badge + cards stay in sync
+        await Promise.all([loadFbSummary(), loadFbTable()]);
+        updateFeedbackBadge();
+      } catch (err) {
+        const el = document.getElementById('fb-review-error');
+        el.textContent = err.message || 'Failed to save review.'; el.classList.add('show');
+      } finally {
+        btn.disabled = false; btn.textContent = 'Mark Reviewed';
+      }
+    }
   </script>
 </body>
 </html>

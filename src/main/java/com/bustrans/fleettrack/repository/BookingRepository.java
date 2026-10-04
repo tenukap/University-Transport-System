@@ -36,4 +36,22 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     /** All non-CANCELLED bookings for a student — used by invoice sync to find all billing months. */
     List<Booking> findByUser_UserIdAndStatusNot(Long userId, String status);
+
+    /** Student tracking: active bookings for upcoming/recent trips in a date window. */
+    @Query("SELECT b FROM Booking b WHERE b.user.userId = :userId " +
+           "AND b.busTrip.tripDate BETWEEN :from AND :to " +
+           "AND b.status <> 'CANCELLED' " +
+           "AND b.busTrip.tripStatus <> 'Cancelled' " +
+           "ORDER BY b.busTrip.tripDate ASC, b.busTrip.startTime ASC")
+    List<Booking> findActiveBookingsForTracking(@Param("userId") Long userId,
+                                                @Param("from") LocalDate from,
+                                                @Param("to") LocalDate to);
+
+    /** CONFIRMED bookings for a student whose trip date is today or earlier.
+     *  startTime filtering is done in Java — SQL Server JDBC maps LocalTime as datetime,
+     *  causing a type-incompatibility error when compared against a TIME column. */
+    @Query("SELECT b FROM Booking b WHERE b.user.userId = :userId AND b.status = 'CONFIRMED' " +
+           "AND b.busTrip.tripDate <= :today")
+    List<Booking> findDepartedConfirmedBookings(@Param("userId") Long userId,
+                                                @Param("today") LocalDate today);
 }

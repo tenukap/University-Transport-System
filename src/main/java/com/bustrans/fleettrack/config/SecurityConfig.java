@@ -42,6 +42,11 @@ public class SecurityConfig {
                         // Financial report is also accessible to Finance Officers.
                         .requestMatchers("/api/reports/financial").hasAnyRole("ADMIN", "FINANCE_OFFICER")
                         .requestMatchers("/api/reports/**").hasRole("ADMIN")
+                        // Specific feedback rules — must appear before the blanket /api/feedback/** rule.
+                        .requestMatchers(HttpMethod.GET, "/api/feedback/eligible", "/api/feedback/mine").hasRole("STUDENT")
+                        .requestMatchers(HttpMethod.POST, "/api/feedback").hasRole("STUDENT")
+                        .requestMatchers(HttpMethod.GET, "/api/feedback", "/api/feedback/summary").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/feedback/*/review").hasRole("ADMIN")
                         // Student-facing endpoints (admin has access too).
                         .requestMatchers("/api/trips/**", "/api/locations/**", "/api/bookings/**", "/api/students/**", "/api/feedback/**")
                                 .hasAnyRole("STUDENT", "ADMIN")

@@ -106,6 +106,7 @@
       <button class="nav-link" data-tab="payments">💳 <span>Payments</span></button>
       <button class="nav-link" data-tab="emergency">🚨 <span>Emergency Reports</span><span class="nav-badge" id="badge-emergency" style="display:none">0</span></button>
       <button class="nav-link" data-tab="crash">⚠️ <span>Crash Incidents</span><span class="nav-badge" id="badge-crash" style="display:none">0</span></button>
+      <button class="nav-link" data-tab="tracking">📡 <span>Tracking</span></button>
     </nav>
     <div class="sidebar__foot">
       <div class="sidebar__user-name" id="side-name">—</div>
@@ -204,7 +205,58 @@
       </div>
     </div>
 
+    <!-- Tracking -->
+    <div class="tab-panel" id="panel-tracking">
+      <div class="panel-head">
+        <div><h2>Tracking</h2><p>Real-time trip and bus status</p></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn--primary" id="trk-by-trip-btn">By Trip</button>
+          <button class="btn btn--ghost" id="trk-by-bus-btn">By Bus</button>
+        </div>
+      </div>
+
+      <!-- By-trip sub-view -->
+      <div id="trk-trip-view">
+        <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap;align-items:flex-end;">
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:600;">Date</label>
+            <input type="date" id="trk-date-filter" style="padding:7px;border:1px solid var(--line);border-radius:6px;font-family:inherit;" />
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="font-size:12px;color:var(--muted);text-transform:uppercase;font-weight:600;">Bus / Driver search</label>
+            <input type="text" id="trk-text-search" placeholder="e.g. NC-5678 or John" style="padding:7px;border:1px solid var(--line);border-radius:6px;font-family:inherit;width:220px;" />
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Trip (pickup → drop)</th><th>Date</th><th>Time</th>
+              <th>Bus</th><th>Driver</th><th>Trip Status</th>
+              <th>Latest Status</th><th>Last Location</th>
+            </tr></thead>
+            <tbody id="trk-trips-body"><tr><td colspan="8" class="state-msg">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- By-bus sub-view -->
+      <div id="trk-bus-view" style="display:none;">
+        <div id="trk-buses-container"><p class="state-msg">Loading…</p></div>
+      </div>
+    </div>
+
   </main>
+
+  <!-- Bus detail modal -->
+  <div class="modal-overlay" id="bus-detail-modal">
+    <div class="modal" style="max-width:640px;max-height:85vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 id="bus-detail-title" style="margin:0;">Bus Details</h3>
+        <button onclick="document.getElementById('bus-detail-modal').classList.remove('show')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);">✕</button>
+      </div>
+      <div id="bus-detail-content"><p class="state-msg">Loading…</p></div>
+    </div>
+  </div>
 
   <!-- Trip Modal (used for both create and edit) -->
   <div class="modal-overlay" id="trip-modal">
@@ -304,19 +356,24 @@
     const TITLES = {
       overview: 'Overview', trips: 'Trips',
       locations: 'Locations', payments: 'Payments',
-      emergency: 'Emergency Reports', crash: 'Crash Incidents'
+      emergency: 'Emergency Reports', crash: 'Crash Incidents', tracking: 'Tracking'
     };
     const loaded = {};
+    let trackingTimer = null; // cleared when leaving the Tracking tab
+
     function setupTabs() {
       document.querySelectorAll('.nav-link').forEach(btn => {
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));
       });
     }
     function switchTab(tab) {
+      // Stop 30 s refresh whenever we leave the tracking tab
+      if (tab !== 'tracking' && trackingTimer) { clearInterval(trackingTimer); trackingTimer = null; }
       document.querySelectorAll('.nav-link').forEach(b => b.classList.toggle('is-active', b.dataset.tab === tab));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('is-active', p.id === `panel-${tab}`));
-      document.getElementById('page-title').textContent = TITLES[tab];
+      document.getElementById('page-title').textContent = TITLES[tab] || tab;
       if (!loaded[tab]) { loaded[tab] = true; lazyLoad(tab); }
+      else if (tab === 'tracking') startTrackingRefresh(); // re-enter: restart timer
     }
     function lazyLoad(tab) {
       if (tab === 'trips') loadTrips();
@@ -324,6 +381,7 @@
       else if (tab === 'payments') loadPayments();
       else if (tab === 'emergency') loadEmergencyReports();
       else if (tab === 'crash') loadCrashIncidents();
+      else if (tab === 'tracking') initTracking();
     }
 
     async function apiFetch(path, options = {}) {
@@ -864,6 +922,231 @@
       ciCurrentFilter = btn.dataset.ciFilter;
       document.querySelectorAll('[data-ci-filter]').forEach(b => b.classList.toggle('is-active', b === btn));
       renderCrashTable();
+    });
+
+    // ---- Tracking tab ----
+    let trkView = 'trip';        // 'trip' | 'bus'
+    let trkTrips = [];
+    let trkBuses = [];
+    let trkServerTime = null;
+    let trkDateFilter = new Date().toISOString().slice(0, 10); // default: today
+    let trkTextSearch = '';
+
+    function initTracking() {
+      document.getElementById('trk-date-filter').value = trkDateFilter;
+      document.getElementById('trk-by-trip-btn').addEventListener('click', () => switchTrkView('trip'));
+      document.getElementById('trk-by-bus-btn').addEventListener('click', () => switchTrkView('bus'));
+      document.getElementById('trk-date-filter').addEventListener('change', e => { trkDateFilter = e.target.value; renderTrkTrips(); });
+      document.getElementById('trk-text-search').addEventListener('input', e => { trkTextSearch = e.target.value.toLowerCase(); renderTrkTrips(); });
+      Promise.all([fetchTrkTrips(), fetchTrkBuses()]).then(startTrackingRefresh);
+    }
+
+    function startTrackingRefresh() {
+      if (trackingTimer) clearInterval(trackingTimer);
+      trackingTimer = setInterval(() => {
+        if (trkView === 'trip') fetchTrkTrips(); else fetchTrkBuses();
+      }, 30000);
+    }
+
+    function switchTrkView(view) {
+      trkView = view;
+      document.getElementById('trk-trip-view').style.display = view === 'trip' ? '' : 'none';
+      document.getElementById('trk-bus-view').style.display  = view === 'bus'  ? '' : 'none';
+      document.getElementById('trk-by-trip-btn').className = view === 'trip' ? 'btn btn--primary' : 'btn btn--ghost';
+      document.getElementById('trk-by-bus-btn').className  = view === 'bus'  ? 'btn btn--primary' : 'btn btn--ghost';
+    }
+
+    async function fetchTrkTrips() {
+      try {
+        const resp = await apiFetch('/transport/tracking/trips');
+        trkServerTime = resp.serverTime;
+        trkTrips = Array.isArray(resp.data) ? resp.data : [];
+        renderTrkTrips();
+      } catch (err) {
+        document.getElementById('trk-trips-body').innerHTML =
+          `<tr><td colspan="8" class="state-msg">${esc(err.message)}</td></tr>`;
+      }
+    }
+
+    async function fetchTrkBuses() {
+      try {
+        const resp = await apiFetch('/transport/tracking/buses');
+        trkServerTime = resp.serverTime;
+        trkBuses = Array.isArray(resp.data) ? resp.data : [];
+        renderTrkBuses();
+      } catch (err) {
+        document.getElementById('trk-buses-container').innerHTML =
+          `<p class="state-msg">${esc(err.message)}</p>`;
+      }
+    }
+
+    // Returns "3 min ago", "2 h ago", etc. using server clock, not browser clock.
+    function trkAge(dateStr) {
+      if (!dateStr || !trkServerTime) return null;
+      const diffMs = new Date(trkServerTime) - new Date(dateStr);
+      if (isNaN(diffMs) || diffMs < 0) return 'just now';
+      const mins = Math.floor(diffMs / 60000);
+      if (mins < 1)  return 'just now';
+      if (mins < 60) return mins + ' min ago';
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24)  return hrs + ' h ago';
+      return Math.floor(hrs / 24) + ' d ago';
+    }
+
+    // True when the given timestamp is older than 30 minutes relative to serverTime.
+    function trkStale(dateStr) {
+      if (!dateStr || !trkServerTime) return false;
+      return (new Date(trkServerTime) - new Date(dateStr)) > 30 * 60 * 1000;
+    }
+
+    function trkStatusBadge(s) {
+      if (!s) return '<span style="color:var(--muted);font-size:12px;">No updates yet</span>';
+      const cls = (s === 'Completed') ? 'badge--ok' :
+                  (['Cancelled','Breakdown'].includes(s)) ? 'badge--other' : 'badge--warn';
+      return `<span class="badge ${cls}">${esc(s)}</span>`;
+    }
+
+    function trkMapLink(lat, lng) {
+      if (!lat || !lng) return '';
+      const url = `https://www.openstreetmap.org/?mlat=${encodeURIComponent(lat)}&mlon=${encodeURIComponent(lng)}#map=16/${encodeURIComponent(lat)}/${encodeURIComponent(lng)}`;
+      return ` <a href="${url}" target="_blank" rel="noopener" style="color:var(--primary);font-weight:600;font-size:12px;">Map</a>`;
+    }
+
+    function renderTrkTrips() {
+      const body = document.getElementById('trk-trips-body');
+      let data = trkTrips;
+      if (trkDateFilter) data = data.filter(t => t.tripDate === trkDateFilter);
+      if (trkTextSearch) data = data.filter(t =>
+        (t.busRegistration || '').toLowerCase().includes(trkTextSearch) ||
+        (t.driverName || '').toLowerCase().includes(trkTextSearch));
+      if (!data.length) {
+        body.innerHTML = '<tr><td colspan="8" class="state-msg">No trips match the filter.</td></tr>'; return;
+      }
+      body.innerHTML = data.map(t => {
+        const statusAge = trkAge(t.latestStatusAt);
+        const locAge    = trkAge(t.latestLocationAt);
+        const staleS    = trkStale(t.latestStatusAt);
+        const staleL    = trkStale(t.latestLocationAt);
+        const staleStyle = 'color:var(--muted);font-style:italic;';
+
+        const statusCell = t.latestStatusType
+          ? `${trkStatusBadge(t.latestStatusType)} <span style="font-size:11px;${staleS ? staleStyle : ''}">${statusAge || ''}</span>
+             ${staleS ? '<span style="font-size:11px;color:var(--muted);">(stale)</span>' : ''}`
+          : '<span style="color:var(--muted);font-size:12px;">No updates yet</span>';
+
+        const locCell = t.latestLat
+          ? `<span style="font-size:12px;${staleL ? staleStyle : ''}">${esc(t.latestLat)}, ${esc(t.latestLng)}</span>
+             <span style="font-size:11px;${staleL ? staleStyle : ''}">(${locAge || ''})</span>${trkMapLink(t.latestLat, t.latestLng)}`
+          : '<span style="color:var(--muted);font-size:12px;">No updates yet</span>';
+
+        return `<tr>
+          <td>${esc(t.pickupName || '?')} → ${esc(t.dropName || '?')}</td>
+          <td>${esc(t.tripDate || '—')}</td>
+          <td>${esc(t.startTime ? t.startTime.substring(0,5) : '—')}</td>
+          <td>${esc(t.busRegistration || '—')}</td>
+          <td>${esc(t.driverName || '—')}</td>
+          <td>${statusBadge(t.tripStatus)}</td>
+          <td>${statusCell}</td>
+          <td style="white-space:normal;min-width:180px;">${locCell}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function renderTrkBuses() {
+      const container = document.getElementById('trk-buses-container');
+      if (!trkBuses.length) {
+        container.innerHTML = '<p class="state-msg">No buses found.</p>'; return;
+      }
+      container.innerHTML = trkBuses.map(bus => {
+        const trip = bus.currentOrNextTrip;
+        const statusCls = bus.busStatus === 'Available' ? 'badge--ok' :
+                          bus.busStatus === 'Maintenance' ? 'badge--warn' : 'badge--other';
+
+        let tripBlock = '<div style="margin-top:8px;color:var(--muted);font-size:13px;">No trips scheduled</div>';
+        if (trip) {
+          const locAge   = trkAge(trip.latestLocationAt);
+          const statAge  = trkAge(trip.latestStatusAt);
+          const staleL   = trkStale(trip.latestLocationAt || trip.latestStatusAt);
+          const staleStyle = staleL ? 'color:var(--muted);font-style:italic;' : '';
+          tripBlock = `<div style="margin-top:8px;">
+            <span style="font-size:13px;font-weight:600;">${esc(trip.pickupName || '?')} → ${esc(trip.dropName || '?')}</span>
+            <span style="color:var(--muted);font-size:12px;"> ${esc(trip.tripDate || '')} ${esc(trip.startTime ? trip.startTime.substring(0,5) : '')}</span>
+            <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+              ${statusBadge(trip.tripStatus)}
+              ${trip.latestStatusType
+                ? `${trkStatusBadge(trip.latestStatusType)} <span style="font-size:11px;${trkStale(trip.latestStatusAt) ? 'color:var(--muted);' : ''}">${statAge || ''}</span>`
+                : '<span style="color:var(--muted);font-size:12px;">No status yet</span>'}
+            </div>
+            <div style="margin-top:4px;font-size:12px;${staleStyle}">
+              ${trip.latestLat
+                ? `${esc(trip.latestLat)}, ${esc(trip.latestLng)} (${locAge || ''})${trkMapLink(trip.latestLat, trip.latestLng)}`
+                : '<span style="color:var(--muted);">No location yet</span>'}
+            </div>
+          </div>`;
+        }
+
+        return `<div style="background:var(--surface);border-radius:10px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <strong style="font-size:15px;">${esc(bus.registration || '—')}</strong>
+              <span class="badge ${statusCls}">${esc(bus.busStatus || '—')}</span>
+              <span style="color:var(--muted);font-size:12px;">${bus.capacity} seats · ${bus.tripsToday} trip(s) today</span>
+            </div>
+            ${tripBlock}
+          </div>
+          <button class="btn btn--ghost btn--sm" data-bus-detail="${esc(String(bus.busId))}">Details</button>
+        </div>`;
+      }).join('');
+
+      container.querySelectorAll('[data-bus-detail]').forEach(btn =>
+        btn.addEventListener('click', () => openBusDetail(btn.dataset.busDetail)));
+    }
+
+    async function openBusDetail(busId) {
+      const modal   = document.getElementById('bus-detail-modal');
+      const content = document.getElementById('bus-detail-content');
+      const title   = document.getElementById('bus-detail-title');
+      const bus = trkBuses.find(b => String(b.busId) === String(busId));
+      title.textContent = bus ? `Bus ${bus.registration} — Details` : `Bus #${busId}`;
+      content.innerHTML = '<p class="state-msg">Loading…</p>';
+      modal.classList.add('show');
+      try {
+        const resp   = await apiFetch(`/transport/tracking/buses/${busId}`);
+        const detail = resp.data;
+        if (!detail.trips || !detail.trips.length) {
+          content.innerHTML = '<p class="state-msg">No trips scheduled for this bus in the current window.</p>'; return;
+        }
+        content.innerHTML = detail.trips.map(trip => {
+          const sLog = trip.statusLog && trip.statusLog.length
+            ? trip.statusLog.map(s => `<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--line);">
+                ${trkStatusBadge(s.statusType)} <span style="color:var(--muted);">${esc(s.time ? s.time.substring(0,16).replace('T',' ') : '—')}</span></div>`).join('')
+            : '<div style="color:var(--muted);font-size:12px;">No status updates</div>';
+          const pLog = trip.recentPings && trip.recentPings.length
+            ? trip.recentPings.map(p => `<div style="font-size:12px;padding:3px 0;border-bottom:1px solid var(--line);">
+                ${esc(p.lat)}, ${esc(p.lng)} <span style="color:var(--muted);">${esc(p.time ? p.time.substring(0,16).replace('T',' ') : '—')}</span>${trkMapLink(p.lat, p.lng)}</div>`).join('')
+            : '<div style="color:var(--muted);font-size:12px;">No location pings</div>';
+          return `<div style="border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+              <strong>Trip #${esc(trip.tripId)}</strong>
+              <span style="font-size:13px;">${esc(trip.pickupName || '?')} → ${esc(trip.dropName || '?')}</span>
+              <span style="color:var(--muted);font-size:12px;">${esc(trip.tripDate || '')} ${esc(trip.startTime ? trip.startTime.substring(0,5) : '')}</span>
+              ${statusBadge(trip.tripStatus)}
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div><div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Status Log</div>${sLog}</div>
+              <div><div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">Recent Pings (last 10)</div>${pLog}</div>
+            </div>
+          </div>`;
+        }).join('');
+      } catch (err) {
+        content.innerHTML = `<p class="state-msg">${esc(err.message)}</p>`;
+      }
+    }
+
+    // Close bus detail modal on backdrop click
+    document.getElementById('bus-detail-modal').addEventListener('click', e => {
+      if (e.target === document.getElementById('bus-detail-modal'))
+        document.getElementById('bus-detail-modal').classList.remove('show');
     });
   </script>
 </body>

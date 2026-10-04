@@ -35,6 +35,21 @@ public class Feedback {
     @Column(name = "SubmittedAt", columnDefinition = "datetime2")
     private LocalDateTime submittedAt;
 
+    @Nationalized
+    @Column(name = "admin_response", columnDefinition = "nvarchar(1000)")
+    private String adminResponse;
+
+    @Column(name = "reviewed_at", columnDefinition = "datetime2")
+    private LocalDateTime reviewedAt;
+
+    // Plain column — reviewer looked up by id when building admin DTO
+    @Column(name = "reviewed_by_id")
+    private Integer reviewedById;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reviewed_by_id", insertable = false, updatable = false)
+    private User reviewedBy;
+
     public Integer getFeedbackId() { return feedbackId; }
     public void setFeedbackId(Integer feedbackId) { this.feedbackId = feedbackId; }
     public User getUser() { return user; }
@@ -51,4 +66,11 @@ public class Feedback {
     public void setStatus(String status) { this.status = status; }
     public LocalDateTime getSubmittedAt() { return submittedAt; }
     public void setSubmittedAt(LocalDateTime submittedAt) { this.submittedAt = submittedAt; }
+    public String getAdminResponse() { return adminResponse; }
+    public void setAdminResponse(String adminResponse) { this.adminResponse = adminResponse; }
+    public LocalDateTime getReviewedAt() { return reviewedAt; }
+    public void setReviewedAt(LocalDateTime reviewedAt) { this.reviewedAt = reviewedAt; }
+    public Integer getReviewedById() { return reviewedById; }
+    public void setReviewedById(Integer reviewedById) { this.reviewedById = reviewedById; }
+    public User getReviewedBy() { return reviewedBy; }
 }

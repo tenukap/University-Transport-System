@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feedback — TransitPass</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body data-page="feedback">
+  <div id="sidebar"></div>
+  <div id="topbar"></div>
+
+  <main class="main">
+    <div class="page-medium">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+        <h2 style="margin:0;">My Feedback</h2>
+        <button class="btn btn--primary" id="give-feedback-btn">+ Give Feedback</button>
+      </div>
+
+      <div id="feedback-list"></div>
+    </div>
+  </main>
+
+  <!-- Give Feedback modal -->
+  <div id="modal-root">
+    <div class="modal-overlay" id="feedback-modal">
+      <div class="modal" style="max-width:500px;">
+        <h3>Rate a Trip</h3>
+        <div class="modal__error" id="fb-modal-error"></div>
+
+        <div class="field" style="margin-bottom:14px;">
+          <label style="display:block;font-size:12px;font-weight:600;color:#8E9A98;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Trip</label>
+          <select id="fb-trip-select" style="width:100%;font-family:inherit;font-size:14px;padding:9px 11px;border:1px solid #C9D2D6;border-radius:8px;outline:none;"></select>
+          <div id="fb-no-trips" style="display:none;color:#8E9A98;font-size:13px;margin-top:8px;">No trips are ready for feedback yet. You can rate a trip after it has departed.</div>
+        </div>
+
+        <div class="field" style="margin-bottom:14px;">
+          <label style="display:block;font-size:12px;font-weight:600;color:#8E9A98;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Rating</label>
+          <div id="star-selector" style="display:flex;gap:6px;" role="group" aria-label="Rating">
+            <button type="button" class="star-btn" data-value="1" aria-label="1 star">&#9733;</button>
+            <button type="button" class="star-btn" data-value="2" aria-label="2 stars">&#9733;</button>
+            <button type="button" class="star-btn" data-value="3" aria-label="3 stars">&#9733;</button>
+            <button type="button" class="star-btn" data-value="4" aria-label="4 stars">&#9733;</button>
+            <button type="button" class="star-btn" data-value="5" aria-label="5 stars">&#9733;</button>
+          </div>
+          <input type="hidden" id="fb-rating" />
+        </div>
+
+        <div class="field" style="margin-bottom:14px;">
+          <label style="display:block;font-size:12px;font-weight:600;color:#8E9A98;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;">Comment</label>
+          <textarea id="fb-comment" rows="4" maxlength="1000"
+            style="width:100%;font-family:inherit;font-size:14px;padding:9px 11px;border:1px solid #C9D2D6;border-radius:8px;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+          <div style="text-align:right;font-size:12px;color:#8E9A98;margin-top:4px;"><span id="fb-char-count">0</span> / 1000</div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;">
+          <button type="button" class="btn btn--outline" id="fb-modal-cancel">Cancel</button>
+          <button type="button" class="btn btn--primary" id="fb-submit-btn">Submit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .star-btn {
+      background: none; border: none; font-size: 28px; cursor: pointer;
+      color: #C9D2D6; padding: 0; line-height: 1; transition: color .15s;
+    }
+    .star-btn.active { color: #f59e0b; }
+    .star-btn:hover { color: #f59e0b; }
+    .feedback-card {
+      background: #fff; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.08);
+      padding: 18px 20px; margin-bottom: 14px;
+    }
+    .feedback-card__header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+    .feedback-card__trip { font-size: 15px; font-weight: 600; }
+    .feedback-card__stars { color: #f59e0b; font-size: 18px; white-space: nowrap; }
+    .feedback-card__comment { margin-top: 8px; font-size: 14px; color: #444; word-break: break-word; }
+    .feedback-card__meta { margin-top: 8px; display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: #8E9A98; }
+    .feedback-card__reply { margin-top: 10px; background: #F5F5F5; border-radius: 8px; padding: 10px 14px; font-size: 13px; }
+    .feedback-card__reply-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #8E9A98; margin-bottom: 4px; }
+    .badge-pending { background: rgba(245,158,11,.12); color: #f59e0b; border-radius: 9999px; padding: 3px 10px; font-size: 11px; font-weight: 700; }
+    .badge-reviewed { background: rgba(16,185,129,.12); color: #10b981; border-radius: 9999px; padding: 3px 10px; font-size: 11px; font-weight: 700; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.55); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+    .modal-overlay.show { display: flex; }
+    .modal { background: #fff; border-radius: 12px; width: 100%; max-width: 460px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,.25); }
+    .modal h3 { font-size: 18px; margin: 0 0 16px; font-family: 'Montserrat', sans-serif; }
+    .modal__error { display: none; background: #FBEAE8; color: #B4463C; border: 1px solid #F0C9C4; border-radius: 8px; padding: 9px 11px; font-size: 13px; margin-bottom: 12px; }
+    .modal__error.show { display: block; }
+    .btn { font-weight: 600; font-size: 13px; border-radius: 8px; border: none; padding: 9px 16px; cursor: pointer; }
+    .btn--primary { background: #35627A; color: #fff; }
+    .btn--primary:hover { background: #2B4F63; }
+    .btn--outline { background: none; border: 1px solid #35627A; color: #35627A; }
+    .btn:disabled { opacity: .6; cursor: not-allowed; }
+  </style>
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>checkAuth('STUDENT');</script>
+  <script src="js/api.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/feedback.js"></script>
+</body>
+</html>

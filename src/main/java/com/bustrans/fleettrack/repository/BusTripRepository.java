@@ -60,6 +60,14 @@ public interface BusTripRepository extends JpaRepository<BusTrip, Integer> {
     @Query("SELECT bt FROM BusTrip bt WHERE bt.driverUserId = :driverId AND bt.tripDate >= :today AND bt.tripStatus <> 'Cancelled' ORDER BY bt.tripDate, bt.startTime")
     List<BusTrip> findUpcomingByDriver(@Param("driverId") Integer driverId, @Param("today") LocalDate today);
 
+    // Tracking: trips in a date window, excluding one status, newest first.
+    @Query("SELECT bt FROM BusTrip bt WHERE bt.tripDate BETWEEN :from AND :to AND bt.tripStatus <> :excludeStatus ORDER BY bt.tripDate DESC, bt.startTime DESC")
+    List<BusTrip> findTrackingTrips(@Param("from") LocalDate from, @Param("to") LocalDate to, @Param("excludeStatus") String excludeStatus);
+
+    // Tracking bus detail: all statuses for a bus in a date window, newest first.
+    @Query("SELECT bt FROM BusTrip bt WHERE bt.bus.busId = :busId AND bt.tripDate BETWEEN :from AND :to ORDER BY bt.tripDate DESC, bt.startTime DESC")
+    List<BusTrip> findByBusIdAndDateRange(@Param("busId") Long busId, @Param("from") LocalDate from, @Param("to") LocalDate to);
+
     // All trip IDs ever assigned to a driver (for GET filtering of status/location logs).
     @Query("SELECT bt.tripId FROM BusTrip bt WHERE bt.driverUserId = :driverId")
     List<Integer> findTripIdsByDriver(@Param("driverId") Integer driverId);

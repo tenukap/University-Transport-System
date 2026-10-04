@@ -2,6 +2,8 @@ package com.bustrans.fleettrack.repository;
 
 import com.bustrans.fleettrack.entity.TripStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -12,4 +14,9 @@ import java.util.Optional;
 public interface TripStatusRepository extends JpaRepository<TripStatus, Integer> {
     Optional<TripStatus> findTopByTripIdOrderByUpdatedAtDesc(Integer tripId);
     List<TripStatus> findByTripIdIn(Collection<Integer> tripIds);
+
+    // One query returns the single latest (highest auto-increment id) status row per trip.
+    @Query("SELECT ts FROM TripStatus ts WHERE ts.statusId IN " +
+           "(SELECT MAX(ts2.statusId) FROM TripStatus ts2 WHERE ts2.tripId IN :tripIds GROUP BY ts2.tripId)")
+    List<TripStatus> findLatestByTripIds(@Param("tripIds") Collection<Integer> tripIds);
 }

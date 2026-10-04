@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Track My Bus — TransitPass</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <style>
+    #trk-map-wrap { height: 280px; border-radius: 10px; overflow: hidden; margin-top: 24px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    .trk-card { background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.09); padding: 18px; margin-bottom: 14px; cursor: pointer; border: 2px solid transparent; transition: border-color .15s; }
+    .trk-card:hover, .trk-card.is-selected { border-color: #35627A; }
+    .trk-card__header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+    .trk-card__route { font-weight: 700; font-size: 15px; }
+    .trk-card__meta  { color: #8E9A98; font-size: 13px; margin-bottom: 6px; }
+    .trk-card__row   { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; }
+    .trk-card__item  { display: flex; flex-direction: column; gap: 2px; }
+    .trk-card__label { font-size: 11px; color: #8E9A98; text-transform: uppercase; font-weight: 600; letter-spacing: .04em; }
+    .trk-stale       { color: #8E9A98; font-style: italic; }
+    .trk-none        { color: #8E9A98; font-size: 12px; }
+  </style>
+</head>
+<body data-page="tracking">
+  <div id="sidebar"></div>
+  <div id="topbar"></div>
+
+  <main class="main">
+    <div class="page-wide">
+      <div id="trk-list"><p class="muted-text">Loading…</p></div>
+      <div id="trk-map-wrap" style="display:none;"></div>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script>checkAuth('STUDENT');</script>
+  <script src="js/api.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/tracking.js"></script>
+</body>
+</html>

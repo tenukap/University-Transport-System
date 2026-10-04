@@ -1,5 +1,31 @@
 # Change Log
 
+## Fix — Feedback eligibility time comparison
+`BookingRepository.findDepartedConfirmedBookings` removed the `startTime <= :now` JPQL predicate (SQL Server JDBC maps `LocalTime` as `datetime`, causing a type-incompatibility 400). The date query now returns trips with `tripDate <= today`; the same-day `startTime` check is applied in Java in `FeedbackApiController.eligible()`. `GlobalExceptionHandler` gains a `DataAccessException` handler that logs the real error and returns a clean 500 `{"message":"Something went wrong, please try again."}` instead of exposing the raw JDBC exception to clients.
+
+## Prompt 17 — Trip feedback workflow
+
+Students can rate a departed trip (1–5 stars) and leave a comment; they see their own feedback and any admin reply. Admins review all feedback and can write a reply.
+
+**Migration:** `V10__feedback_review.sql` — adds `admin_response NVARCHAR(1000)`, `reviewed_at DATETIME2`, `reviewed_by_id INT FK(Users)` to the Feedback table, and a filtered unique index `UIX_Feedback_User_Booking ON (UserId, BookingId) WHERE BookingId IS NOT NULL` (one rating per booking).
+
+**Endpoints and roles:**
+
+| Method | Path | Role |
+|--------|------|------|
+| GET | `/api/feedback/eligible` | STUDENT |
+| POST | `/api/feedback` | STUDENT |
+| GET | `/api/feedback/mine` | STUDENT |
+| GET | `/api/feedback` | ADMIN |
+| GET | `/api/feedback/summary` | ADMIN |
+| PUT | `/api/feedback/{id}/review` | ADMIN |
+
+**Student UI:** `frontend/feedback.html` + `js/feedback.js` — Give Feedback modal (trip dropdown, star selector, comment textarea with char counter), My Feedback table (trip, stars, comment, status badge, admin reply when present). "Feedback" nav link added to `js/layout.js` for all student pages.
+
+**Admin UI:** New Feedback tab in `admin-dashboard.html` — summary metric cards (total, pending, reviewed, average rating), filter (All/Pending/Reviewed), table (student, trip, bus, rating, comment, status, date, Review/Edit Reply action), review modal with full comment, reply textarea and Mark Reviewed button. A pending count badge on the sidebar item.
+
+**Ethical note:** Feedback is tied to the student's own account via JWT. Each student sees only their own feedback and the admin's reply to it. No feedback (including ratings and comments) is visible to other students. Only the reviewing admin can see all feedback.
+
 ## Prompt 12 — Finance review screen and admin finance view
 
 ### Why
@@ -336,4 +362,57 @@ Added two PUT matchers before the general `/api/transport/**` rule to restrict `
 - `frontend/driver.html`
 - `frontend/transport-officer-dashboard.html`
 - `frontend/admin-dashboard.html`
+- `docs/CHANGES.md` (this file)
+
+---
+
+## Prompt 16 - trip and bus tracking
+
+Added real-time tracking endpoints so the transport officer, admin, and students can see each trip's latest driver-logged status and last GPS ping without polling individual rows.
+
+### Backend
+
+New batch finders (one query per table, not N+1):
+- `TripStatusRepository.findLatestByTripIds` — MAX(statusId) GROUP BY tripId subquery.
+- `LocationUpdateRepository.findLatestByTripIds` — same pattern for pings.
+- `LocationUpdateRepository.findByTripIdsOrderByRecordedAtDesc` — all pings newest-first for bus-detail history.
+
+New controllers:
+- `TrackingController` — endpoints under `/api/transport/tracking/**` (existing TRANSPORT_OFFICER+ADMIN security rule covers them; no SecurityConfig change needed).
+- `StudentTrackingController` — `/api/student/tracking` (existing STUDENT security rule covers it); userId always taken from `authentication.getName()` (JWT sub), never from a request parameter.
+
+Every response is wrapped in `{ serverTime, data }` so the UI can show "3 min ago" without trusting the browser clock.
+
+### Endpoint / role table
+
+| Method | Path | Roles |
+|---|---|---|
+| GET | /api/transport/tracking/trips | TRANSPORT_OFFICER, ADMIN |
+| GET | /api/transport/tracking/buses | TRANSPORT_OFFICER, ADMIN |
+| GET | /api/transport/tracking/buses/{id} | TRANSPORT_OFFICER, ADMIN |
+| GET | /api/student/tracking | STUDENT |
+
+### Frontend
+
+- `transport-officer-dashboard.html` — new "Tracking" sidebar tab with By-trip table (date filter, text search) and By-bus cards with clickable bus-detail modal; auto-refresh every 30 s while the tab is open; data older than 30 min shown as stale (grey italic).
+- `admin-dashboard.html` — same Tracking tab, read-only.
+- `frontend/tracking.html` + `frontend/js/tracking.js` — student "Track My Bus" page; cards show booked trip, seat, latest status and age, last location with Map link; clicking a card with a known location renders a small Leaflet map.
+- `frontend/js/layout.js` — added "Track My Bus" nav item for all student pages.
+- `frontend/js/map.js` — removed hardcoded "9 seats left" text.
+
+### Files changed
+- `src/…/repository/TripStatusRepository.java`
+- `src/…/repository/LocationUpdateRepository.java`
+- `src/…/controller/TrackingController.java` (new)
+- `src/…/controller/StudentTrackingController.java` (new)
+- `src/…/dto/TrackingTripDTO.java` (new — was untracked)
+- `src/…/dto/TrackingBusDTO.java` (new — was untracked)
+- `src/…/dto/TrackingBusDetailDTO.java` (new — was untracked)
+- `src/…/dto/StudentTrackingDTO.java` (new — was untracked)
+- `frontend/transport-officer-dashboard.html`
+- `frontend/admin-dashboard.html`
+- `frontend/js/layout.js`
+- `frontend/tracking.html` (new)
+- `frontend/js/tracking.js` (new)
+- `frontend/js/map.js`
 - `docs/CHANGES.md` (this file)

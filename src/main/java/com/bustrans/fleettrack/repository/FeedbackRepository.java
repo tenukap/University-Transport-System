@@ -17,4 +17,14 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Integer> {
     @Modifying
     @Query("UPDATE Feedback f SET f.bookingId = NULL WHERE f.bookingId = :bookingId")
     void clearBookingId(@Param("bookingId") Long bookingId);
+
+    boolean existsByBookingId(Long bookingId);
+
+    Optional<Feedback> findByBookingId(Long bookingId);
+
+    List<Feedback> findByUser_UserIdOrderBySubmittedAtDesc(Long userId);
+
+    List<Feedback> findAllByOrderBySubmittedAtDesc();
+
+    List<Feedback> findByStatusOrderBySubmittedAtDesc(String status);
 }

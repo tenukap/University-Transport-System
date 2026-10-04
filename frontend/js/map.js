@@ -98,7 +98,6 @@ function renderInfo(selected) {
   infoEl.innerHTML = `
     <div class="trip-info__route">${getLocationName(selected.pickupLocationId)} → ${getLocationName(selected.dropLocationId)}</div>
     <div class="trip-info__meta">Departure: <strong>${formatTime(selected.startTime)}</strong>${etaPart}</div>
-    <div class="trip-info__seats">9 seats left</div>
     <button class="btn btn--primary" id="book-this-trip">Book This Trip</button>`;
   document.getElementById('book-this-trip').addEventListener('click', () => {
     window.location.href = 'book.html';
